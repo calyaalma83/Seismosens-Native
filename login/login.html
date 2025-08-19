@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Seismosens</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="login.css">
+</head>
+<body>
+    <main class="login-page">
+        <div class="logo"></div>
+
+        <h1 class="title">Seismosens</h1>
+        <p class="subtitle">Earthquake Monitoring System</p>
+
+        <section class="login-card">
+            <h2>Masuk ke Akun</h2>
+            <p class="desc">Gunakan email dan password untuk melanjutkan</p>
+            <form id="loginForm">
+               <div class="input-group">
+                  <input type="email" id="email" placeholder="Email Address" required>
+                 <input type="password" id="password" placeholder="Password" required>
+               </div>
+
+                <button type="submit" class="login-btn">Masuk ke Seismosens</button>
+            </form>
+
+            <a href="#" class="forgot">Lupa Password?</a>
+            <p class="register-text">Belum punya akun? <a href="register/register.html" class="register-link">Daftar Sekarang</a></p> 
+        </section>
+    </main>
+
+    <script type="module" src="login.ts"></script>
+</body>
+</html>

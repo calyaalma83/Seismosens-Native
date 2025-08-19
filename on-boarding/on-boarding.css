@@ -1,0 +1,74 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Inter', sans-serif;
+}
+
+.onboarding {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100%;
+  background: linear-gradient(180deg, #5a7ce2, #8d52c9);
+  text-align: center;
+  color: white;
+  padding: 40px 20px;
+}
+
+.earth-img {
+  width: 140px;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 50%;
+  margin-bottom: 30px;
+  border: none;
+  animation: rotateEarth 20s linear infinite;
+}
+
+@keyframes rotateEarth {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+h1 {
+  font-size: 26px;
+  margin-bottom: 15px;
+  font-weight: 700;
+}
+
+.highlight {
+  color: orange;
+  font-weight: bold;
+}
+
+p {
+  font-size: 15px;
+  margin-bottom: 40px;
+  line-height: 1.5;
+  max-width: 320px;
+}
+
+button {
+  background: linear-gradient(270deg, #4e9af1, #ffffff);
+  background-size: 200% 200%;
+  border: none;
+  padding: 12px 25px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.3s ease, background-position 0.5s ease;
+}
+
+button:hover {
+  opacity: 0.95;
+  transform: scale(1.05);
+  background-position: right center;
+}

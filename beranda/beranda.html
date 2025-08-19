@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SeismoSens - Beranda</title>
+  <link rel="stylesheet" href="beranda.css">
+</head>
+<body>
+  <div class="header">
+    <div class="top-bar">
+      <div class="logo">SeismoSens</div>
+      <div class="icon">🔔</div>
+    </div>
+    <h2>Halo, Tomo! 👋</h2>
+    <p>Sistem monitoring berjalan optimal</p>
+
+    <div class="status-cards">
+      <div class="status-card">
+        <h3>3</h3>
+        <p>Perangkat</p>
+      </div>
+      <div class="status-card">
+        <h3>2</h3>
+        <p>Online</p>
+      </div>
+      <div class="status-card">
+        <h3>92%</h3>
+        <p>Health</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert">
+    ⚠️ <strong>Perhatian</strong><br>
+    SMS-USER-003 offline sejak 2 jam lalu
+  </div>
+
+  <div class="device-card online">
+    <h4>SMS-USER-001 <span class="status online">● Online</span></h4>
+    <p>Rumah Tinggal • Surakarta</p>
+    <div class="device-info">
+      <div><strong>95%</strong><br>Health</div>
+      <div><strong>0.02</strong><br>Vibration</div>
+      <div><strong>15.2</strong><br>Frequency</div>
+    </div>
+  </div>
+
+  <div class="device-card warning">
+    <h4>SMS-USER-002 <span class="status warning">● Warning</span></h4>
+    <p>Kantor • Surakarta</p>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <h3>Perangkat Saya</h3>
+      <a href="#">Lihat Semua</a>
+    </div>
+    <div class="my-device">
+      <img src="https://via.placeholder.com/80" alt="device">
+      <div>
+        <h4>SMS-USER-002</h4>
+        <p>Rumah Tinggal • Surakarta</p>
+      </div>
+      <button class="add-btn">＋</button>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="beranda.html" class="active">🏠<br>Beranda</a>
+    <a href="../perangkat/perangkat.html">📡<br>Perangkat</a>
+    <a href="../peta/peta.html">🗺️<br>Peta</a>
+    <a href="../pengaturan/pengaturan.html">⚙️<br>Pengaturan</a>
+    <a href="../profile/profile.html">👤<br>Profil</a>
+  </nav>
+
+  <script src="beranda.js"></script>
+</body>
+</html>

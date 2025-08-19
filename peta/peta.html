@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peta Seismosens</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="peta.css">
+</head>
+<body>
+    <header class="header">
+        <h1>Smart City Map 🗺️</h1>
+        <p>Monitoring Kota Surakarta</p>
+    </header>
+
+    <main class="map-container">
+        <div class="map"></div>
+
+        <div class="filter-box">
+            <h3>Filter Lokasi</h3>
+            <div class="filters">
+                <button class="filter-btn active">Lokasi Saya</button>
+                <button class="filter-btn">Rawan Gempa</button>
+                <button class="filter-btn">Tersimpan</button>
+                <button class="filter-btn">Warning</button>
+            </div>
+        </div>
+
+        <div class="location-list">
+            <h3>Daftar Lokasi Yang Anda Kunjungi</h3>
+            <div class="location-card">
+                <strong>Jebres</strong>
+                <span>Lihat Lokasi</span>
+            </div>
+
+            <div class="location-card">
+                <strong>Banjarsari</strong>
+                <span>Lihat Lokasi</span>
+            </div>
+        </div>
+    </main>
+
+    <nav class="bottom-nav">
+    <a href="../beranda/beranda.html">🏠<span>Beranda</span></a>
+    <a href="../perangkat/perangkat.html">📡<span>Perangkat</span></a>
+    <a href="peta.html" class="active">🗺️<span>Peta</span></a>
+    <a href="../pengaturan/pengaturan.html">⚙️<span>Pengaturan</span></a>
+    <a href="../profile/profile.html">👤<span>Profil</span></a>
+  </nav>
+
+  <script src="peta.js"></script>
+
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap"></script>
+</body>
+</html>
