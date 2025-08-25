@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - SeismoSens</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="register.css">
+</head>
+<body>
+  <div class="register-container">
+    <!-- Logo / Icon -->
+    <div class="logo">🟠</div>
+    <h2 class="app-title">SeismoSens</h2>
+
+    <!-- Card -->
+    <div class="register-card">
+      <h3>Buat Akun Baru</h3>
+      <p>Bergabung dengan jaringan SeismoSens Indonesia</p>
+
+      <form onsubmit="return registerUser(event)">
+        <div class="form-group">
+          <input type="text" placeholder="Nama Lengkap" required>
+        </div>
+        <div class="form-group">
+          <input type="email" placeholder="Email Address" required>
+        </div>
+        <div class="form-group">
+          <input type="password" placeholder="Password" required>
+        </div>
+        <div class="form-group">
+          <input type="password" placeholder="Konfirmasi Password" required>
+        </div>
+
+        <label class="checkbox">
+          <input type="checkbox" required>
+          Saya setuju dengan <a href="#">Syarat & Ketentuan</a>
+        </label>
+
+        <button type="submit" class="register-button">Daftar SeismoSens</button>
+      </form>
+
+      <p class="login-text">
+        Sudah punya akun? <a href="../login/login.html">Masuk</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="register.js"></script>
+</body>
+</html>
