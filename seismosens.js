@@ -1,3 +1,55 @@
+// Import Firebase
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+
+// Firebase config (sama persis dengan register.js)
+const firebaseConfig = {
+  apiKey: "AlzaSyD07M2-79Yh0CzotaQeGYYy4WLZoevTdWY",
+  authDomain: "seismosens-a048e.firebaseapp.com",
+  projectId: "seismosens-a048e",
+  storageBucket: "seismosens-a048e.appspot.com",
+  messagingSenderId: "358453169511",
+  appId: "1:358453169511:web:fccc32bf22ede39ff0b3c2"
+};
+
+// Init Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+// Cek user login
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    console.log("✅ User terdeteksi:", user.email);
+
+    // Update nama di greeting (home)
+    document.getElementById("greetingName").textContent = user.displayName || "User";
+
+    // Update profil (profile page)
+    const profileName = document.querySelector("#profile-page .header div div:nth-child(2)");
+    const profileEmail = document.querySelector("#profile-page .header div div:nth-child(3)");
+
+    if (profileName) profileName.textContent = user.displayName || "User";
+    if (profileEmail) profileEmail.textContent = user.email;
+  } else {
+    console.warn("❌ Tidak ada user login, redirect ke login.html");
+    window.location.href = "login/login.html";
+  }
+});
+
+// Fungsi logout (ganti alert jadi Firebase signOut)
+function logout() {
+  if (confirm("Yakin ingin keluar dari akun SeismoSens?")) {
+    signOut(auth)
+      .then(() => {
+        alert("✅ Berhasil logout!");
+        window.location.href = "login/login.html";
+      })
+      .catch((error) => {
+        alert("❌ Gagal logout: " + error.message);
+      });
+  }
+}
+
 let map;
         let mapInitialized = false;
         
