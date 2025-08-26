@@ -18,18 +18,18 @@
       <h3>Buat Akun Baru</h3>
       <p>Bergabung dengan jaringan SeismoSens Indonesia</p>
 
-      <form onsubmit="return registerUser(event)">
+      <form id="registerForm">
         <div class="form-group">
-          <input type="text" placeholder="Nama Lengkap" required>
+          <input id="nama" type="text" placeholder="Nama Lengkap" required>
         </div>
         <div class="form-group">
-          <input type="email" placeholder="Email Address" required>
+          <input id="email" type="email" placeholder="Email Address" required>
         </div>
         <div class="form-group">
-          <input type="password" placeholder="Password" required>
+          <input id="password" type="password" placeholder="Password" required>
         </div>
         <div class="form-group">
-          <input type="password" placeholder="Konfirmasi Password" required>
+          <input id="confirmPassword" type="password" placeholder="Konfirmasi Password" required>
         </div>
 
         <label class="checkbox">
@@ -46,6 +46,7 @@
     </div>
   </div>
 
-  <script src="register.js"></script>
+  <!-- Pastikan ini pakai module -->
+  <script type="module" src="register.js"></script>
 </body>
 </html>
