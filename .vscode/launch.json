@@ -4,9 +4,32 @@
         {
             "type": "chrome",
             "request": "launch",
-            "name": "Open seismosens.html",
-            "file": "${workspaceFolder}/seismosens.html",
-            "webRoot": "${workspaceFolder}"
+            "name": "Launch Chrome against localhost",
+            "url": "http://localhost:3000/login/login.html",
+            "webRoot": "${workspaceFolder}",
+            "sourceMaps": true,
+            "sourceMapPathOverrides": {
+                "webpack:///src/*": "${webRoot}/*"
+            },
+            "runtimeArgs": [
+                "--disable-web-security",
+                "--disable-site-isolation-trials"
+            ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch Server",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/server.js"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Client + Server",
+            "configurations": ["Launch Server", "Launch Chrome against localhost"]
         }
     ]
 }

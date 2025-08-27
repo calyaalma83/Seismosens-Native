@@ -1,51 +1,83 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
 import { 
-  getAuth, 
-  createUserWithEmailAndPassword, 
-  updateProfile 
-} from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+  auth, 
+  redirectIfAuthenticated,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  signInWithEmailAndPassword 
+} from '../auth.js';
 
-const firebaseConfig = {
-  apiKey: "AlzaSyD07M2-79Yh0CzotaQeGYYy4WLZoevTdWY",
-  authDomain: "seismosens-a048e.firebaseapp.com",
-  projectId: "seismosens-a048e",
-  storageBucket: "seismosens-a048e.appspot.com",
-  messagingSenderId: "358453169511",
-  appId: "1:358453169511:web:fccc32bf22ede39ff0b3c2"
-};
+// Debug info
+console.log('Register script loaded');
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-
-document.getElementById("registerForm").addEventListener("submit", (event) => {
-  event.preventDefault();
+// Redirect to home if already logged in
+redirectIfAuthenticated().then(() => {
+  console.log('Auth check completed');
+  
+  const form = document.getElementById('registerForm');
+  if (!form) {
+    console.error('Register form not found!');
+    return;
+  }
+  
+  console.log('Adding submit event listener to form');
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    console.log("Form submitted");
 
   const nama = document.getElementById("nama").value;
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
   const confirmPassword = document.getElementById("confirmPassword").value;
+  
+  console.log("Form values:", { nama, email, password: '***', confirmPassword: '***' });
 
   if (password !== confirmPassword) {
     alert("Password dan konfirmasi password tidak sama!");
     return;
   }
 
+  console.log("Attempting to create user...");
   createUserWithEmailAndPassword(auth, email, password)
     .then((userCredential) => {
-      const user = userCredential.user;
-      console.log("✅ User berhasil dibuat:", user);
-
-      // Update profile (nama)
-      return updateProfile(user, { displayName: nama });
+      console.log("User created successfully:", userCredential.user.uid);
+      // Update user profile with display name
+      return updateProfile(userCredential.user, {
+        displayName: nama
+      });
     })
     .then(() => {
-      alert(`Selamat datang, ${nama}! Registrasi berhasil ✅`);
-      localStorage.setItem("hasAccount", "true"); // typo sudah diperbaiki
-      console.log("➡️ Redirect ke ../seismosens.html");
-      window.location.href = "../seismosens.html";
+      console.log("Attempting to sign in...");
+      return signInWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          console.log("Signed in successfully:", userCredential.user.uid);
+          return userCredential;
+        });
+    })
+    .then(() => {
+      console.log("Redirecting to home page...");
+      // Use absolute path for more reliable redirect
+      window.location.href = "/seismosens.html";
     })
     .catch((error) => {
-      console.error("❌ Error saat register:", error);
-      alert("Gagal daftar: " + error.message);
+      console.error("Registration error:", error);
+      let errorMessage = "Registrasi gagal: ";
+      switch (error.code) {
+        case 'auth/email-already-in-use':
+          errorMessage = "Email sudah terdaftar";
+          break;
+        case 'auth/weak-password':
+          errorMessage = "Password terlalu lemah, minimal 6 karakter";
+          break;
+        case 'auth/invalid-email':
+          errorMessage = "Format email tidak valid";
+          break;
+        case 'auth/network-request-failed':
+          errorMessage = "Koneksi internet bermasalah. Silakan coba lagi.";
+          break;
+        default:
+          errorMessage = `Terjadi kesalahan: ${error.message}`;
+      }
+      alert(errorMessage);
     });
+  });
 });

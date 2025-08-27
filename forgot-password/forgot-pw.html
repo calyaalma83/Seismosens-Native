@@ -27,11 +27,62 @@
       </form>
 
       <div class="extra-links">
-        <p>Sudah ingat password? <a href="../login/login.html">Masuk Sekarang</a></p>
+        <p>Sudah ingat password? <a href="/login/login.html">Masuk Sekarang</a></p>
       </div>
     </div>
   </div>
 
-  <script src="forgot-pw.js"></script>
+  <script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { 
+      getAuth, 
+      sendPasswordResetEmail 
+    } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyD07M2-79Yh0CzotaQeGYYy4WLZoevTdWY",
+      authDomain: "seismosens-a048e.firebaseapp.com",
+      projectId: "seismosens-a048e",
+      storageBucket: "seismosens-a048e.appspot.com",
+      messagingSenderId: "358453169511",
+      appId: "1:358453169511:web:fccc32bf22ede39ff0b3c2"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    
+    console.log('Firebase initialized for password reset');
+
+    // Handle form submission
+    window.forgotPassword = async function(e) {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      
+      try {
+        await sendPasswordResetEmail(auth, email);
+        alert('Link reset password telah dikirim ke email Anda. Silakan periksa kotak masuk Anda.');
+        window.location.href = '/login/login.html';
+      } catch (error) {
+        console.error('Error:', error);
+        let errorMessage = 'Gagal mengirim email reset password: ';
+        
+        switch(error.code) {
+          case 'auth/user-not-found':
+            errorMessage += 'Email tidak terdaftar';
+            break;
+          case 'auth/invalid-email':
+            errorMessage += 'Format email tidak valid';
+            break;
+          default:
+            errorMessage += error.message;
+        }
+        
+        alert(errorMessage);
+      }
+    };
+  </script>
 </body>
 </html>

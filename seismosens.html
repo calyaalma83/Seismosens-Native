@@ -26,7 +26,7 @@
                     </div>
                     
                     <div class="welcome-text">
-                        <div class="welcome-title">Halo, <span id="greetingName">...</span> 👋</div>
+                        <div class="welcome-title">Halo, <span id="greetingName">Memuat...</span> 👋</div>
                         <div class="welcome-subtitle">Sistem monitoring berjalan optimal</div>
                     </div>
                     
@@ -173,9 +173,8 @@
                 <div class="map-container">
                     <div id="map"></div>
                     
-                    <!-- Map Legend -->
                     <div class="map-legend">
-                        <div style="font-weight: 600; margin-bottom: 12px; font-size: 15px;">SeismoSens Network</div>
+                        <div style="font-weight: 600; margin-bottom: 8px;">SeismoSens Network</div>
                         <div class="legend-item">
                             <div class="legend-dot" style="background: #10b981;"></div>
                             <span>Normal (1,156)</span>
@@ -193,24 +192,100 @@
                             <span>Perangkat Anda (3)</span>
                         </div>
                     </div>
-
-                    <!-- Map Controls -->
+                    
                     <div class="map-controls">
-                        <button class="map-btn" onclick="zoomIn()">+</button>
-                        <button class="map-btn" onclick="zoomOut()">-</button>
-                        <button class="map-btn" onclick="centerMap()">📍</button>
+                        <div class="map-btn" onclick="zoomIn()">+</div>
+                        <div class="map-btn" onclick="zoomOut()">-</div>
+                        <div class="map-btn" onclick="centerMap()">📍</div>
+                    </div>
+                </div>
+
+                <!-- Filter Controls -->
+                <div style="margin: 0 20px 20px; background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <div style="font-weight: 600; margin-bottom: 10px; color: #1e293b;">Filter Peta</div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button class="map-filter active" onclick="filterMarkers('all')" style="padding: 6px 12px; border: none; border-radius: 15px; background: #3b82f6; color: white; font-size: 12px; cursor: pointer;">Semua</button>
+                        <button class="map-filter" onclick="filterMarkers('normal')" style="padding: 6px 12px; border: 1px solid #e2e8f0; border-radius: 15px; background: white; color: #64748b; font-size: 12px; cursor: pointer;">Normal</button>
+                        <button class="map-filter" onclick="filterMarkers('warning')" style="padding: 6px 12px; border: 1px solid #e2e8f0; border-radius: 15px; background: white; color: #64748b; font-size: 12px; cursor: pointer;">Warning</button>
+                        <button class="map-filter" onclick="filterMarkers('offline')" style="padding: 6px 12px; border: 1px solid #e2e8f0; border-radius: 15px; background: white; color: #64748b; font-size: 12px; cursor: pointer;">Offline</button>
+                        <button class="map-filter" onclick="filterMarkers('user')" style="padding: 6px 12px; border: 1px solid #e2e8f0; border-radius: 15px; background: white; color: #64748b; font-size: 12px; cursor: pointer;">Milik Saya</button>
+                    </div>
+                </div>
+
+                <div class="content-section">
+                    <div class="section-title">Perangkat di Surakarta</div>
+                    
+                    <!-- Stats Grid -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+                        <div style="background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <div style="font-size: 20px; font-weight: 700; color: #10b981;">1,187</div>
+                            <div style="font-size: 11px; color: #64748b;">Total Aktif</div>
+                        </div>
+                        <div style="background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <div style="font-size: 20px; font-weight: 700; color: #3b82f6;">97.4%</div>
+                            <div style="font-size: 11px; color: #64748b;">Uptime Kota</div>
+                        </div>
+                    </div>
+                    
+                    <div class="device-card" onclick="showLocationDetail('Balai Kota Surakarta')">
+                        <div class="device-header">
+                            <div class="device-info">
+                                <h3>Balai Kota Surakarta</h3>
+                                <p>0.8 km • Pemerintahan • Jl. Jend. Sudirman</p>
+                            </div>
+                            <div class="device-status online">● Normal</div>
+                        </div>
+                    </div>
+                    
+                    <div class="device-card" onclick="showLocationDetail('RSUD Dr. Moewardi')">
+                        <div class="device-header">
+                            <div class="device-info">
+                                <h3>RSUD Dr. Moewardi</h3>
+                                <p>1.2 km • Rumah Sakit • Jl. Kol. Sutarto</p>
+                            </div>
+                            <div class="device-status online">● Normal</div>
+                        </div>
+                    </div>
+                    
+                    <div class="device-card warning" onclick="showLocationDetail('UNS Kentingan')">
+                        <div class="device-header">
+                            <div class="device-info">
+                                <h3>UNS Kentingan</h3>
+                                <p>2.1 km • Universitas • Jl. Ir. Sutami</p>
+                            </div>
+                            <div class="device-status warning">⚠ Warning</div>
+                        </div>
+                    </div>
+                    
+                    <div class="device-card" onclick="showLocationDetail('Keraton Surakarta')">
+                        <div class="device-header">
+                            <div class="device-info">
+                                <h3>Keraton Surakarta</h3>
+                                <p>1.8 km • Budaya • Jl. Brigjen Slamet Riyadi</p>
+                            </div>
+                            <div class="device-status online">● Normal</div>
+                        </div>
                     </div>
 
-                    <!-- Filter Controls -->
-                    <div class="map-filters">
-                        <div class="filters-container">
-                            <div class="filters-title">Filter Peta</div>
-                            <div class="filters-row">
-                                <button class="filter-btn active" onclick="filterMarkers('all')">Semua</button>
-                                <button class="filter-btn" onclick="filterMarkers('normal')">Normal</button>
-                                <button class="filter-btn" onclick="filterMarkers('warning')">Warning</button>
-                                <button class="filter-btn" onclick="filterMarkers('offline')">Offline</button>
-                                <button class="filter-btn" onclick="filterMarkers('user')">Milik Saya</button>
+                    <!-- Your Devices in Solo -->
+                    <div style="font-weight: 600; margin: 20px 0 10px; color: #1e293b;">Perangkat Anda di Solo</div>
+                    
+                    <div class="device-card" style="border-left-color: #3b82f6;" onclick="showDeviceDetail('SMS-USER-001')">
+                        <div class="device-header">
+                            <div class="device-info">
+                                <h3>SMS-USER-001</h3>
+                                <p>Rumah Tinggal • Jl. Slamet Riyadi No. 234</p>
+                            </div>
+                            <div class="device-status online" style="background: #eff6ff; color: #3b82f6;">● Milik Anda</div>
+                        </div>
+                        <div class="device-metrics">
+                            <div class="metric">
+                                <div class="metric-value">95%</div>
+                                <div class="metric-label">Health</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">Online</div>
+                                <div class="metric-label">Status</div>
                             </div>
                         </div>
                     </div>
@@ -313,9 +388,9 @@
             <div class="page-content" id="profile-page">
                 <div class="header">
                     <div style="text-align: center;">
-                        <div style="width: 80px; height: 80px; background: linear-gradient(45deg, #fbbf24, #f59e0b); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; margin: 0 auto 15px; border: 4px solid rgba(255,255,255,0.3);">JS</div>
-                        <div style="font-size: 22px; font-weight: 700; margin-bottom: 5px;">John Smith</div>
-                        <div style="font-size: 14px; opacity: 0.9;">john.smith@email.com</div>
+                        <div id="profileAvatar" style="width: 80px; height: 80px; background: linear-gradient(45deg, #fbbf24, #f59e0b); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; margin: 0 auto 15px; border: 4px solid rgba(255,255,255,0.3);">U</div>
+                        <div id="profileName" style="font-size: 22px; font-weight: 700; margin-bottom: 5px;">Memuat...</div>
+                        <div id="profileEmail" style="font-size: 14px; opacity: 0.9;">Memuat email...</div>
                     </div>
                     
                     <div style="display: flex; justify-content: space-around; margin-top: 20px;">
@@ -418,8 +493,65 @@
     </div>
 
 
+  <!-- Firebase and App Scripts -->
+  <script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { 
+      getAuth, 
+      onAuthStateChanged,
+      signOut 
+    } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyD07M2-79Yh0CzotaQeGYYy4WLZoevTdWY",
+      authDomain: "seismosens-a048e.firebaseapp.com",
+      projectId: "seismosens-a048e",
+      storageBucket: "seismosens-a048e.appspot.com",
+      messagingSenderId: "358453169511",
+      appId: "1:358453169511:web:fccc32bf22ede39ff0b3c2"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // Check authentication state
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        // User is not signed in, redirect to login page
+        window.location.href = '/login/login.html';
+      } else {
+        // User is signed in
+        const greetingName = document.getElementById('greetingName');
+        const profileName = document.getElementById('profileName');
+        const profileEmail = document.getElementById('profileEmail');
+        
+        if (greetingName) greetingName.textContent = user.displayName || 'Pengguna';
+        if (profileName) profileName.textContent = user.displayName || 'Pengguna';
+        if (profileEmail) profileEmail.textContent = user.email || '';
+        
+        // Initialize the app
+        if (typeof initApp === 'function') {
+          initApp();
+        }
+      }
+    });
+
+    // Logout function
+    window.logout = async function() {
+      try {
+        await signOut(auth);
+        window.location.href = '/login/login.html';
+      } catch (error) {
+        console.error('Logout error:', error);
+        alert('Gagal logout. Silakan coba lagi.');
+      }
+    };
+  </script>
+  
   <!-- Leaflet Library -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="seismosens.js"></script>
 </body>
