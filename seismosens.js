@@ -2,8 +2,8 @@
 let map;
 let mapInitialized = false;
 
-// Ekspor fungsi-fungsi yang diperlukan
-export function switchPage(pageName, event) {
+// Fungsi navigasi
+function switchPage(pageName, event) {
     // Prevent default if event exists (for anchor tags)
     if (event) {
         event.preventDefault();
@@ -51,11 +51,8 @@ export function switchPage(pageName, event) {
     }
 }
 
-// Make functions available globally
-window.switchPage = switchPage;
-
 // Initialize the application
-export function initApp() {
+function initApp() {
   console.log('Initializing app...');
   
   // Initial page load - show home page by default
@@ -66,7 +63,7 @@ export function initApp() {
   
   // Update stats periodically
   updateStats();
-  setInterval(updateStats, 30000); // Update every 30 seconds
+  setInterval(updateStats, 10000);
   
   // Initialize map if on map page
   if (window.location.hash === '#map') {
@@ -74,16 +71,13 @@ export function initApp() {
   }
 }
 
-// Make initApp available globally
-window.initApp = initApp;
-
 // Map related functions
-export function initializeMap() {
+function initializeMap() {
   console.log('Initializing map...');
   map = L.map('map').setView([-7.566667, 110.816667], 13); // Center on Solo
   
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors'
+    attribution: ' OpenStreetMap contributors'
   }).addTo(map);
   
   // Add markers from devices array
@@ -96,36 +90,36 @@ export function initializeMap() {
 }
 
 // Map controls
-export function zoomIn() {
+function zoomIn() {
   if (map) map.zoomIn();
 }
 
-export function zoomOut() {
+function zoomOut() {
   if (map) map.zoomOut();
 }
 
-export function centerMap() {
+function centerMap() {
   if (map) map.setView([-7.566667, 110.816667], 13);
 }
 
 // Interactive functions
-export function showNotifications() {
+function showNotifications() {
   alert('Fitur notifikasi akan segera hadir!');
 }
 
-export function showDeviceDetail(deviceName) {
+function showDeviceDetail(deviceName) {
   alert(`Detail perangkat: ${deviceName}`);
 }
 
-export function showLocationDetail(locationName) {
+function showLocationDetail(locationName) {
   alert(`Detail lokasi: ${locationName}`);
 }
 
-export function showSetting(settingName) {
+function showSetting(settingName) {
   alert(`Pengaturan: ${settingName}`);
 }
 
-export function showQuickActions() {
+function showQuickActions() {
   const quickActions = document.getElementById('quickActions');
   if (quickActions) {
     quickActions.style.display = quickActions.style.display === 'block' ? 'none' : 'block';
@@ -133,7 +127,7 @@ export function showQuickActions() {
 }
 
 // Real-time data updates
-export function updateStats() {
+function updateStats() {
   // Update metrics
   const metrics = document.querySelectorAll('.metric-value');
   metrics.forEach(metric => {
@@ -153,7 +147,7 @@ export function updateStats() {
   }
 }
 
-export function updateTime() {
+function updateTime() {
   const now = new Date();
   const timeString = now.getHours().toString().padStart(2, '0') + ':' + 
                    now.getMinutes().toString().padStart(2, '0');
@@ -164,6 +158,8 @@ export function updateTime() {
 }
 
 // Make all functions available globally
+window.switchPage = switchPage;
+window.initApp = initApp;
 window.zoomIn = zoomIn;
 window.zoomOut = zoomOut;
 window.centerMap = centerMap;
@@ -172,9 +168,24 @@ window.showDeviceDetail = showDeviceDetail;
 window.showLocationDetail = showLocationDetail;
 window.showSetting = showSetting;
 window.showQuickActions = showQuickActions;
+window.updateStats = updateStats;
+window.updateTime = updateTime;
 
-// Make logout function available globally
-window.logout = logout;
+// Debug log to verify functions are available
+console.log('Global functions initialized:', {
+  switchPage: typeof window.switchPage,
+  initApp: typeof window.initApp,
+  zoomIn: typeof window.zoomIn,
+  zoomOut: typeof window.zoomOut,
+  centerMap: typeof window.centerMap,
+  showNotifications: typeof window.showNotifications,
+  showDeviceDetail: typeof window.showDeviceDetail,
+  showLocationDetail: typeof window.showLocationDetail,
+  showSetting: typeof window.showSetting,
+  showQuickActions: typeof window.showQuickActions,
+  updateStats: typeof window.updateStats,
+  updateTime: typeof window.updateTime
+});
 
 // Devices data
 const devices = [
@@ -242,58 +253,6 @@ function switchPage(pageName, event) {
 // Make switchPage available globally
 window.switchPage = switchPage;
 
-        // Initialize map
-        function initializeMap() {
-            try {
-                if (typeof L === 'undefined') {
-                    console.log('Leaflet not loaded yet');
-                    return;
-                }
-
-                const mapElement = document.getElementById('map');
-                if (!mapElement) {
-                    console.log('Map element not found');
-                    return;
-                }
-
-                // Create map
-                map = L.map('map').setView(surakartaCenter, 13);
-                
-                // Add tile layer
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap contributors',
-                    maxZoom: 18
-                }).addTo(map);
-                
-                // Add markers
-                deviceLocations.forEach(device => {
-                    const color = device.type === 'normal' ? '#10b981' :
-                                 device.type === 'warning' ? '#f59e0b' :
-                                 device.type === 'offline' ? '#ef4444' : '#3b82f6';
-                    
-                    const marker = L.circleMarker([device.lat, device.lng], {
-                        radius: 8,
-                        fillColor: color,
-                        color: 'white',
-                        weight: 3,
-                        opacity: 1,
-                        fillOpacity: 0.8
-                    }).addTo(map);
-                    
-                    marker.bindPopup(`
-                        <div style="font-family: Inter, sans-serif;">
-                            <strong>${device.name}</strong><br>
-                            <small>${device.category}</small><br>
-                            <span style="color: ${color};">
-                                ${device.type === 'normal' ? '● Normal' :
-                                  device.type === 'warning' ? '⚠ Warning' :
-                                  device.type === 'offline' ? '● Offline' : '● Perangkat Anda'}
-                            </span>
-                        </div>
-                    `);
-                });
-                
-                mapInitialized = true;
                 console.log('Map initialized successfully');
                 
             } catch (error) {
