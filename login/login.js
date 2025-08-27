@@ -1,32 +1,41 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+console.log('Login script loaded');
+import { 
+  auth, 
+  redirectIfAuthenticated,
+  signInWithEmailAndPassword 
+} from '../auth.js';
 
-const firebaseConfig = {
-  apiKey: "AlzaSyD07M2-79Yh0CzotaQeGYYy4WLZoevTdWY",
-  authDomain: "seismosens-a048e.firebaseapp.com",
-  projectId: "seismosens-a048e",
-  storageBucket: "seismosens-a048e.appspot.com",
-  messagingSenderId: "358453169511",
-  appId: "1:358453169511:web:fccc32bf22ede39ff0b3c2"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+// Redirect to home if already logged in
+redirectIfAuthenticated();
 
 document.getElementById("loginForm").addEventListener("submit", (event) => {
   event.preventDefault();
 
-  const email = document.getElementById("email").value.trim();
+  const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
 
   console.log('Attempting to sign in with:', email);
   signInWithEmailAndPassword(auth, email, password)
     .then((userCredential) => {
-      alert("Login berhasil 🎉");
-      localStorage.setItem("isLoggedIn", "true");
-      window.location.href = "../seismosens.html";
+      console.log('Login successful, user:', userCredential.user.uid);
+      // Use absolute path for more reliable redirect
+      window.location.href = "/seismosens.html";
     })
     .catch((error) => {
-      alert("Login gagal: " + error.message);
+      let errorMessage = "Login gagal: ";
+      switch (error.code) {
+        case 'auth/user-not-found':
+          errorMessage += "Email tidak terdaftar";
+          break;
+        case 'auth/wrong-password':
+          errorMessage += "Password salah";
+          break;
+        case 'auth/too-many-requests':
+          errorMessage += "Terlalu banyak percobaan login. Silakan coba lagi nanti";
+          break;
+        default:
+          errorMessage += error.message;
+      }
+      alert(errorMessage);
     });
 });
