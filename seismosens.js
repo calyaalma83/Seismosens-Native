@@ -1,3 +1,55 @@
+// Import Firebase
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+
+// Firebase config (sama persis dengan register.js)
+const firebaseConfig = {
+  apiKey: "AlzaSyD07M2-79Yh0CzotaQeGYYy4WLZoevTdWY",
+  authDomain: "seismosens-a048e.firebaseapp.com",
+  projectId: "seismosens-a048e",
+  storageBucket: "seismosens-a048e.appspot.com",
+  messagingSenderId: "358453169511",
+  appId: "1:358453169511:web:fccc32bf22ede39ff0b3c2"
+};
+
+// Init Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+// Cek user login
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    console.log("✅ User terdeteksi:", user.email);
+
+    // Update nama di greeting (home)
+    document.getElementById("greetingName").textContent = user.displayName || "User";
+
+    // Update profil (profile page)
+    const profileName = document.querySelector("#profile-page .header div div:nth-child(2)");
+    const profileEmail = document.querySelector("#profile-page .header div div:nth-child(3)");
+
+    if (profileName) profileName.textContent = user.displayName || "User";
+    if (profileEmail) profileEmail.textContent = user.email;
+  } else {
+    console.warn("❌ Tidak ada user login, redirect ke login.html");
+    window.location.href = "login/login.html";
+  }
+});
+
+// Fungsi logout (ganti alert jadi Firebase signOut)
+function logout() {
+  if (confirm("Yakin ingin keluar dari akun SeismoSens?")) {
+    signOut(auth)
+      .then(() => {
+        alert("✅ Berhasil logout!");
+        window.location.href = "login/login.html";
+      })
+      .catch((error) => {
+        alert("❌ Gagal logout: " + error.message);
+      });
+  }
+}
+
 let map;
         let mapInitialized = false;
         
@@ -19,28 +71,39 @@ let map;
         ];
 
         // Navigation function
-        function switchPage(pageName) {
-            // Remove active from all nav items
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            
-            // Add active to clicked nav item
-            event.target.closest('.nav-item').classList.add('active');
-            
-            // Hide all pages
-            document.querySelectorAll('.page-content').forEach(page => {
-                page.classList.remove('active');
-            });
-            
-            // Show target page
-            document.getElementById(pageName + '-page').classList.add('active');
-            
-            // Initialize map if switching to map page
-            if (pageName === 'map' && !mapInitialized) {
-                setTimeout(initializeMap, 300);
-            }
-        }
+function switchPage(pageName, event) {
+    // Remove active from all nav items
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // Add active to clicked nav item
+    if (event) {
+        event.target.closest('.nav-item').classList.add('active');
+    } else {
+        const navItem = document.querySelector(`.nav-item[onclick*="${pageName}"]`);
+        if (navItem) navItem.classList.add('active');
+    }
+    
+    // Hide all pages
+    document.querySelectorAll('.page-content').forEach(page => {
+        page.classList.remove('active');
+    });
+    
+    // Show target page
+    const targetPage = document.getElementById(pageName + '-page');
+    if (targetPage) {
+        targetPage.classList.add('active');
+    }
+    
+    // Initialize map if switching to map page
+    if (pageName === 'map' && !mapInitialized) {
+        setTimeout(initializeMap, 300);
+    }
+}
+
+// Make switchPage available globally
+window.switchPage = switchPage;
 
         // Initialize map
         function initializeMap() {
@@ -193,8 +256,26 @@ let map;
             document.querySelector('.status-bar div').textContent = timeString;
         }
 
-        // Add touch feedback
-        document.querySelectorAll('.device-card, .settings-item, .nav-item').forEach(element => {
+        // Initialize the application
+function initApp() {
+  // Initial page load - show home page by default
+  switchPage('beranda');
+  
+  // Update time every second
+  setInterval(updateTime, 1000);
+  
+  // Update stats periodically
+  updateStats();
+  setInterval(updateStats, 30000); // Update every 30 seconds
+  
+  // Initialize map if on map page
+  if (window.location.hash === '#map') {
+    switchPage('map');
+  }
+}
+
+// Add touch feedback
+document.querySelectorAll('.device-card, .settings-item, .nav-item').forEach(element => {
             element.addEventListener('touchstart', function() {
                 this.style.transform = 'scale(0.98)';
             });
