@@ -1,88 +1,96 @@
-// Import Firebase
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+// Import Firebase and shared auth utilities
+import { auth, requireAuth } from './auth.js';
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
 
-// Firebase config (sama persis dengan register.js)
-const firebaseConfig = {
-  apiKey: "AlzaSyD07M2-79Yh0CzotaQeGYYy4WLZoevTdWY",
-  authDomain: "seismosens-a048e.firebaseapp.com",
-  projectId: "seismosens-a048e",
-  storageBucket: "seismosens-a048e.appspot.com",
-  messagingSenderId: "358453169511",
-  appId: "1:358453169511:web:fccc32bf22ede39ff0b3c2"
-};
-
-// Init Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-
-// Cek user login
-onAuthStateChanged(auth, (user) => {
+// Check authentication status when app loads
+requireAuth().then(isAuthenticated => {
+  if (!isAuthenticated) return; // Will redirect to login if not authenticated
+  
+  // Get current user
+  const user = auth.currentUser;
+  
+  // Update UI with user info
   if (user) {
     console.log("✅ User terdeteksi:", user.email);
 
-    // Update nama di greeting (home)
-    document.getElementById("greetingName").textContent = user.displayName || "User";
+    // Update greeting name
+    const greetingElement = document.getElementById("greetingName");
+    if (greetingElement) {
+      greetingElement.textContent = user.displayName || "User";
+    }
 
-    // Update profil (profile page)
+    // Update profile info
     const profileName = document.querySelector("#profile-page .header div div:nth-child(2)");
     const profileEmail = document.querySelector("#profile-page .header div div:nth-child(3)");
 
-    if (profileName) profileName.textContent = user.displayName || "User";
+    if (profileName) profileName.textContent = user.displayName || "Nama Pengguna";
     if (profileEmail) profileEmail.textContent = user.email;
-  } else {
-    console.warn("❌ Tidak ada user login, redirect ke login.html");
-    window.location.href = "login/login.html";
+    
+    // Initialize the app
+    initApp();
   }
 });
 
-// Fungsi logout (ganti alert jadi Firebase signOut)
+// Logout function
 function logout() {
   if (confirm("Yakin ingin keluar dari akun SeismoSens?")) {
     signOut(auth)
       .then(() => {
-        alert("✅ Berhasil logout!");
+        console.log("✅ User logged out successfully");
         window.location.href = "login/login.html";
       })
       .catch((error) => {
+        console.error("Logout error:", error);
         alert("❌ Gagal logout: " + error.message);
       });
   }
 }
 
-let map;
-        let mapInitialized = false;
-        
-        // Surakarta coordinates
-        const surakartaCenter = [-7.5755, 110.8243];
-        
-        // Device locations in Surakarta
-        const deviceLocations = [
-            { lat: -7.5694, lng: 110.8192, type: 'normal', name: 'Balai Kota Surakarta', category: 'Pemerintahan' },
-            { lat: -7.5695, lng: 110.8096, type: 'normal', name: 'RSUD Dr. Moewardi', category: 'Rumah Sakit' },
-            { lat: -7.5596, lng: 110.7715, type: 'warning', name: 'UNS Kentingan', category: 'Universitas' },
-            { lat: -7.5648, lng: 110.8242, type: 'normal', name: 'SMAN 1 Surakarta', category: 'Sekolah' },
-            { lat: -7.5556, lng: 110.8235, type: 'normal', name: 'Stasiun Solo Balapan', category: 'Transportasi' },
-            { lat: -7.5670, lng: 110.8107, type: 'normal', name: 'Solo Grand Mall', category: 'Pusat Belanja' },
-            { lat: -7.5755, lng: 110.8243, type: 'normal', name: 'Keraton Surakarta', category: 'Budaya' },
-            { lat: -7.5642, lng: 110.8189, type: 'user', name: 'SMS-USER-001', category: 'Rumah Tinggal' },
-            { lat: -7.5701, lng: 110.8221, type: 'user', name: 'SMS-USER-002', category: 'Kantor' },
-            { lat: -7.5588, lng: 110.8301, type: 'user', name: 'SMS-USER-003', category: 'Gudang' }
-        ];
+// Make logout function available globally
+window.logout = logout;
 
-        // Navigation function
+// Devices data
+const devices = [
+    { lat: -7.5694, lng: 110.8192, type: 'normal', name: 'Balai Kota Surakarta', category: 'Pemerintahan' },
+    { lat: -7.5695, lng: 110.8096, type: 'normal', name: 'RSUD Dr. Moewardi', category: 'Rumah Sakit' },
+    { lat: -7.5596, lng: 110.7715, type: 'warning', name: 'UNS Kentingan', category: 'Universitas' },
+    { lat: -7.5648, lng: 110.8242, type: 'normal', name: 'SMAN 1 Surakarta', category: 'Sekolah' },
+    { lat: -7.5556, lng: 110.8235, type: 'normal', name: 'Stasiun Solo Balapan', category: 'Transportasi' },
+    { lat: -7.5670, lng: 110.8107, type: 'normal', name: 'Solo Grand Mall', category: 'Pusat Belanja' },
+    { lat: -7.5755, lng: 110.8243, type: 'normal', name: 'Keraton Surakarta', category: 'Budaya' },
+    { lat: -7.5642, lng: 110.8189, type: 'user', name: 'SMS-USER-001', category: 'Rumah Tinggal' },
+    { lat: -7.5701, lng: 110.8221, type: 'user', name: 'SMS-USER-002', category: 'Kantor' },
+    { lat: -7.5588, lng: 110.8301, type: 'user', name: 'SMS-USER-003', category: 'Gudang' }
+];
+
+// Navigation function
 function switchPage(pageName, event) {
+    // Prevent default if event exists (for anchor tags)
+    if (event) {
+        event.preventDefault();
+    }
+    
+    console.log('Switching to page:', pageName);
+    
     // Remove active from all nav items
     document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.remove('active');
     });
     
     // Add active to clicked nav item
+    let clickedItem = null;
     if (event) {
-        event.target.closest('.nav-item').classList.add('active');
+        clickedItem = event.target.closest('.nav-item');
+        if (!clickedItem) {
+            // If click was on a child element, find the parent nav-item
+            clickedItem = event.target.closest('.bottom-nav').querySelector(`[onclick*="${pageName}"]`);
+        }
     } else {
-        const navItem = document.querySelector(`.nav-item[onclick*="${pageName}"]`);
-        if (navItem) navItem.classList.add('active');
+        clickedItem = document.querySelector(`.nav-item[onclick*="${pageName}"]`);
+    }
+    
+    if (clickedItem) {
+        clickedItem.classList.add('active');
     }
     
     // Hide all pages
@@ -94,6 +102,8 @@ function switchPage(pageName, event) {
     const targetPage = document.getElementById(pageName + '-page');
     if (targetPage) {
         targetPage.classList.add('active');
+    } else {
+        console.error('Target page not found:', pageName + '-page');
     }
     
     // Initialize map if switching to map page
@@ -258,8 +268,11 @@ window.switchPage = switchPage;
 
         // Initialize the application
 function initApp() {
+  console.log('Initializing app...');
+  
   // Initial page load - show home page by default
-  switchPage('beranda');
+  // Use 'home' instead of 'beranda' to match the page IDs
+  switchPage('home');
   
   // Update time every second
   setInterval(updateTime, 1000);
