@@ -1,87 +1,35 @@
-// Import Firebase and shared auth utilities
-import { auth, requireAuth } from './auth.js';
-import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-
-// Check authentication status when app loads
-requireAuth().then(isAuthenticated => {
-  if (!isAuthenticated) return; // Will redirect to login if not authenticated
-  
-  // Get current user
-  const user = auth.currentUser;
-  
-  // Update UI with user info
-  if (user) {
-    console.log("✅ User terdeteksi:", user.email);
-
-    // Update greeting name
-    const greetingElement = document.getElementById("greetingName");
-    if (greetingElement) {
-      greetingElement.textContent = user.displayName || "User";
-    }
-
-    // Update profile info
-    const profileName = document.querySelector("#profile-page .header div div:nth-child(2)");
-    const profileEmail = document.querySelector("#profile-page .header div div:nth-child(3)");
-
-    if (profileName) profileName.textContent = user.displayName || "Nama Pengguna";
-    if (profileEmail) profileEmail.textContent = user.email;
-    
-    // Initialize the app
-    initApp();
-  }
-});
-
-// Logout function
-function logout() {
-  if (confirm("Yakin ingin keluar dari akun SeismoSens?")) {
-    signOut(auth)
-      .then(() => {
-        console.log("✅ User logged out successfully");
-        window.location.href = "login/login.html";
-      })
-      .catch((error) => {
-        console.error("Logout error:", error);
-        alert("❌ Gagal logout: " + error.message);
-      });
-  }
-}
-
-// Make logout function available globally
-window.logout = logout;
-
+// Variables global
 let map;
-        let mapInitialized = false;
-        
-        // Surakarta coordinates
-        const surakartaCenter = [-7.5755, 110.8243];
-        
-        // Device locations in Surakarta
-        const deviceLocations = [
-            { lat: -7.5694, lng: 110.8192, type: 'normal', name: 'Balai Kota Surakarta', category: 'Pemerintahan' },
-            { lat: -7.5695, lng: 110.8096, type: 'normal', name: 'RSUD Dr. Moewardi', category: 'Rumah Sakit' },
-            { lat: -7.5596, lng: 110.7715, type: 'warning', name: 'UNS Kentingan', category: 'Universitas' },
-            { lat: -7.5648, lng: 110.8242, type: 'normal', name: 'SMAN 1 Surakarta', category: 'Sekolah' },
-            { lat: -7.5556, lng: 110.8235, type: 'normal', name: 'Stasiun Solo Balapan', category: 'Transportasi' },
-            { lat: -7.5670, lng: 110.8107, type: 'normal', name: 'Solo Grand Mall', category: 'Pusat Belanja' },
-            { lat: -7.5755, lng: 110.8243, type: 'normal', name: 'Keraton Surakarta', category: 'Budaya' },
-            { lat: -7.5642, lng: 110.8189, type: 'user', name: 'SMS-USER-001', category: 'Rumah Tinggal' },
-            { lat: -7.5701, lng: 110.8221, type: 'user', name: 'SMS-USER-002', category: 'Kantor' },
-            { lat: -7.5588, lng: 110.8301, type: 'user', name: 'SMS-USER-003', category: 'Gudang' }
-        ];
+let mapInitialized = false;
 
-        // Navigation function
-function switchPage(pageName, event) {
+// Ekspor fungsi-fungsi yang diperlukan
+export function switchPage(pageName, event) {
+    // Prevent default if event exists (for anchor tags)
+    if (event) {
+        event.preventDefault();
+    }
+    
+    console.log('Switching to page:', pageName);
+    
     // Remove active from all nav items
     document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.remove('active');
     });
     
     // Add active to clicked nav item
+    let clickedItem = null;
     if (event) {
-        event.target.closest('.nav-item').classList.add('active');
+        clickedItem = event.target.closest('.nav-item');
+        if (!clickedItem) {
+            // If click was on a child element, find the parent nav-item
+            clickedItem = event.target.closest('.bottom-nav').querySelector(`[onclick*="${pageName}"]`);
+        }
     } else {
-        const navItem = document.querySelector(`.nav-item[onclick*="${pageName}"]`);
-        if (navItem) navItem.classList.add('active');
+        clickedItem = document.querySelector(`.nav-item[onclick*="${pageName}"]`);
+    }
+    
+    if (clickedItem) {
+        clickedItem.classList.add('active');
     }
     
     // Hide all pages
@@ -93,6 +41,196 @@ function switchPage(pageName, event) {
     const targetPage = document.getElementById(pageName + '-page');
     if (targetPage) {
         targetPage.classList.add('active');
+    } else {
+        console.error('Target page not found:', pageName + '-page');
+    }
+    
+    // Initialize map if switching to map page
+    if (pageName === 'map' && !mapInitialized) {
+        setTimeout(initializeMap, 300);
+    }
+}
+
+// Make functions available globally
+window.switchPage = switchPage;
+
+// Initialize the application
+export function initApp() {
+  console.log('Initializing app...');
+  
+  // Initial page load - show home page by default
+  switchPage('home');
+  
+  // Update time every second
+  setInterval(updateTime, 1000);
+  
+  // Update stats periodically
+  updateStats();
+  setInterval(updateStats, 30000); // Update every 30 seconds
+  
+  // Initialize map if on map page
+  if (window.location.hash === '#map') {
+    initializeMap();
+  }
+}
+
+// Make initApp available globally
+window.initApp = initApp;
+
+// Map related functions
+export function initializeMap() {
+  console.log('Initializing map...');
+  map = L.map('map').setView([-7.566667, 110.816667], 13); // Center on Solo
+  
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+  }).addTo(map);
+  
+  // Add markers from devices array
+  devices.forEach(device => {
+    const marker = L.marker([device.lat, device.lng]).addTo(map);
+    marker.bindPopup(`<b>${device.name}</b><br>${device.category}`);
+  });
+  
+  mapInitialized = true;
+}
+
+// Map controls
+export function zoomIn() {
+  if (map) map.zoomIn();
+}
+
+export function zoomOut() {
+  if (map) map.zoomOut();
+}
+
+export function centerMap() {
+  if (map) map.setView([-7.566667, 110.816667], 13);
+}
+
+// Interactive functions
+export function showNotifications() {
+  alert('Fitur notifikasi akan segera hadir!');
+}
+
+export function showDeviceDetail(deviceName) {
+  alert(`Detail perangkat: ${deviceName}`);
+}
+
+export function showLocationDetail(locationName) {
+  alert(`Detail lokasi: ${locationName}`);
+}
+
+export function showSetting(settingName) {
+  alert(`Pengaturan: ${settingName}`);
+}
+
+export function showQuickActions() {
+  const quickActions = document.getElementById('quickActions');
+  if (quickActions) {
+    quickActions.style.display = quickActions.style.display === 'block' ? 'none' : 'block';
+  }
+}
+
+// Real-time data updates
+export function updateStats() {
+  // Update metrics
+  const metrics = document.querySelectorAll('.metric-value');
+  metrics.forEach(metric => {
+    if (metric.textContent.includes('%')) {
+      const current = parseInt(metric.textContent);
+      const newValue = current + (Math.random() - 0.5) * 2;
+      metric.textContent = Math.max(70, Math.min(100, newValue)).toFixed(0) + '%';
+    }
+  });
+  
+  // Update quick stats
+  const quickStats = document.querySelectorAll('.quick-stat-value');
+  if (quickStats[2]) {
+    const current = parseInt(quickStats[2].textContent);
+    const newValue = current + (Math.random() - 0.5) * 2;
+    quickStats[2].textContent = Math.max(85, Math.min(100, newValue)).toFixed(0) + '%';
+  }
+}
+
+export function updateTime() {
+  const now = new Date();
+  const timeString = now.getHours().toString().padStart(2, '0') + ':' + 
+                   now.getMinutes().toString().padStart(2, '0');
+  const timeElement = document.querySelector('.status-bar div');
+  if (timeElement) {
+    timeElement.textContent = timeString;
+  }
+}
+
+// Make all functions available globally
+window.zoomIn = zoomIn;
+window.zoomOut = zoomOut;
+window.centerMap = centerMap;
+window.showNotifications = showNotifications;
+window.showDeviceDetail = showDeviceDetail;
+window.showLocationDetail = showLocationDetail;
+window.showSetting = showSetting;
+window.showQuickActions = showQuickActions;
+
+// Make logout function available globally
+window.logout = logout;
+
+// Devices data
+const devices = [
+    { lat: -7.5694, lng: 110.8192, type: 'normal', name: 'Balai Kota Surakarta', category: 'Pemerintahan' },
+    { lat: -7.5695, lng: 110.8096, type: 'normal', name: 'RSUD Dr. Moewardi', category: 'Rumah Sakit' },
+    { lat: -7.5596, lng: 110.7715, type: 'warning', name: 'UNS Kentingan', category: 'Universitas' },
+    { lat: -7.5648, lng: 110.8242, type: 'normal', name: 'SMAN 1 Surakarta', category: 'Sekolah' },
+    { lat: -7.5556, lng: 110.8235, type: 'normal', name: 'Stasiun Solo Balapan', category: 'Transportasi' },
+    { lat: -7.5670, lng: 110.8107, type: 'normal', name: 'Solo Grand Mall', category: 'Pusat Belanja' },
+    { lat: -7.5755, lng: 110.8243, type: 'normal', name: 'Keraton Surakarta', category: 'Budaya' },
+    { lat: -7.5642, lng: 110.8189, type: 'user', name: 'SMS-USER-001', category: 'Rumah Tinggal' },
+    { lat: -7.5701, lng: 110.8221, type: 'user', name: 'SMS-USER-002', category: 'Kantor' },
+    { lat: -7.5588, lng: 110.8301, type: 'user', name: 'SMS-USER-003', category: 'Gudang' }
+];
+
+// Navigation function
+function switchPage(pageName, event) {
+    // Prevent default if event exists (for anchor tags)
+    if (event) {
+        event.preventDefault();
+    }
+    
+    console.log('Switching to page:', pageName);
+    
+    // Remove active from all nav items
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // Add active to clicked nav item
+    let clickedItem = null;
+    if (event) {
+        clickedItem = event.target.closest('.nav-item');
+        if (!clickedItem) {
+            // If click was on a child element, find the parent nav-item
+            clickedItem = event.target.closest('.bottom-nav').querySelector(`[onclick*="${pageName}"]`);
+        }
+    } else {
+        clickedItem = document.querySelector(`.nav-item[onclick*="${pageName}"]`);
+    }
+    
+    if (clickedItem) {
+        clickedItem.classList.add('active');
+    }
+    
+    // Hide all pages
+    document.querySelectorAll('.page-content').forEach(page => {
+        page.classList.remove('active');
+    });
+    
+    // Show target page
+    const targetPage = document.getElementById(pageName + '-page');
+    if (targetPage) {
+        targetPage.classList.add('active');
+    } else {
+        console.error('Target page not found:', pageName + '-page');
     }
     
     // Initialize map if switching to map page
@@ -257,8 +395,11 @@ window.switchPage = switchPage;
 
         // Initialize the application
 function initApp() {
+  console.log('Initializing app...');
+  
   // Initial page load - show home page by default
-  switchPage('beranda');
+  // Use 'home' instead of 'beranda' to match the page IDs
+  switchPage('home');
   
   // Update time every second
   setInterval(updateTime, 1000);
