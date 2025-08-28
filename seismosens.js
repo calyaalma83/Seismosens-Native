@@ -1,9 +1,11 @@
-// Variables global
+// ==============================
+// Global Variables
+// ==============================
 let map;
 let mapInitialized = false;
 
-// Fungsi navigasi
-function switchPage(pageName, event) {
+// Ekspor fungsi-fungsi yang diperlukan
+export function switchPage(pageName, event) {
     // Prevent default if event exists (for anchor tags)
     if (event) {
         event.preventDefault();
@@ -51,8 +53,11 @@ function switchPage(pageName, event) {
     }
 }
 
+// Make functions available globally
+window.switchPage = switchPage;
+
 // Initialize the application
-function initApp() {
+export function initApp() {
   console.log('Initializing app...');
   
   // Initial page load - show home page by default
@@ -63,7 +68,7 @@ function initApp() {
   
   // Update stats periodically
   updateStats();
-  setInterval(updateStats, 10000);
+  setInterval(updateStats, 30000); // Update every 30 seconds
   
   // Initialize map if on map page
   if (window.location.hash === '#map') {
@@ -71,13 +76,16 @@ function initApp() {
   }
 }
 
+// Make initApp available globally
+window.initApp = initApp;
+
 // Map related functions
-function initializeMap() {
+export function initializeMap() {
   console.log('Initializing map...');
   map = L.map('map').setView([-7.566667, 110.816667], 13); // Center on Solo
   
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: ' OpenStreetMap contributors'
+    attribution: '© OpenStreetMap contributors'
   }).addTo(map);
   
   // Add markers from devices array
@@ -90,36 +98,36 @@ function initializeMap() {
 }
 
 // Map controls
-function zoomIn() {
+export function zoomIn() {
   if (map) map.zoomIn();
 }
 
-function zoomOut() {
+export function zoomOut() {
   if (map) map.zoomOut();
 }
 
-function centerMap() {
+export function centerMap() {
   if (map) map.setView([-7.566667, 110.816667], 13);
 }
 
 // Interactive functions
-function showNotifications() {
+export function showNotifications() {
   alert('Fitur notifikasi akan segera hadir!');
 }
 
-function showDeviceDetail(deviceName) {
+export function showDeviceDetail(deviceName) {
   alert(`Detail perangkat: ${deviceName}`);
 }
 
-function showLocationDetail(locationName) {
+export function showLocationDetail(locationName) {
   alert(`Detail lokasi: ${locationName}`);
 }
 
-function showSetting(settingName) {
+export function showSetting(settingName) {
   alert(`Pengaturan: ${settingName}`);
 }
 
-function showQuickActions() {
+export function showQuickActions() {
   const quickActions = document.getElementById('quickActions');
   if (quickActions) {
     quickActions.style.display = quickActions.style.display === 'block' ? 'none' : 'block';
@@ -127,7 +135,7 @@ function showQuickActions() {
 }
 
 // Real-time data updates
-function updateStats() {
+export function updateStats() {
   // Update metrics
   const metrics = document.querySelectorAll('.metric-value');
   metrics.forEach(metric => {
@@ -147,7 +155,7 @@ function updateStats() {
   }
 }
 
-function updateTime() {
+export function updateTime() {
   const now = new Date();
   const timeString = now.getHours().toString().padStart(2, '0') + ':' + 
                    now.getMinutes().toString().padStart(2, '0');
@@ -158,8 +166,6 @@ function updateTime() {
 }
 
 // Make all functions available globally
-window.switchPage = switchPage;
-window.initApp = initApp;
 window.zoomIn = zoomIn;
 window.zoomOut = zoomOut;
 window.centerMap = centerMap;
@@ -168,91 +174,106 @@ window.showDeviceDetail = showDeviceDetail;
 window.showLocationDetail = showLocationDetail;
 window.showSetting = showSetting;
 window.showQuickActions = showQuickActions;
-window.updateStats = updateStats;
-window.updateTime = updateTime;
 
-// Debug log to verify functions are available
-console.log('Global functions initialized:', {
-  switchPage: typeof window.switchPage,
-  initApp: typeof window.initApp,
-  zoomIn: typeof window.zoomIn,
-  zoomOut: typeof window.zoomOut,
-  centerMap: typeof window.centerMap,
-  showNotifications: typeof window.showNotifications,
-  showDeviceDetail: typeof window.showDeviceDetail,
-  showLocationDetail: typeof window.showLocationDetail,
-  showSetting: typeof window.showSetting,
-  showQuickActions: typeof window.showQuickActions,
-  updateStats: typeof window.updateStats,
-  updateTime: typeof window.updateTime
-});
+// Make logout function available globally
+window.logout = logout;
 
 // Devices data
 const devices = [
-    { lat: -7.5694, lng: 110.8192, type: 'normal', name: 'Balai Kota Surakarta', category: 'Pemerintahan' },
-    { lat: -7.5695, lng: 110.8096, type: 'normal', name: 'RSUD Dr. Moewardi', category: 'Rumah Sakit' },
-    { lat: -7.5596, lng: 110.7715, type: 'warning', name: 'UNS Kentingan', category: 'Universitas' },
-    { lat: -7.5648, lng: 110.8242, type: 'normal', name: 'SMAN 1 Surakarta', category: 'Sekolah' },
-    { lat: -7.5556, lng: 110.8235, type: 'normal', name: 'Stasiun Solo Balapan', category: 'Transportasi' },
-    { lat: -7.5670, lng: 110.8107, type: 'normal', name: 'Solo Grand Mall', category: 'Pusat Belanja' },
-    { lat: -7.5755, lng: 110.8243, type: 'normal', name: 'Keraton Surakarta', category: 'Budaya' },
-    { lat: -7.5642, lng: 110.8189, type: 'user', name: 'SMS-USER-001', category: 'Rumah Tinggal' },
-    { lat: -7.5701, lng: 110.8221, type: 'user', name: 'SMS-USER-002', category: 'Kantor' },
-    { lat: -7.5588, lng: 110.8301, type: 'user', name: 'SMS-USER-003', category: 'Gudang' }
+  { lat: -7.5694, lng: 110.8192, type: 'normal', name: 'Balai Kota Surakarta', category: 'Pemerintahan' },
+  { lat: -7.5695, lng: 110.8096, type: 'normal', name: 'RSUD Dr. Moewardi', category: 'Rumah Sakit' },
+  { lat: -7.5596, lng: 110.7715, type: 'warning', name: 'UNS Kentingan', category: 'Universitas' },
+  { lat: -7.5648, lng: 110.8242, type: 'normal', name: 'SMAN 1 Surakarta', category: 'Sekolah' },
+  { lat: -7.5556, lng: 110.8235, type: 'normal', name: 'Stasiun Solo Balapan', category: 'Transportasi' },
+  { lat: -7.5670, lng: 110.8107, type: 'normal', name: 'Solo Grand Mall', category: 'Pusat Belanja' },
+  { lat: -7.5755, lng: 110.8243, type: 'normal', name: 'Keraton Surakarta', category: 'Budaya' },
+  { lat: -7.5642, lng: 110.8189, type: 'user', name: 'SMS-USER-001', category: 'Rumah Tinggal' },
+  { lat: -7.5701, lng: 110.8221, type: 'user', name: 'SMS-USER-002', category: 'Kantor' },
+  { lat: -7.5588, lng: 110.8301, type: 'user', name: 'SMS-USER-003', category: 'Gudang' }
 ];
 
-// Navigation function
-function switchPage(pageName, event) {
-    // Prevent default if event exists (for anchor tags)
-    if (event) {
-        event.preventDefault();
-    }
-    
-    console.log('Switching to page:', pageName);
-    
-    // Remove active from all nav items
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.remove('active');
-    });
-    
-    // Add active to clicked nav item
-    let clickedItem = null;
-    if (event) {
-        clickedItem = event.target.closest('.nav-item');
-        if (!clickedItem) {
-            // If click was on a child element, find the parent nav-item
-            clickedItem = event.target.closest('.bottom-nav').querySelector(`[onclick*="${pageName}"]`);
-        }
-    } else {
-        clickedItem = document.querySelector(`.nav-item[onclick*="${pageName}"]`);
-    }
-    
-    if (clickedItem) {
-        clickedItem.classList.add('active');
-    }
-    
-    // Hide all pages
-    document.querySelectorAll('.page-content').forEach(page => {
-        page.classList.remove('active');
-    });
-    
-    // Show target page
-    const targetPage = document.getElementById(pageName + '-page');
-    if (targetPage) {
-        targetPage.classList.add('active');
-    } else {
-        console.error('Target page not found:', pageName + '-page');
-    }
-    
-    // Initialize map if switching to map page
-    if (pageName === 'map' && !mapInitialized) {
-        setTimeout(initializeMap, 300);
-    }
-}
+// ==============================
+// Navigation
+// ==============================
+export function switchPage(pageName, event) {
+  if (event) event.preventDefault();
+  console.log('Switching to page:', pageName);
 
-// Make switchPage available globally
+  // Reset nav active state
+  document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+  const clickedItem = event
+    ? event.target.closest('.nav-item')
+    : document.querySelector(`.nav-item[onclick*="${pageName}"]`);
+  if (clickedItem) clickedItem.classList.add('active');
+
+  // Toggle pages
+  document.querySelectorAll('.page-content').forEach(page => page.classList.remove('active'));
+  const targetPage = document.getElementById(pageName + '-page');
+  if (targetPage) {
+    targetPage.classList.add('active');
+  } else {
+    console.error('Target page not found:', pageName + '-page');
+  }
+
+  // Lazy init map
+  if (pageName === 'map' && !mapInitialized) {
+    setTimeout(initializeMap, 300);
+  }
+}
 window.switchPage = switchPage;
 
+        // Initialize map
+        function initializeMap() {
+            try {
+                if (typeof L === 'undefined') {
+                    console.log('Leaflet not loaded yet');
+                    return;
+                }
+
+                const mapElement = document.getElementById('map');
+                if (!mapElement) {
+                    console.log('Map element not found');
+                    return;
+                }
+
+                // Create map
+                map = L.map('map').setView(surakartaCenter, 13);
+                
+                // Add tile layer
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors',
+                    maxZoom: 18
+                }).addTo(map);
+                
+                // Add markers
+                deviceLocations.forEach(device => {
+                    const color = device.type === 'normal' ? '#10b981' :
+                                 device.type === 'warning' ? '#f59e0b' :
+                                 device.type === 'offline' ? '#ef4444' : '#3b82f6';
+                    
+                    const marker = L.circleMarker([device.lat, device.lng], {
+                        radius: 8,
+                        fillColor: color,
+                        color: 'white',
+                        weight: 3,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    }).addTo(map);
+                    
+                    marker.bindPopup(`
+                        <div style="font-family: Inter, sans-serif;">
+                            <strong>${device.name}</strong><br>
+                            <small>${device.category}</small><br>
+                            <span style="color: ${color};">
+                                ${device.type === 'normal' ? '● Normal' :
+                                  device.type === 'warning' ? '⚠ Warning' :
+                                  device.type === 'offline' ? '● Offline' : '● Perangkat Anda'}
+                            </span>
+                        </div>
+                    `);
+                });
+                
+                mapInitialized = true;
                 console.log('Map initialized successfully');
                 
             } catch (error) {
@@ -355,61 +376,19 @@ window.switchPage = switchPage;
         // Initialize the application
 function initApp() {
   console.log('Initializing app...');
-  
-  // Initial page load - show home page by default
-  // Use 'home' instead of 'beranda' to match the page IDs
   switchPage('home');
-  
-  // Update time every second
   setInterval(updateTime, 1000);
-  
-  // Update stats periodically
   updateStats();
-  setInterval(updateStats, 30000); // Update every 30 seconds
-  
-  // Initialize map if on map page
-  if (window.location.hash === '#map') {
-    switchPage('map');
-  }
+  setInterval(updateStats, 30000);
+  if (window.location.hash === '#map') switchPage('map');
 }
+window.initApp = initApp;
 
-// Add touch feedback
-document.querySelectorAll('.device-card, .settings-item, .nav-item').forEach(element => {
-            element.addEventListener('touchstart', function() {
-                this.style.transform = 'scale(0.98)';
-            });
-            
-            element.addEventListener('touchend', function() {
-                setTimeout(() => {
-                    this.style.transform = '';
-                }, 150);
-            });
-        });
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('SeismoSens Mobile App loaded successfully!');
-            
-            // Update time every minute
-            setInterval(updateTime, 60000);
-            
-            // Update stats every 5 seconds
-            setInterval(updateStats, 5000);
-            
-            // Try to initialize map after a delay
-            setTimeout(() => {
-                if (typeof L !== 'undefined') {
-                    console.log('Leaflet is ready');
-                } else {
-                    console.log('Leaflet not loaded yet, will retry when map page is opened');
-                }
-            }, 2000);
-        });
-
-        // Prevent default touch behaviors for better mobile experience
-        document.addEventListener('touchmove', function(e) {
-            if (e.target.closest('.main-content')) {
-                return; // Allow scrolling in main content
-            }
-            e.preventDefault();
-        }, { passive: false });
+// ==============================
+// DOM Ready
+// ==============================
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('SeismoSens Mobile App loaded successfully!');
+  setInterval(updateTime, 60000);
+  setInterval(updateStats, 5000);
+});
