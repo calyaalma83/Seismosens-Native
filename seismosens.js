@@ -1,13 +1,10 @@
-// ==============================
-// Global Variables
-// ==============================
+import { auth, checkAuthState, deleteUser } from "./auth.js";
+
 let map;
 let mapInitialized = false;
 const surakartaCenter = [-7.566667, 110.816667];
 
-// ==============================
 // Devices Data
-// ==============================
 const devices = [
   { lat: -7.5694, lng: 110.8192, type: 'normal', name: 'Balai Kota Surakarta', category: 'Pemerintahan' },
   { lat: -7.5695, lng: 110.8096, type: 'normal', name: 'RSUD Dr. Moewardi', category: 'Rumah Sakit' },
@@ -21,21 +18,17 @@ const devices = [
   { lat: -7.5588, lng: 110.8301, type: 'user', name: 'SMS-USER-003', category: 'Gudang' }
 ];
 
-// ==============================
 // Navigation
-// ==============================
 export function switchPage(pageName, event) {
   if (event) event.preventDefault();
   console.log('Switching to page:', pageName);
 
-  // Reset nav active state
   document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
   const clickedItem = event
     ? event.target.closest('.nav-item')
     : document.querySelector(`.nav-item[onclick*="${pageName}"]`);
   if (clickedItem) clickedItem.classList.add('active');
 
-  // Toggle pages
   document.querySelectorAll('.page-content').forEach(page => page.classList.remove('active'));
   const targetPage = document.getElementById(pageName + '-page');
   if (targetPage) {
@@ -44,16 +37,13 @@ export function switchPage(pageName, event) {
     console.error('Target page not found:', pageName + '-page');
   }
 
-  // Lazy init map
   if (pageName === 'map' && !mapInitialized) {
     setTimeout(initializeMap, 300);
   }
 }
 window.switchPage = switchPage;
 
-// ==============================
 // Map
-// ==============================
 export function initializeMap() {
   try {
     if (typeof L === 'undefined') {
@@ -126,9 +116,7 @@ window.zoomIn = zoomIn;
 window.zoomOut = zoomOut;
 window.centerMap = centerMap;
 
-// ==============================
 // Interactions
-// ==============================
 export function showNotifications() {
   alert('🔔 Notifikasi Terbaru:\n\n• SMS-USER-003 offline\n• Update firmware v2.1.0 tersedia\n• Backup data berhasil\n• Sistem monitoring berjalan normal');
 }
@@ -140,18 +128,42 @@ export function showQuickActions() {
   const choice = prompt('Quick Actions:\n' + actions.map((a, i) => `${i+1}. ${a}`).join('\n'));
   if (choice >= 1 && choice <= 4) alert(`Menjalankan: ${actions[choice-1]} ✅`);
 }
-export function logout() { if (confirm('Yakin logout?')) alert('✅ Berhasil logout (demo mode)'); }
+
+// ✅ Delete Account
+async function deleteAccount() {
+  const user = auth.currentUser;
+  if (!user) {
+    alert("⚠️ Tidak ada user yang login");
+    return;
+  }
+
+  const confirmDelete = confirm("⚠️ Apakah kamu yakin ingin menghapus akun ini secara permanen?");
+  if (!confirmDelete) return;
+
+  try {
+    await deleteUser(user); // langsung hapus jika recent-login
+    alert("✅ Akun berhasil dihapus");
+    window.location.href = "../onboarding/onboarding.html";
+  } catch (err) {
+    if (err.code === "auth/requires-recent-login") {
+      alert("⚠️ Demi keamanan, silakan login ulang sebelum menghapus akun.");
+      await auth.signOut(); // logout dulu
+      sessionStorage.setItem("fromDeleteAccount", "true"); // flag login ulang untuk delete
+      window.location.href = "../login/login.html"; // redirect ke login
+    } else {
+      alert("⚠️ Gagal menghapus akun: " + err.message);
+    }
+  }
+}
 
 window.showNotifications = showNotifications;
 window.showDeviceDetail = showDeviceDetail;
 window.showLocationDetail = showLocationDetail;
 window.showSetting = showSetting;
 window.showQuickActions = showQuickActions;
-window.logout = logout;
+window.deleteAccount = deleteAccount;
 
-// ==============================
 // Real-time Data
-// ==============================
 export function updateStats() {
   document.querySelectorAll('.metric-value').forEach(metric => {
     if (metric.textContent.includes('%')) {
@@ -176,11 +188,27 @@ export function updateTime() {
 window.updateStats = updateStats;
 window.updateTime = updateTime;
 
-// ==============================
+// ✅ Update Profile Info dari Firebase User
+async function updateProfileUI() {
+  const user = await checkAuthState();
+  if (user) {
+    const greetingName = document.getElementById('greetingName');
+    const profileName = document.getElementById('profileName');
+    const profileEmail = document.getElementById('profileEmail');
+    const profileAvatar = document.getElementById('profileAvatar');
+
+    if (greetingName) greetingName.textContent = user.displayName || 'Pengguna';
+    if (profileName) profileName.textContent = user.displayName || 'Pengguna';
+    if (profileEmail) profileEmail.textContent = user.email || '';
+    if (profileAvatar) profileAvatar.textContent = (user.displayName ? user.displayName[0] : 'U').toUpperCase();
+  }
+}
+
 // Init App
-// ==============================
 export function initApp() {
   console.log('Initializing app...');
+  updateProfileUI(); // ✅ update profile pas init
+
   switchPage('home');
   setInterval(updateTime, 1000);
   updateStats();
@@ -189,11 +217,10 @@ export function initApp() {
 }
 window.initApp = initApp;
 
-// ==============================
 // DOM Ready
-// ==============================
 document.addEventListener('DOMContentLoaded', () => {
   console.log('SeismoSens Mobile App loaded successfully!');
   setInterval(updateTime, 60000);
   setInterval(updateStats, 5000);
+  updateProfileUI(); // ✅ jaga-jaga kalau belum keupdate
 });

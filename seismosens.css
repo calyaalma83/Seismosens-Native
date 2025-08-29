@@ -722,3 +722,19 @@ body {
         border: none;
     }
 }
+
+/* Tombol hapus akun*/
+.btn-delete{
+    background: #dc2626;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.btn-delete :hover{
+    background: #b91c1c;
+}

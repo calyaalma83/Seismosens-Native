@@ -1,41 +1,37 @@
-console.log('Login script loaded');
-import { 
-  auth, 
-  redirectIfAuthenticated,
-  signInWithEmailAndPassword 
-} from '../auth.js';
+console.log("Login script loaded");
+import { auth, signInWithEmailAndPassword, deleteUser, redirectIfAuthenticated } from "../auth.js";
 
-// Redirect to home if already logged in
-redirectIfAuthenticated();
+document.addEventListener("DOMContentLoaded", async () => {
+  const fromDelete = sessionStorage.getItem("fromDeleteAccount") === "true";
 
-document.getElementById("loginForm").addEventListener("submit", (event) => {
-  event.preventDefault();
+  // redirect normal hanya jika user sudah login dan bukan delete account
+  const alreadyRedirected = await redirectIfAuthenticated();
+  if (alreadyRedirected && !fromDelete) return;
 
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
+  const form = document.getElementById("loginForm");
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-  console.log('Attempting to sign in with:', email);
-  signInWithEmailAndPassword(auth, email, password)
-    .then((userCredential) => {
-      console.log('Login successful, user:', userCredential.user.uid);
-      // Use absolute path for more reliable redirect
-      window.location.href = "/seismosens.html";
-    })
-    .catch((error) => {
-      let errorMessage = "Login gagal: ";
-      switch (error.code) {
-        case 'auth/user-not-found':
-          errorMessage += "Email tidak terdaftar";
-          break;
-        case 'auth/wrong-password':
-          errorMessage += "Password salah";
-          break;
-        case 'auth/too-many-requests':
-          errorMessage += "Terlalu banyak percobaan login. Silakan coba lagi nanti";
-          break;
-        default:
-          errorMessage += error.message;
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+
+      if (fromDelete) {
+        try {
+          await deleteUser(userCredential.user);
+          alert("✅ Akun berhasil dihapus permanen");
+          sessionStorage.removeItem("fromDeleteAccount"); // hapus flag setelah sukses
+          window.location.href = "../onboarding/onboarding.html"; // absolute path
+        } catch (err) {
+          alert("❌ Gagal hapus akun: " + err.message);
+        }
+      } else {
+        window.location.href = "../seismosens.html"; // absolute path
       }
-      alert(errorMessage);
-    });
+    } catch (error) {
+      alert("Login gagal: " + error.message);
+    }
+  });
 });

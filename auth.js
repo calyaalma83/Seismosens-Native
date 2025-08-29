@@ -7,7 +7,8 @@ import {
   signOut,
   updateProfile,
   setPersistence,
-  browserLocalPersistence
+  browserSessionPersistence,
+  deleteUser as fbDeleteUser
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -21,10 +22,13 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-// Set persistence to local so auth state persists across page refreshes
-setPersistence(auth, browserLocalPersistence);
 
-// Check authentication state when app loads
+// Set persistence supaya login nggak hilang setelah refresh
+setPersistence(auth, browserSessionPersistence);
+
+window.auth = auth;
+
+// Check authentication state ketika app load
 function checkAuthState() {
   return new Promise((resolve) => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -34,27 +38,32 @@ function checkAuthState() {
   });
 }
 
-// Redirect to login if not authenticated
+// Redirect ke login kalau belum login
 async function requireAuth() {
   const user = await checkAuthState();
   if (!user) {
-    window.location.href = 'login/login.html';
+    window.location.href = '../login/login.html';
     return false;
   }
   return true;
 }
 
-// Redirect to home if already authenticated
+// Redirect ke home kalau sudah login
 async function redirectIfAuthenticated() {
   const user = await checkAuthState();
-  if (user) {
-    window.location.href = 'seismosens.html';
+  const fromDelete = sessionStorage.getItem("fromDeleteAccount") === "true";
+
+  // Hanya redirect normal kalau user sudah login dan bukan proses delete
+  if (user && !fromDelete) {
+    window.location.href = '../seismosens.html';
     return true;
   }
+
+  // Jangan hapus flag di sini, biar login + delete tetap aman
   return false;
 }
 
-// Export all auth functions that might be needed
+// Export semua function penting
 export { 
   auth, 
   checkAuthState, 
@@ -63,5 +72,6 @@ export {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
-  updateProfile
+  updateProfile,
+  fbDeleteUser as deleteUser
 };
