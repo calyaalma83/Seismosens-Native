@@ -1,24 +1,19 @@
-import { 
-  registerUser,
-  redirectIfAuthenticated,
-  updateProfile,
-  signInWithEmailAndPassword,
-  auth
-} from '../auth.js';
+import { auth, createUserWithEmailAndPassword, updateProfile, signInWithEmailAndPassword, redirectIfAuthenticated } from "../auth.js";
 
-// Debug info
-console.log('Register script loaded');
+console.log("Register script loaded");
 
-// Kalau sudah login → redirect ke home
-redirectIfAuthenticated().then(() => {
-  const form = document.getElementById('registerForm');
+document.addEventListener("DOMContentLoaded", async () => {
+  // Redirect jika sudah login
+  await redirectIfAuthenticated();
+
+  const form = document.getElementById("registerForm");
   if (!form) {
     console.error('Register form not found!');
     return;
   }
 
-  form.addEventListener('submit', async (event) => {
-    event.preventDefault();
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
     const nama = document.getElementById("nama").value;
     const email = document.getElementById("email").value;
@@ -32,38 +27,57 @@ redirectIfAuthenticated().then(() => {
 
     try {
       console.log("Registering user:", email);
+      
+      // Buat user baru
+      console.log('Creating user with email:', email);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      console.log('User created, updating profile with name:', nama);
+      
+      // Pastikan user sudah terautentikasi sebelum update profile
+      if (auth.currentUser) {
+        // Update profile dengan nama
+        await updateProfile(auth.currentUser, { 
+          displayName: nama 
+        });
+        
+        // Refresh token untuk memastikan data terupdate
+        await auth.currentUser.reload();
+        
+        console.log('Profile updated, verifying displayName:', auth.currentUser.displayName);
+      } else {
+        console.error('No authenticated user found after registration');
+        throw new Error('Authentication failed after registration');
+      }
 
-      // 🔹 Panggil registerUser dari auth.js (default role = user)
-      const user = await registerUser(email, password, "user");
-
-      // Update profile (nama)
-      await updateProfile(user, { displayName: nama });
-
-      // Login ulang biar state sinkron
-      await signInWithEmailAndPassword(auth, email, password);
-
-      // Redirect ke home
+      // Login otomatis setelah registrasi tidak diperlukan karena sudah login
+      console.log('Registration successful, user data:', {
+        displayName: auth.currentUser.displayName,
+        email: auth.currentUser.email,
+        uid: auth.currentUser.uid
+      });
+      
+      // Redirect ke halaman utama
+      console.log('Redirecting to main page');
       window.location.href = "/seismosens.html";
-
+      
     } catch (error) {
       console.error("Registration error:", error);
       let errorMessage = "Registrasi gagal: ";
+      
       switch (error.code) {
-        case 'auth/email-already-in-use':
-          errorMessage = "Email sudah terdaftar";
+        case "auth/email-already-in-use": 
+          errorMessage = "Email sudah terdaftar"; 
           break;
-        case 'auth/weak-password':
-          errorMessage = "Password terlalu lemah, minimal 6 karakter";
+        case "auth/weak-password": 
+          errorMessage = "Password terlalu lemah, minimal 6 karakter"; 
           break;
-        case 'auth/invalid-email':
-          errorMessage = "Format email tidak valid";
+        case "auth/invalid-email": 
+          errorMessage = "Format email tidak valid"; 
           break;
-        case 'auth/network-request-failed':
-          errorMessage = "Koneksi internet bermasalah. Silakan coba lagi.";
-          break;
-        default:
-          errorMessage = `Terjadi kesalahan: ${error.message}`;
+        default: 
+          errorMessage += error.message;
       }
+      
       alert(errorMessage);
     }
   });

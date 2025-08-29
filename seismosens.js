@@ -1,3 +1,8 @@
+import { auth, checkAuthState, deleteUser } from "./auth.js";
+
+// Constants
+const surakartaCenter = [-7.566667, 110.816667];
+
 // Global variables
 let map;
 let mapInitialized = false;
@@ -22,7 +27,10 @@ function switchPage(pageName, event) {
         clickedItem = event.target.closest('.nav-item');
         if (!clickedItem) {
             // If click was on a child element, find the parent nav-item
-            clickedItem = event.target.closest('.bottom-nav').querySelector(`[onclick*="${pageName}"]`);
+            const bottomNav = event.target.closest('.bottom-nav');
+            if (bottomNav) {
+                clickedItem = bottomNav.querySelector(`[onclick*="${pageName}"]`);
+            }
         }
     } else {
         clickedItem = document.querySelector(`.nav-item[onclick*="${pageName}"]`);
@@ -41,33 +49,49 @@ function switchPage(pageName, event) {
     const targetPage = document.getElementById(pageName + '-page');
     if (targetPage) {
         targetPage.classList.add('active');
+        
+        // Initialize map if switching to map page
+        if (pageName === 'map' && !mapInitialized) {
+            setTimeout(initializeMap, 300);
+        }
     } else {
         console.error('Target page not found:', pageName + '-page');
-    }
-    
-    // Initialize map if switching to map page
-    if (pageName === 'map' && !mapInitialized) {
-        setTimeout(initializeMap, 300);
     }
 }
 
 // Initialize the application
-function initApp() {
+async function initApp() {
     console.log('Initializing app...');
     
-    // Initial page load - show home page by default
-    switchPage('home');
-    
-    // Update time every second
-    setInterval(updateTime, 1000);
-    
-    // Update stats periodically
-    updateStats();
-    setInterval(updateStats, 10000);
-    
-    // Initialize map if on map page
-    if (window.location.hash === '#map') {
-        initializeMap();
+    try {
+        // Wait for auth state to be ready
+        const user = await checkAuthState();
+        console.log('App initialized with user:', user ? {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName
+        } : 'No user signed in');
+        
+        // Update user profile info
+        await updateProfileUI();
+        
+        // Initial page load - show home page by default
+        switchPage('home');
+        
+        // Update time every second
+        updateTime();
+        setInterval(updateTime, 1000);
+        
+        // Update stats periodically
+        updateStats();
+        setInterval(updateStats, 10000);
+        
+        // Initialize map if on map page
+        if (window.location.hash === '#map') {
+            initializeMap();
+        }
+    } catch (error) {
+        console.error('Error initializing app:', error);
     }
 }
 
@@ -200,12 +224,110 @@ const devices = [
     { lat: -7.5695, lng: 110.8096, type: 'normal', name: 'RSUD Dr. Moewardi', category: 'Rumah Sakit' },
     { lat: -7.56043, lng: 110.856619, type: 'warning', name: 'UNS Kentingan', category: 'Universitas' },
     { lat: -7.5648, lng: 110.8242, type: 'normal', name: 'SMAN 1 Surakarta', category: 'Sekolah' },
-    { lat: -7.5556, lng: 110.8235, type: 'normal', name: 'Stasiun Solo Balapan', category: 'Transportasi' },
-    { lat: -7.5670, lng: 110.8107, type: 'normal', name: 'Solo Grand Mall', category: 'Pusat Belanja' },
-    { lat: -7.5782384, lng: 110.8255062, type: 'normal', name: 'Keraton Surakarta', category: 'Budaya' },
 ];
 
-// Make all functions available globally
+// Export functions to window
+window.switchPage = switchPage;
+window.initializeMap = initializeMap;
+window.zoomIn = zoomIn;
+window.zoomOut = zoomOut;
+window.centerMap = centerMap;
+window.showNotifications = showNotifications;
+window.showDeviceDetail = showDeviceDetail;
+window.showLocationDetail = showLocationDetail;
+window.showSetting = showSetting;
+window.showQuickActions = showQuickActions;
+window.logout = logout;
+window.updateStats = updateStats;
+window.updateTime = updateTime;
+
+// Update Profile Info dari Firebase User
+async function updateProfileUI() {
+    console.log('Updating profile UI...');
+    try {
+        const user = await checkAuthState();
+        console.log('User data from checkAuthState:', user ? {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName,
+            emailVerified: user.emailVerified
+        } : 'No user');
+        
+        if (user) {
+            // Force refresh user data
+            await user.reload();
+            console.log('Refreshed user data:', {
+                displayName: user.displayName,
+                email: user.email
+            });
+            
+            const displayName = user.displayName || 'Pengguna';
+            console.log('Setting display name to:', displayName);
+            
+            const greetingName = document.getElementById('greetingName');
+            const profileName = document.getElementById('profileName');
+            const profileEmail = document.getElementById('profileEmail');
+            const profileAvatar = document.getElementById('profileAvatar');
+
+            console.log('DOM elements found:', {
+                greetingName: !!greetingName,
+                profileName: !!profileName,
+                profileEmail: !!profileEmail,
+                profileAvatar: !!profileAvatar
+            });
+
+            if (greetingName) {
+                greetingName.textContent = displayName;
+                console.log('Updated greeting name to:', greetingName.textContent);
+            }
+            if (profileName) {
+                profileName.textContent = displayName;
+                console.log('Updated profile name to:', profileName.textContent);
+            }
+            if (profileEmail) {
+                profileEmail.textContent = user.email || '';
+                console.log('Updated profile email to:', profileEmail.textContent);
+            }
+            if (profileAvatar) {
+                const initial = displayName[0].toUpperCase();
+                profileAvatar.textContent = initial;
+                console.log('Updated profile avatar to:', profileAvatar.textContent);
+            }
+        } else {
+            console.log('No user is currently signed in');
+        }
+    } catch (error) {
+        console.error('Error in updateProfileUI:', error);
+    }
+}
+
+// Initialize the app when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('SeismoSens app initialized');
+    
+    // Initialize app
+    initApp();
+    
+    // Add touch feedback
+    document.querySelectorAll('.device-card, .settings-item, .nav-item').forEach(element => {
+        element.addEventListener('touchstart', function() {
+            this.style.transform = 'scale(0.98)';
+        });
+        
+        element.addEventListener('touchend', function() {
+            this.style.transform = '';
+        });
+        
+        element.addEventListener('touchcancel', function() {
+            this.style.transform = '';
+        });
+    });
+    
+    // Update profile UI
+    updateProfileUI();
+});
+
+// Export functions to window
 window.switchPage = switchPage;
 window.initApp = initApp;
 window.zoomIn = zoomIn;
@@ -219,21 +341,22 @@ window.showQuickActions = showQuickActions;
 window.updateStats = updateStats;
 window.updateTime = updateTime;
 window.logout = logout;
-
-// Add touch feedback
-document.querySelectorAll('.device-card, .settings-item, .nav-item').forEach(element => {
-    element.addEventListener('touchstart', function() {
-        this.style.transform = 'scale(0.98)';
-    });
-    
-    element.addEventListener('touchend', function() {
-        this.style.transform = '';
-    });
-    
-    element.addEventListener('touchcancel', function() {
-        this.style.transform = '';
-    });
-});
+window.updateProfileUI = updateProfileUI;
+window.deleteAccount = async function() {
+    if (confirm('Apakah Anda yakin ingin menghapus akun ini? Tindakan ini tidak dapat dibatalkan.')) {
+        try {
+            const user = auth.currentUser;
+            if (user) {
+                await deleteUser(user);
+                alert('Akun berhasil dihapus');
+                window.location.href = '/login/login.html';
+            }
+        } catch (error) {
+            console.error('Error deleting account:', error);
+            alert('Gagal menghapus akun: ' + error.message);
+        }
+    }
+};
 
 // Debug log to verify functions are available
 console.log('Global functions initialized:', {
@@ -249,5 +372,7 @@ console.log('Global functions initialized:', {
     showQuickActions: typeof window.showQuickActions,
     updateStats: typeof window.updateStats,
     updateTime: typeof window.updateTime,
-    logout: typeof window.logout
+    logout: typeof window.logout,
+    updateProfileUI: typeof window.updateProfileUI,
+    deleteAccount: typeof window.deleteAccount
 });

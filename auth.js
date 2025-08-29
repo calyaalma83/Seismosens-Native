@@ -7,7 +7,8 @@ import {
   signOut,
   updateProfile,
   setPersistence,
-  browserLocalPersistence
+  browserSessionPersistence,
+  deleteUser as fbDeleteUser
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 import { 
@@ -32,11 +33,11 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+// Set persistence supaya login nggak hilang setelah refresh
+setPersistence(auth, browserSessionPersistence);
 
-// Set supaya login bertahan walau refresh
-setPersistence(auth, browserLocalPersistence);
+window.auth = auth;
 
-// 🔹 Cek state login
 function checkAuthState() {
   return new Promise((resolve) => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -56,15 +57,21 @@ async function requireAuth() {
   return user;
 }
 
-// 🔹 Kalau sudah login → redirect ke app
+// Redirect ke home kalau sudah login
 async function redirectIfAuthenticated() {
   const user = await checkAuthState();
-  if (user) {
-    window.location.href = '/seismosens.html';
+  const fromDelete = sessionStorage.getItem("fromDeleteAccount") === "true";
+
+  // Hanya redirect normal kalau user sudah login dan bukan proses delete
+  if (user && !fromDelete) {
+    window.location.href = '../seismosens.html';
     return true;
   }
+
+  // Jangan hapus flag di sini, biar login + delete tetap aman
   return false;
 }
+
 
 // ==================================================
 // 🔑 Tambahan untuk Role Management (user / admin)
@@ -99,9 +106,6 @@ async function requireAdmin() {
   return user;
 }
 
-// ==================================================
-// 🔹 Export supaya bisa dipakai file lain
-// ==================================================
 export { 
   auth,
   db,
@@ -113,5 +117,6 @@ export {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
-  updateProfile
+  updateProfile,
+  fbDeleteUser as deleteUser
 };
