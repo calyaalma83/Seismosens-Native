@@ -1,37 +1,87 @@
+import { auth, signInWithEmailAndPassword, deleteUser, redirectIfAuthenticated, db } from "../auth.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
 console.log("Login script loaded");
-import { auth, signInWithEmailAndPassword, deleteUser, redirectIfAuthenticated } from "../auth.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
   const fromDelete = sessionStorage.getItem("fromDeleteAccount") === "true";
 
-  // redirect normal hanya jika user sudah login dan bukan delete account
+  // Redirect jika sudah login dan bukan dari delete account
   const alreadyRedirected = await redirectIfAuthenticated();
   if (alreadyRedirected && !fromDelete) return;
 
   const form = document.getElementById("loginForm");
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
+  if (!form) {
+    console.error('Login form not found!');
+    return;
+  }
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
 
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
 
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    if (!email || !password) {
+      alert("Email dan password harus diisi!");
+      return;
+    }
 
-      if (fromDelete) {
-        try {
-          await deleteUser(userCredential.user);
-          alert("✅ Akun berhasil dihapus permanen");
-          sessionStorage.removeItem("fromDeleteAccount"); // hapus flag setelah sukses
-          window.location.href = "../onboarding/onboarding.html"; // absolute path
-        } catch (err) {
-          alert("❌ Gagal hapus akun: " + err.message);
-        }
+    try {
+      console.log('Attempting to sign in with:', email);
+      
+      // Sign in user
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Check user role in Firestore
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      const role = userDoc.exists() ? userDoc.data().role : "user";
+
+      // Redirect based on role
+      if (role === "admin") {
+        console.log("Login as admin");
+        window.location.href = "/admin/admin.html";
       } else {
-        window.location.href = "../seismosens.html"; // absolute path
+        console.log("Login as normal user");
+        window.location.href = "/seismosens.html";
       }
+      
     } catch (error) {
-      alert("Login gagal: " + error.message);
+      console.error("Login error:", error);
+      let errorMessage = "Login gagal: ";
+      
+      switch (error.code) {
+        case 'auth/user-not-found':
+          errorMessage = "Email tidak terdaftar";
+          break;
+        case 'auth/wrong-password':
+          errorMessage = "Password salah";
+          break;
+        case 'auth/too-many-requests':
+          errorMessage = "Terlalu banyak percobaan login. Silakan coba lagi nanti";
+          break;
+        case 'auth/invalid-email':
+          errorMessage = "Format email tidak valid";
+          break;
+        default:
+          errorMessage += error.message;
+      }
+      
+      alert(errorMessage);
+
+      // Handle delete account flow
+      if (fromDelete && error.code === 'auth/wrong-password') {
+        try {
+          await deleteUser(userCredential?.user);
+          alert("✅ Akun berhasil dihapus permanen");
+          sessionStorage.removeItem("fromDeleteAccount");
+          window.location.href = "/onboarding/onboarding.html";
+        } catch (err) {
+          console.error("Delete account error:", err);
+          alert("❌ Gagal menghapus akun: " + err.message);
+        }
+      }
     }
   });
 });

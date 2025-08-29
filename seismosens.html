@@ -51,72 +51,19 @@
                     <div class="alert-text">SMS-USER-003 offline sejak 2 jam lalu</div>
                 </div>
 
-                <div class="chart-container">
-                    <div class="section-title">
-                        <span>Monitoring Real-time</span>
-                        <span class="see-all">Detail</span>
-                    </div>
-                    <div class="chart-placeholder" id="health-chart">
-                        <div class="chart-container-wrapper">
-                            <canvas id="healthChart" class="chart-canvas"></canvas>
-                        </div>
-                    </div>
-                </div>
-
+                <!-- Section Berita Terkini -->
                 <div class="content-section">
                     <div class="section-title">
-                        <span>Perangkat Saya</span>
-                        <span class="see-all">Lihat Semua</span>
+                    <span>Berita Terkini</span>
                     </div>
-                    
-                    <div class="device-card" onclick="showDeviceDetail('SMS-USER-001')">
-                        <div class="device-header">
-                            <div class="device-info">
-                                <h3>SMS-USER-001</h3>
-                                <p>Rumah Tinggal • Surakarta</p>
-                            </div>
-                            <div class="device-status online">● Online</div>
-                        </div>
-                        <div class="device-metrics">
-                            <div class="metric">
-                                <div class="metric-value">95%</div>
-                                <div class="metric-label">Health</div>
-                            </div>
-                            <div class="metric">
-                                <div class="metric-value">0.02</div>
-                                <div class="metric-label">Vibration</div>
-                            </div>
-                            <div class="metric">
-                                <div class="metric-value">15.2</div>
-                                <div class="metric-label">Frequency</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="device-card warning" onclick="showDeviceDetail('SMS-USER-002')">
-                        <div class="device-header">
-                            <div class="device-info">
-                                <h3>SMS-USER-002</h3>
-                                <p>Kantor • Surakarta</p>
-                            </div>
-                            <div class="device-status warning">⚠ Warning</div>
-                        </div>
-                        <div class="device-metrics">
-                            <div class="metric">
-                                <div class="metric-value">78%</div>
-                                <div class="metric-label">Health</div>
-                            </div>
-                            <div class="metric">
-                                <div class="metric-value">0.08</div>
-                                <div class="metric-label">Vibration</div>
-                            </div>
-                            <div class="metric">
-                                <div class="metric-value">12.7</div>
-                                <div class="metric-label">Frequency</div>
-                            </div>
-                        </div>
+                    <div id="news-list">
+                    <!-- berita dari news.js akan muncul di sini -->
                     </div>
                 </div>
+                
+                <!-- script -->
+                <script type="module" src="news.js"></script>
+  
             </div>
 
             <!-- Devices Page -->
@@ -458,6 +405,9 @@
                 </div>
 
                 <div style="padding: 20px; text-align: center;">
+                    <button onclick="window.logout()" style="background: #ef4444; color: white; border: none; padding: 12px 30px; border-radius: 25px; font-weight: 600; cursor: pointer;">
+                        Keluar dari Akun
+                    </button>
                     <button onclick="deleteAccount()" class="btn-delete">
                         🗑️ Hapus Akun
                     </button>
@@ -466,27 +416,27 @@
         </div>
 
         <!-- FAB -->
-        <div class="fab" onclick="showQuickActions()">+</div>
+        <div class="fab" onclick="window.showQuickActions()">+</div>
 
         <!-- Bottom Navigation -->
         <div class="bottom-nav">
-            <div class="nav-item active" onclick="switchPage('home')">
+            <div class="nav-item active" onclick="window.switchPage('home', event)">
                 <div class="nav-icon">🏠</div>
                 <div class="nav-label">Beranda</div>
             </div>
-            <div class="nav-item" onclick="switchPage('devices')">
+            <div class="nav-item" onclick="window.switchPage('devices', event)">
                 <div class="nav-icon">📱</div>
                 <div class="nav-label">Perangkat</div>
             </div>
-            <div class="nav-item" onclick="switchPage('map')">
+            <div class="nav-item" onclick="window.switchPage('map', event)">
                 <div class="nav-icon">🗺</div>
                 <div class="nav-label">Peta</div>
             </div>
-            <div class="nav-item" onclick="switchPage('settings')">
+            <div class="nav-item" onclick="window.switchPage('settings', event)">
                 <div class="nav-icon">⚙</div>
                 <div class="nav-label">Pengaturan</div>
             </div>
-            <div class="nav-item" onclick="switchPage('profile')">
+            <div class="nav-item" onclick="window.switchPage('profile', event)">
                 <div class="nav-icon">👤</div>
                 <div class="nav-label">Profil</div>
             </div>
@@ -494,11 +444,15 @@
 
 
   <!-- Firebase and App Scripts -->
-  <script type="module" src="/seismosens.js"></script>
-  <script type="module" src="./auth.js"></script>
-  
-  <!-- Leaflet Library -->
+  <!-- Load Leaflet first -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<<<<<<< HEAD
   <script src="seismosens.js"></script>
+=======
+  
+  <!-- Load Firebase and App -->
+  <script type="module" src="./auth.js"></script>
+  <script type="module" src="./seismosens.js"></script>
+>>>>>>> 084ae617a4dee0053dd545bf6874586fc3186710
 </body>
 </html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SeismoSens - Admin Dashboard</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="admin-header">
+    <h1 class="admin-title">Dashboard Admin</h1>
+    <p class="admin-subtitle">Kelola pengguna & berita terkini</p>
+  </header>
+
+  <!-- MAIN -->
+  <main class="admin-container">
+
+    <!-- DAFTAR USER -->
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title">Daftar User</h2>
+      </div>
+      <div class="section-body">
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Tanggal Daftar</th>
+              </tr>
+            </thead>
+            <tbody id="user-list">
+              <!-- akan diisi dari admin.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAMBAH BERITA -->
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title">Tambah Berita</h2>
+      </div>
+      <div class="section-body">
+        <form id="news-form" class="form">
+          <input id="title" type="text" class="input" placeholder="Judul Berita" required>
+          <textarea id="content" class="textarea" placeholder="Isi berita..." required></textarea>
+          <button type="submit" class="btn btn-primary">Simpan Berita</button>
+        </form>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER ACTIONS -->
+  <div class="footer-actions">
+    <button class="btn btn-danger" id="logoutBtn">Keluar</button>
+  </div>
+
+  <!-- SCRIPT -->
+  <script type="module" src="admin.js"></script>
+</body>
+</html>
