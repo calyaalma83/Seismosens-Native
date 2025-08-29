@@ -1,64 +1,51 @@
 import { 
-  auth, 
+  registerUser,
   redirectIfAuthenticated,
-  createUserWithEmailAndPassword,
   updateProfile,
-  signInWithEmailAndPassword 
+  signInWithEmailAndPassword,
+  auth
 } from '../auth.js';
 
 // Debug info
 console.log('Register script loaded');
 
-// Redirect to home if already logged in
+// Kalau sudah login → redirect ke home
 redirectIfAuthenticated().then(() => {
-  console.log('Auth check completed');
-  
   const form = document.getElementById('registerForm');
   if (!form) {
     console.error('Register form not found!');
     return;
   }
-  
-  console.log('Adding submit event listener to form');
-  form.addEventListener('submit', (event) => {
+
+  form.addEventListener('submit', async (event) => {
     event.preventDefault();
-    console.log("Form submitted");
 
-  const nama = document.getElementById("nama").value;
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-  const confirmPassword = document.getElementById("confirmPassword").value;
-  
-  console.log("Form values:", { nama, email, password: '***', confirmPassword: '***' });
+    const nama = document.getElementById("nama").value;
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const confirmPassword = document.getElementById("confirmPassword").value;
 
-  if (password !== confirmPassword) {
-    alert("Password dan konfirmasi password tidak sama!");
-    return;
-  }
+    if (password !== confirmPassword) {
+      alert("Password dan konfirmasi password tidak sama!");
+      return;
+    }
 
-  console.log("Attempting to create user...");
-  createUserWithEmailAndPassword(auth, email, password)
-    .then((userCredential) => {
-      console.log("User created successfully:", userCredential.user.uid);
-      // Update user profile with display name
-      return updateProfile(userCredential.user, {
-        displayName: nama
-      });
-    })
-    .then(() => {
-      console.log("Attempting to sign in...");
-      return signInWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-          console.log("Signed in successfully:", userCredential.user.uid);
-          return userCredential;
-        });
-    })
-    .then(() => {
-      console.log("Redirecting to home page...");
-      // Use absolute path for more reliable redirect
+    try {
+      console.log("Registering user:", email);
+
+      // 🔹 Panggil registerUser dari auth.js (default role = user)
+      const user = await registerUser(email, password, "user");
+
+      // Update profile (nama)
+      await updateProfile(user, { displayName: nama });
+
+      // Login ulang biar state sinkron
+      await signInWithEmailAndPassword(auth, email, password);
+
+      // Redirect ke home
       window.location.href = "/seismosens.html";
-    })
-    .catch((error) => {
+
+    } catch (error) {
       console.error("Registration error:", error);
       let errorMessage = "Registrasi gagal: ";
       switch (error.code) {
@@ -78,6 +65,6 @@ redirectIfAuthenticated().then(() => {
           errorMessage = `Terjadi kesalahan: ${error.message}`;
       }
       alert(errorMessage);
-    });
+    }
   });
 });

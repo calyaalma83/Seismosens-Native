@@ -4,7 +4,7 @@
         {
             "type": "chrome",
             "request": "launch",
-            "name": "Launch Chrome against localhost",
+            "name": "Launch Chrome (Login Page)",
             "url": "http://localhost:3000/login/login.html",
             "webRoot": "${workspaceFolder}",
             "sourceMaps": true,
@@ -28,8 +28,8 @@
     ],
     "compounds": [
         {
-            "name": "Client + Server",
-            "configurations": ["Launch Server", "Launch Chrome against localhost"]
+            "name": "Run Client + Server",
+            "configurations": ["Launch Server", "Launch Chrome (Login Page)"]
         }
     ]
 }

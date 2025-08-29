@@ -51,72 +51,19 @@
                     <div class="alert-text">SMS-USER-003 offline sejak 2 jam lalu</div>
                 </div>
 
-                <div class="chart-container">
-                    <div class="section-title">
-                        <span>Monitoring Real-time</span>
-                        <span class="see-all">Detail</span>
-                    </div>
-                    <div class="chart-placeholder" id="health-chart">
-                        <div class="chart-container-wrapper">
-                            <canvas id="healthChart" class="chart-canvas"></canvas>
-                        </div>
-                    </div>
-                </div>
-
+                <!-- Section Berita Terkini -->
                 <div class="content-section">
                     <div class="section-title">
-                        <span>Perangkat Saya</span>
-                        <span class="see-all">Lihat Semua</span>
+                    <span>Berita Terkini</span>
                     </div>
-                    
-                    <div class="device-card" onclick="showDeviceDetail('SMS-USER-001')">
-                        <div class="device-header">
-                            <div class="device-info">
-                                <h3>SMS-USER-001</h3>
-                                <p>Rumah Tinggal • Surakarta</p>
-                            </div>
-                            <div class="device-status online">● Online</div>
-                        </div>
-                        <div class="device-metrics">
-                            <div class="metric">
-                                <div class="metric-value">95%</div>
-                                <div class="metric-label">Health</div>
-                            </div>
-                            <div class="metric">
-                                <div class="metric-value">0.02</div>
-                                <div class="metric-label">Vibration</div>
-                            </div>
-                            <div class="metric">
-                                <div class="metric-value">15.2</div>
-                                <div class="metric-label">Frequency</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="device-card warning" onclick="showDeviceDetail('SMS-USER-002')">
-                        <div class="device-header">
-                            <div class="device-info">
-                                <h3>SMS-USER-002</h3>
-                                <p>Kantor • Surakarta</p>
-                            </div>
-                            <div class="device-status warning">⚠ Warning</div>
-                        </div>
-                        <div class="device-metrics">
-                            <div class="metric">
-                                <div class="metric-value">78%</div>
-                                <div class="metric-label">Health</div>
-                            </div>
-                            <div class="metric">
-                                <div class="metric-value">0.08</div>
-                                <div class="metric-label">Vibration</div>
-                            </div>
-                            <div class="metric">
-                                <div class="metric-value">12.7</div>
-                                <div class="metric-label">Frequency</div>
-                            </div>
-                        </div>
+                    <div id="news-list">
+                    <!-- berita dari news.js akan muncul di sini -->
                     </div>
                 </div>
+                
+                <!-- script -->
+                <script type="module" src="news.js"></script>
+  
             </div>
 
             <!-- Devices Page -->
