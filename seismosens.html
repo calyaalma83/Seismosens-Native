@@ -67,46 +67,81 @@
             </div>
 
             <!-- Devices Page -->
-            <div class="page-content" id="devices-page">
-                <div class="header">
-                    <div class="welcome-text">
-                        <div class="welcome-title">Perangkat Saya 📱</div>
-                        <div class="welcome-subtitle">Kelola semua perangkat SeismoSens</div>
-                    </div>
-                </div>
-                
-                <div class="content-section">
-                    <div class="device-card" onclick="showDeviceDetail('SMS-USER-001')">
-                        <div class="device-header">
-                            <div class="device-info">
-                                <h3>SMS-USER-001</h3>
-                                <p>Rumah Tinggal • Jl. Slamet Riyadi No. 234</p>
-                            </div>
-                            <div class="device-status online">● Online (95%)</div>
-                        </div>
-                    </div>
-                    
-                    <div class="device-card warning" onclick="showDeviceDetail('SMS-USER-002')">
-                        <div class="device-header">
-                            <div class="device-info">
-                                <h3>SMS-USER-002</h3>
-                                <p>Kantor • Jl. Dr. Rajiman No. 45</p>
-                            </div>
-                            <div class="device-status warning">⚠ Warning (78%)</div>
-                        </div>
-                    </div>
-                    
-                    <div class="device-card offline" onclick="showDeviceDetail('SMS-USER-003')">
-                        <div class="device-header">
-                            <div class="device-info">
-                                <h3>SMS-USER-003</h3>
-                                <p>Gudang • Jl. Adi Sucipto No. 12</p>
-                            </div>
-                            <div class="device-status offline">● Offline</div>
-                        </div>
-                    </div>
-                </div>
+            <!-- Tambahkan Firebase Script -->
+<script type="module">
+    // Import Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+  
+    // Config Firebase (isi dengan data project-mu)
+    const firebaseConfig = {
+      apiKey: "API_KEY_FIREBASE_KAMU",
+      authDomain: "project-id.firebaseapp.com",
+      databaseURL: "https://project-id.firebaseio.com",
+      projectId: "project-id",
+      storageBucket: "project-id.appspot.com",
+      messagingSenderId: "sender-id",
+      appId: "app-id"
+    };
+  
+    // Init Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+  
+    // ======== LISTENER PERANGKAT ========
+    // Misalnya node di Firebase: /devices/{deviceId}
+    const devicesRef = ref(db, "devices");
+  
+    onValue(devicesRef, (snapshot) => {
+      const devices = snapshot.val();
+      const container = document.querySelector("#devices-page .content-section");
+      container.innerHTML = ""; // reset isi sebelum render ulang
+  
+      // Loop semua device
+      for (const id in devices) {
+        const d = devices[id];
+        let statusClass = "offline";
+        let statusText = "● Offline";
+  
+        if (d.status === "online") {
+          statusClass = "online";
+          statusText = `● Online (${d.health || "100"}%)`;
+        } else if (d.status === "warning") {
+          statusClass = "warning";
+          statusText = `⚠ Warning (${d.health || "0"}%)`;
+        }
+  
+        // Buat card perangkat
+        const card = document.createElement("div");
+        card.className = `device-card ${statusClass}`;
+        card.setAttribute("onclick", `showDeviceDetail('${id}')`);
+        card.innerHTML = `
+          <div class="device-header">
+            <div class="device-info">
+              <h3>${id}</h3>
+              <p>${d.lokasi || "Lokasi tidak diketahui"}</p>
             </div>
+            <div class="device-status ${statusClass}">${statusText}</div>
+          </div>
+        `;
+        container.appendChild(card);
+      }
+    });
+  
+    // ======== UPDATE MAP STATS ========
+    const statsRef = ref(db, "stats"); // contoh node untuk menyimpan statistik kota
+    onValue(statsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (!data) return;
+  
+      document.querySelector("#map-page .map-legend .legend-item:nth-child(2) span").innerText = `Normal (${data.normal})`;
+      document.querySelector("#map-page .map-legend .legend-item:nth-child(3) span").innerText = `Warning (${data.warning})`;
+      document.querySelector("#map-page .map-legend .legend-item:nth-child(4) span").innerText = `Offline (${data.offline})`;
+      document.querySelector("#map-page .map-legend .legend-item:nth-child(5) span").innerText = `Perangkat Anda (${data.userDevices})`;
+    });
+  
+  </script>
+  
 
             <!-- Map Page -->
             <div class="page-content" id="map-page">
