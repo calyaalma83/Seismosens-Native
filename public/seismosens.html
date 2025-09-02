@@ -6,7 +6,7 @@
   <title>SeismoSens Mobile</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="seismosens.css">
+  <link rel="stylesheet" href="./seismosens.css">
 </head>
 <body>
     <!-- Main Content -->
@@ -62,8 +62,17 @@
                 </div>
                 
                 <!-- script -->
-                <script type="module" src="news.js"></script>
-  
+                <script type="module" src="./news.js"></script>
+
+                <div class="content-section">
+                    <div class="section-title">
+                        <span>Statistik Harian</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="myChart" class="chart-canvas"></canvas>
+                    </div>
+                </div>
+
             </div>
 
             <!-- Devices Page -->
@@ -239,96 +248,34 @@
                 </div>
             </div>
 
-            <!-- Settings Page -->
-            <div class="page-content" id="settings-page">
+            <!-- Forum Page -->
+            <div class="page-content" id="forum-page">
                 <div class="header">
                     <div class="welcome-text">
-                        <div class="welcome-title">Pengaturan ⚙</div>
-                        <div class="welcome-subtitle">Konfigurasi aplikasi dan perangkat</div>
+                        <div class="welcome-title">Forum Diskusi 💬</div>
+                        <div class="welcome-subtitle">Diskusi bersama pengguna lain</div>
                     </div>
                 </div>
 
+                <!-- Forum Post -->
                 <div class="settings-section">
-                    <div class="settings-header">Perangkat</div>
-                    <div class="settings-item" onclick="showSetting('Konfigurasi Perangkat')">
-                        <div class="settings-item-left">
-                            <div class="settings-icon" style="background: #3b82f6; color: white;">📱</div>
-                            <div class="settings-text">
-                                <h4>Konfigurasi Perangkat</h4>
-                                <p>Atur nama, lokasi, dan parameter</p>
-                            </div>
-                        </div>
-                        <span>›</span>
-                    </div>
-                    <div class="settings-item" onclick="showSetting('Update Firmware')">
-                        <div class="settings-item-left">
-                            <div class="settings-icon" style="background: #f59e0b; color: white;">🔄</div>
-                            <div class="settings-text">
-                                <h4>Update Firmware</h4>
-                                <p>v2.1.0 tersedia</p>
-                            </div>
-                        </div>
-                        <span>›</span>
-                    </div>
-                    <div class="settings-item" onclick="showSetting('Koneksi WiFi')">
-                        <div class="settings-item-left">
-                            <div class="settings-icon" style="background: #10b981; color: white;">📶</div>
-                            <div class="settings-text">
-                                <h4>Koneksi WiFi</h4>
-                                <p>Terhubung ke SeismoSens_Network</p>
-                            </div>
-                        </div>
-                        <span>›</span>
+                    <div class="settings-header">Buat Post Baru</div>
+                    <div style="padding: 15px;">
+                        <input id="forumTitle" placeholder="Judul posting..." style="width:100%; padding:12px; border-radius:8px; border:1px solid #e2e8f0; font-size:14px; margin-bottom:10px;">
+                        <textarea id="forumInput" placeholder="Tulis sesuatu..." style="width:100%; padding:12px; border-radius:8px; border:1px solid #e2e8f0; font-size:14px;"></textarea>
+                        <button onclick="addForumPost()" style="margin-top:10px; width:100%; background:#3b82f6; color:white; border:none; padding:10px; border-radius:8px; font-weight:600; cursor:pointer;">
+                          Kirim
+                        </button>
                     </div>
                 </div>
 
-                <div class="settings-section">
-                    <div class="settings-header">Data & Storage</div>
-                    <div class="settings-item" onclick="showSetting('Manage Data')">
-                        <div class="settings-item-left">
-                            <div class="settings-icon" style="background: #06b6d4; color: white;">📊</div>
-                            <div class="settings-text">
-                                <h4>Manage Data</h4>
-                                <p>Export, backup, dan analisis</p>
-                            </div>
-                        </div>
-                        <span>›</span>
+                 <!-- Daftar Post -->
+                 <div class="content-section">
+                    <div class="section-title">
+                        <span>Postingan Terbaru</span>
                     </div>
-                    <div class="settings-item" onclick="showSetting('Storage')">
-                        <div class="settings-item-left">
-                            <div class="settings-icon" style="background: #8b5cf6; color: white;">💾</div>
-                            <div class="settings-text">
-                                <h4>Storage</h4>
-                                <p>2.3GB dari 8GB terpakai</p>
-                            </div>
-                        </div>
-                        <span>›</span>
-                    </div>
-                </div>
-
-                <div class="settings-section">
-                    <div class="settings-header">Aplikasi</div>
-                    <div class="settings-item" onclick="showSetting('Notifikasi')">
-                        <div class="settings-item-left">
-                            <div class="settings-icon" style="background: #ef4444; color: white;">🔔</div>
-                            <div class="settings-text">
-                                <h4>Notifikasi</h4>
-                                <p>Alert dan peringatan sistem</p>
-                            </div>
-                        </div>
-                        <span>›</span>
-                    </div>
-                    <div class="settings-item" onclick="showSetting('Bantuan')">
-                        <div class="settings-item-left">
-                            <div class="settings-icon" style="background: #64748b; color: white;">❓</div>
-                            <div class="settings-text">
-                                <h4>Bantuan & FAQ</h4>
-                                <p>Panduan penggunaan aplikasi</p>
-                            </div>
-                        </div>
-                        <span>›</span>
-                    </div>
-                </div>
+                    <div id="forumPosts"></div>
+                 </div>
             </div>
 
             <!-- Profile Page -->
@@ -381,6 +328,88 @@
                 </div>
 
                 <div class="settings-section">
+                    <div class="settings-header">Perangkat</div>
+                    <div class="settings-item" onclick="showSetting('Konfigurasi Perangkat')">
+                        <div class="settings-item-left">
+                            <div class="settings-icon" style="background: #3b82f6; color: white;">📱</div>
+                            <div class="settings-text">
+                                <h4>Konfigurasi Perangkat</h4>
+                                <p>Atur nama, lokasi, dan parameter</p>
+                            </div>
+                        </div>
+                        <span></span>
+                    </div>
+                    <div class="settings-item" onclick="showSetting('Update Firmware')">
+                        <div class="settings-item-left">
+                            <div class="settings-icon" style="background: #f59e0b; color: white;">🔄</div>
+                            <div class="settings-text">
+                                <h4>Update Firmware</h4>
+                                <p>v2.1.0 tersedia</p>
+                            </div>
+                        </div>
+                        <span></span>
+                    </div>
+                    <div class="settings-item" onclick="showSetting('Koneksi WiFi')">
+                        <div class="settings-item-left">
+                            <div class="settings-icon" style="background: #10b981; color: white;">📶</div>
+                            <div class="settings-text">
+                                <h4>Koneksi WiFi</h4>
+                                <p>Terhubung ke SeismoSens_Network</p>
+                            </div>
+                        </div>
+                        <span></span>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <div class="settings-header">Data & Storage</div>
+                    <div class="settings-item" onclick="showSetting('Manage Data')">
+                        <div class="settings-item-left">
+                            <div class="settings-icon" style="background: #06b6d4; color: white;">📊</div>
+                            <div class="settings-text">
+                                <h4>Manage Data</h4>
+                                <p>Export, Backup, dan Analisis</p>
+                            </div>
+                        </div>
+                        <span></span>
+                    </div>
+                    <div class="settings-item" onclick="showSetting('Storage')">
+                        <div class="settings-item-left">
+                            <div class="settings-icon" style="background: #8b5cf6; color: white;">💾</div>
+                            <div class="settings-text">
+                                <h4>Storage</h4>
+                                <p>2.3GB dari 8GB terpakai</p>
+                            </div>
+                        </div>
+                        <span></span>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <div class="settings-header">Aplikasi</div>
+                    <div class="settings-item" onclick="showSetting('Notifikasi')">
+                        <div class="settings-item-left">
+                            <div class="settings-icon" style="background: #ef4444; color: white;">🔔</div>
+                            <div class="settings-text">
+                                <h4>Notifikasi</h4>
+                                <p>Alert dan Peringatan Sistem</p>
+                            </div>
+                        </div>
+                        <span></span>
+                    </div>
+                    <div class="settings-item" onclick="showSetting('Bantuan')">
+                        <div class="settings-item-left">
+                            <div class="settings-icon" style="background: #64748b; color: white;">❓</div>
+                            <div class="settings-text">
+                                <h4>Bantuan & FAQ</h4>
+                                <p>Panduan pengguaan aplikasi</p>
+                            </div>
+                        </div>
+                        <span></span>
+                    </div>
+                </div>
+
+                <div class="settings-section">
                     <div class="settings-header">Support</div>
                     <div class="settings-item" onclick="showSetting('Hubungi Support')">
                         <div class="settings-item-left">
@@ -408,8 +437,8 @@
                     <button onclick="window.logout()" style="background: #ef4444; color: white; border: none; padding: 12px 30px; border-radius: 25px; font-weight: 600; cursor: pointer;">
                         Keluar dari Akun
                     </button>
-                    <button onclick="deleteAccount()" class="btn-delete">
-                        🗑️ Hapus Akun
+                    <button onclick="deleteAccount()" class="btn-delete-account">
+                        🗑 Hapus Akun
                     </button>
                 </div>
             </div>
@@ -432,9 +461,9 @@
                 <div class="nav-icon">🗺</div>
                 <div class="nav-label">Peta</div>
             </div>
-            <div class="nav-item" onclick="window.switchPage('settings', event)">
-                <div class="nav-icon">⚙</div>
-                <div class="nav-label">Pengaturan</div>
+            <div class="nav-item" onclick="window.switchPage('forum', event)">
+                <div class="nav-icon">💬</div>
+                <div class="nav-label">Forum</div>
             </div>
             <div class="nav-item" onclick="window.switchPage('profile', event)">
                 <div class="nav-icon">👤</div>
@@ -446,13 +475,11 @@
   <!-- Firebase and App Scripts -->
   <!-- Load Leaflet first -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<<<<<<< HEAD
-  <script src="seismosens.js"></script>
-=======
-  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <!-- Load Firebase and App -->
   <script type="module" src="./auth.js"></script>
+  <script type="module" src="./news.js"></script>
   <script type="module" src="./seismosens.js"></script>
->>>>>>> 084ae617a4dee0053dd545bf6874586fc3186710
 </body>
 </html>

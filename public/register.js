@@ -1,4 +1,4 @@
-import { auth, createUserWithEmailAndPassword, updateProfile, signInWithEmailAndPassword, redirectIfAuthenticated } from "../auth.js";
+import { auth, createUserWithEmailAndPassword, updateProfile, signInWithEmailAndPassword, redirectIfAuthenticated } from "./auth.js";
 
 console.log("Register script loaded");
 
@@ -58,7 +58,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       
       // Redirect ke halaman utama
       console.log('Redirecting to main page');
-      window.location.href = "/seismosens.html";
+      window.location.href = '/seismosens.html';
       
     } catch (error) {
       console.error("Registration error:", error);

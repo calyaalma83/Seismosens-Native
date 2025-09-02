@@ -724,7 +724,7 @@ body {
 }
 
 /* Tombol hapus akun*/
-.btn-delete{
+.btn-delete-account{
     background: #dc2626;
     color: white;
     border: none;
@@ -735,6 +735,6 @@ body {
     transition: background 0.3s ease;
 }
 
-.btn-delete :hover{
+.btn-delete-account:hover{
     background: #b91c1c;
 }

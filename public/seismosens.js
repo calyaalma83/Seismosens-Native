@@ -1,4 +1,7 @@
 import { auth, checkAuthState, deleteUser } from "./auth.js";
+import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { app } from "./firebase.js";
+const db = getFirestore(app);
 
 // Constants
 const surakartaCenter = [-7.566667, 110.816667];
@@ -182,7 +185,7 @@ async function logout() {
         if (window.auth && typeof window.auth.signOut === 'function') {
             await window.auth.signOut();
         }
-        window.location.href = '/login/login.html';
+        window.location.href = '/login.html';
     } catch (error) {
         console.error('Error signing out:', error);
         alert('Gagal keluar. Silakan coba lagi.');
@@ -325,6 +328,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Update profile UI
     updateProfileUI();
+
+    // Load forum posts saat halaman dibuka
+    loadForumPosts();
 });
 
 // Export functions to window
@@ -349,7 +355,7 @@ window.deleteAccount = async function() {
             if (user) {
                 await deleteUser(user);
                 alert('Akun berhasil dihapus');
-                window.location.href = '/login/login.html';
+                window.location.href = '/login.html';
             }
         } catch (error) {
             console.error('Error deleting account:', error);
@@ -357,6 +363,109 @@ window.deleteAccount = async function() {
         }
     }
 };
+
+function initChart() {
+    const canvas = document.getElementById('myChart');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    new Chart(ctx, {
+        type:"line",
+        data: {
+            labels: ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"],
+            datasets: [{
+                label: "Data Sensor",
+                data: [12, 19, 7, 15, 10, 8, 17],
+                borderColor: "rgba(59, 130, 246, 1)",
+                backgroundColor: "rgba(59, 130, 246, 0.3)",
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+}
+document.addEventListener("DOMContentLoaded", initChart());
+
+// Forum functions (Firebase version)
+async function addForumPost() {
+    const titleInput = document.getElementById('forumTitle');
+    const textInput = document.getElementById('forumInput');
+
+    if (!titleInput || !textInput) return;
+    if (titleInput.value.trim() === "" || textInput.value.trim() === "") {
+        alert("Judul dan isi posting harus diisi!");
+        return;
+    }
+
+    const user = auth.currentUser;
+    if (!user) {
+        alert("Anda harus login untuk membuat posting.");
+        return;
+    }
+
+    try {
+        await addDoc(collection(db, "forumPosts"), {
+            title: titleInput.value.trim(),
+            text: textInput.value.trim(),
+            author: user.displayName || user.email || "Anonim",
+            uid: user.uid,
+            time: serverTimestamp()
+        });
+
+        // Reset input setelah sukses
+        titleInput.value = "";
+        textInput.value = "";
+    } catch (error) {
+        console.error("Error menambahkan post:", error);
+        alert("Gagal mengirim posting.");
+    }
+}
+
+function renderForumPost(postData, container) {
+    const post = document.createElement('div');
+    post.className = "device-card";
+    post.innerHTML = `
+        <div class="device-header">
+            <div class="device-info">
+                <h3>${postData.title}</h3>
+                <p>${postData.text}</p>
+                <small>Diposting oleh ${postData.author} • ${postData.time}</small>
+            </div>
+        </div>
+    `;
+    container.prepend(post);
+}
+
+function loadForumPosts() {
+    const postsContainer = document.getElementById('forumPosts');
+    if (!postsContainer) return;
+    postsContainer.innerHTML = "";
+
+    const q = query(collection(db, "forumPosts"), orderBy("time", "desc"));
+
+    onSnapshot(q, (snapshot) => {
+        postsContainer.innerHTML = "";
+        snapshot.forEach((doc) => {
+            const post = doc.data();
+            renderForumPost({
+                title: post.title,
+                text: post.text,
+                author: post.author,
+                time: post.time ? post.time.toDate().toLocaleString() : "-"
+            }, postsContainer);
+        });
+    });
+}
+
+// Export ke global
+window.addForumPost = addForumPost;
+window.loadForumPosts = loadForumPosts;
 
 // Debug log to verify functions are available
 console.log('Global functions initialized:', {

@@ -10,7 +10,7 @@ async function loadNews() {
   const user = await checkAuthState();
   if (!user) {
     // kalau belum login, paksa balik ke login
-    window.location.href = "/login/login.html";
+    window.location.href = '/login.html';
     return;
   }
 
