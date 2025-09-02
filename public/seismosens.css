@@ -624,6 +624,120 @@ body {
     color: #64748b;
 }
 
+/* Container reply */
+.replies {
+  margin-top: 8px;
+  padding-left: 12px;
+  border-left: 2px solid #e5e7eb; /* garis abu tipis */
+}
+
+/* Tombol tampilkan komentar lainnya */
+.show-more-replies {
+  background: none;
+  border: none;
+  color: #2563eb;        /* biru mirip link */
+  font-size: 14px;
+  padding: 4px 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.show-more-replies:hover {
+  text-decoration: underline;
+}
+
+/* Style reply */
+.reply-card {
+  margin-top: 6px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background-color: #f9fafb;
+}
+
+.reply-text {
+  font-size: 14px;
+  color: #111827;
+  margin-bottom: 2px;
+}
+
+.reply-author {
+  font-size: 12px;
+  color: #6b7280; /* abu-abu */
+}
+
+/* Form balasan (punya kamu, lebih cakep) */
+.reply-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 8px;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.reply-form input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 999px; /* bikin bulat */
+  outline: none;
+  font-size: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.reply-form input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.reply-form button {
+  padding: 8px 16px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 999px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.reply-form button:hover {
+  background: #2563eb;
+}
+
+.reply-form button:active {
+  transform: scale(0.95);
+}
+
+/* Nested reply (balasan ke komentar) */
+.reply-nested {
+  margin-left: 20px;           /* menjorok ke kanan */
+  background-color: #f3f4f6;   /* sedikit beda abu */
+}
+
+/* Tombol Balas di tiap reply */
+.reply-actions {
+  font-size: 12px;
+  color: #2563eb;
+  cursor: pointer;
+  margin-top: 2px;
+  display: inline-block;
+}
+
+.reply-actions:hover {
+  text-decoration: underline;
+}
+
+/* Highlight input saat mode balas */
+.reply-form.replying input {
+  border-color: #2563eb;
+  background: #eef2ff;
+}
+.reply-form.replying button {
+  background: #2563eb;
+}
+
 /* Bottom Navigation */
 .bottom-nav {
     position: fixed;

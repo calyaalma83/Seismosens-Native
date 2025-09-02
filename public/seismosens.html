@@ -7,6 +7,31 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="./seismosens.css">
+
+  <script type="module">
+        // Import Firebase core
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+        
+        // Firebase config 
+        const firebaseConfig = {
+        apiKey: "AIzaSyD07M2-79Yh0CzotaQeGYYy4WLZoevTdWY",
+        authDomain: "seismosens-a048e.firebaseapp.com",
+        projectId: "seismosens-a048e",
+        storageBucket: "seismosens-a048e.appspot.com",
+        messagingSenderId: "358453169511",
+        appId: "1:358453169511:web:fccc32bf22ede39ff0b3c2"
+        };
+
+        // Init app
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Export ke window biar bisa dipakai di seismosens.js
+        window._firebase = { app, auth, db };
+    </script>
 </head>
 <body>
     <!-- Main Content -->
@@ -60,10 +85,7 @@
                     <!-- berita dari news.js akan muncul di sini -->
                     </div>
                 </div>
-                
-                <!-- script -->
-                <script type="module" src="./news.js"></script>
-
+            
                 <div class="content-section">
                     <div class="section-title">
                         <span>Statistik Harian</span>
@@ -269,13 +291,22 @@
                     </div>
                 </div>
 
-                 <!-- Daftar Post -->
-                 <div class="content-section">
+                <!-- Daftar Post -->
+                <div class="content-section">
                     <div class="section-title">
                         <span>Postingan Terbaru</span>
                     </div>
                     <div id="forumPosts"></div>
-                 </div>
+                </div>
+
+                <!-- Template untuk balas postingan -->
+                <template id="replyTemplate">
+                    <div class="reply-card">
+                        <p class="reply-text"></p>
+                        <small class="reply-author"></small>
+                        <span class="reply-actions">Balas</span>
+                    </div>
+                </template>
             </div>
 
             <!-- Profile Page -->
@@ -470,7 +501,6 @@
                 <div class="nav-label">Profil</div>
             </div>
     </div>
-
 
   <!-- Firebase and App Scripts -->
   <!-- Load Leaflet first -->
