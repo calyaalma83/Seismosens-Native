@@ -64,7 +64,7 @@ async function redirectIfAuthenticated() {
 
   // Hanya redirect normal kalau user sudah login dan bukan proses delete
   if (user && !fromDelete) {
-    window.location.href = '../seismosens.html';
+    window.location.href = '/seismosens.html';
     return true;
   }
 

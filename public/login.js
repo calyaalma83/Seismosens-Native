@@ -1,4 +1,4 @@
-import { auth, signInWithEmailAndPassword, deleteUser, redirectIfAuthenticated, db } from "../auth.js";
+import { auth, signInWithEmailAndPassword, deleteUser, redirectIfAuthenticated, db } from "./auth.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 console.log("Login script loaded");
@@ -41,10 +41,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Redirect based on role
       if (role === "admin") {
         console.log("Login as admin");
-        window.location.href = "/admin/admin.html";
+        window.location.href = "../admin/admin.html";
       } else {
         console.log("Login as normal user");
-        window.location.href = "/seismosens.html";
+        window.location.href = '/seismosens.html';
       }
       
     } catch (error) {
@@ -76,7 +76,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           await deleteUser(userCredential?.user);
           alert("✅ Akun berhasil dihapus permanen");
           sessionStorage.removeItem("fromDeleteAccount");
-          window.location.href = "/onboarding/onboarding.html";
+          window.location.href = '/index.html';
         } catch (err) {
           console.error("Delete account error:", err);
           alert("❌ Gagal menghapus akun: " + err.message);

@@ -32,7 +32,7 @@ document.getElementById("forgotForm").addEventListener("submit", (event) => {
         CSSContainerRule.style.animation = "slideFadeOut 0.5s ease forwards";
       }
       setTimeout(() => {
-        window.location.href = "../login/login.html";
+        window.location.href = '/login.html';
       }, 500);
     })
     .catch ((error) => {
