@@ -15,6 +15,7 @@ let mapInitialized = false;
 function switchPage(pageName, event) {
   if (event) event.preventDefault();
 
+<<<<<<< HEAD
   // reset active
   document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
 
@@ -30,16 +31,38 @@ function switchPage(pageName, event) {
   document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
 
   // tampilkan target
+=======
+  document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+
+  let clickedItem = null;
+  if (event) {
+    clickedItem = event.target.closest('.nav-item') ||
+      (event.target.closest('.bottom-nav')?.querySelector(`[onclick*="${pageName}"]`) ?? null);
+  } else {
+    clickedItem = document.querySelector(`.nav-item[onclick*="${pageName}"]`);
+  }
+  if (clickedItem) clickedItem.classList.add('active');
+
+  document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+
+>>>>>>> 56ad33b7b4ff55894abb36ed371c91bff165cf3b
   const targetPage = document.getElementById(`${pageName}-page`);
   if (targetPage) {
     targetPage.classList.add('active');
     if (pageName === 'map' && !mapInitialized) setTimeout(initializeMap, 300);
   } else {
+<<<<<<< HEAD
     console.error("❌ Target page tidak ditemukan:", `${pageName}-page`);
   }
 }
 
 
+=======
+    console.error('Target page not found:', `${pageName}-page`);
+  }
+}
+
+>>>>>>> 56ad33b7b4ff55894abb36ed371c91bff165cf3b
 // ===== App Init =====
 async function initApp() {
   try {
