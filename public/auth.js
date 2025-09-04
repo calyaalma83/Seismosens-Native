@@ -1,4 +1,3 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { 
   getAuth, 
   onAuthStateChanged,
@@ -19,20 +18,10 @@ import {
   serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-// 🔹 Firebase config
-const firebaseConfig = {
-  apiKey: "AIzaSyD07M2-79Yh0CzotaQeGYYy4WLZoevTdWY",
-  authDomain: "seismosens-a048e.firebaseapp.com",
-  projectId: "seismosens-a048e",
-  storageBucket: "seismosens-a048e.appspot.com",
-  messagingSenderId: "358453169511",
-  appId: "1:358453169511:web:fccc32bf22ede39ff0b3c2"
-};
+// ✅ Gunakan app yang sudah diinisialisasi di seismosens.html
+const auth = getAuth(window._firebase.app);
+const db = getFirestore(window._firebase.app);
 
-// 🔹 Init
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
 // Set persistence supaya login nggak hilang setelah refresh
 setPersistence(auth, browserSessionPersistence);
 
@@ -62,27 +51,20 @@ async function redirectIfAuthenticated() {
   const user = await checkAuthState();
   const fromDelete = sessionStorage.getItem("fromDeleteAccount") === "true";
 
-  // Hanya redirect normal kalau user sudah login dan bukan proses delete
   if (user && !fromDelete) {
     window.location.href = '/seismosens.html';
     return true;
   }
-
-  // Jangan hapus flag di sini, biar login + delete tetap aman
   return false;
 }
 
-
 // ==================================================
-// 🔑 Tambahan untuk Role Management (user / admin)
+// 🔑 Role Management (user / admin)
 // ==================================================
-
-// Register user baru (default: role=user)
 async function registerUser(email, password, role = "user") {
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
   const user = userCredential.user;
 
-  // Simpan ke Firestore
   await setDoc(doc(db, "users", user.uid), {
     email,
     role,
@@ -92,7 +74,6 @@ async function registerUser(email, password, role = "user") {
   return user;
 }
 
-// Cek apakah user admin
 async function requireAdmin() {
   const user = await requireAuth();
   if (!user) return;

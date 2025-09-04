@@ -1,39 +1,42 @@
 import { auth, checkAuthState, deleteUser } from "./auth.js";
-import { collection, addDoc, onSnapshot, serverTimestamp, query, orderBy, doc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { collection, addDoc, onSnapshot, serverTimestamp, query, orderBy, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 const db = window._firebase.db;
 if (!db) {
-    console.error("Firestore belum siap. Passtikan firebase init di <head> sudah jalan.");
+  console.error("Firestore belum siap. Pastikan firebase init di <head> sudah jalan.");
 }
 
 const surakartaCenter = [-7.566667, 110.816667];
 
 let map;
 let mapInitialized = false;
+let chart;
 
 // ===== Navigation =====
 function switchPage(pageName, event) {
   if (event) event.preventDefault();
 
-  document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+  document.querySelectorAll(".nav-item").forEach(item => item.classList.remove("active"));
 
   let clickedItem = null;
   if (event) {
-    clickedItem = event.target.closest('.nav-item') ||
-      (event.target.closest('.bottom-nav')?.querySelector(`[onclick*="${pageName}"]`) ?? null);
+    clickedItem = event.target.closest(".nav-item") ||
+      (event.target.closest(".bottom-nav")?.querySelector(`[onclick*="${pageName}"]`) ?? null);
   } else {
     clickedItem = document.querySelector(`.nav-item[onclick*="${pageName}"]`);
   }
-  if (clickedItem) clickedItem.classList.add('active');
+  if (clickedItem) clickedItem.classList.add("active");
 
-  document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll(".page-content").forEach(p => p.classList.remove("active"));
 
   const targetPage = document.getElementById(`${pageName}-page`);
   if (targetPage) {
-    targetPage.classList.add('active');
-    if (pageName === 'map' && !mapInitialized) setTimeout(initializeMap, 300);
+    targetPage.classList.add("active");
+
+    if (pageName === "map" && !mapInitialized) setTimeout(initializeMap, 300);
+    if (pageName === "home") initChart(); // [FIX] chart di-refresh tiap buka home
   } else {
-    console.error('Target page not found:', `${pageName}-page`);
+    console.error("Target page not found:", `${pageName}-page`);
   }
 }
 
@@ -41,50 +44,186 @@ function switchPage(pageName, event) {
 async function initApp() {
   try {
     const user = await checkAuthState();
-    console.log('App initialized with user:', user ? {
+    console.log("App initialized with user:", user ? {
       uid: user.uid, email: user.email, displayName: user.displayName
-    } : 'No user');
+    } : "No user");
 
     await updateProfileUI();
-    switchPage('home');
+    switchPage("home");
 
     updateTime();
     setInterval(updateTime, 1000);
 
-    updateStats();
-    setInterval(updateStats, 10000);
+    listenDeviceStats();
+    listenSensorData();
+    listenDevices();
 
-    if (window.location.hash === '#map') initializeMap();
-
+    if (window.location.hash === "#map") initializeMap();
   } catch (error) {
-    console.error('Error initializing app:', error);
+    console.error("Error initializing app:", error);
   }
 }
 
+function listenSensorData() {
+    const { rtdb, ref, onValue } = window._firebase;
+    const sensorRef = ref(rtdb, "sensor/data");
+
+    onValue(sensorRef, (snapshot) => {
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            console.log("Data sensor realtime: ", data);
+
+            // contoh update ke UI
+            const el = document.getElementById("sensorData");
+            if (el) el.textContent = JSON.stringify(data, null, 2);
+
+            //masukin ke grafik
+            if (data.displacement_cm !== undefined && data.vibrationMagnitude !== undefined) {
+                updateChart(data.displacement_cm, data.vibrationMagnitude);
+            }
+
+            let normal = 0, warning = 0;
+            if (data.vibrationMagnitude > 0.5 || data.displacement_cm > 1) {
+                warning++;
+            } else {
+                normal ++;
+            }
+
+            const elNormal = document.getElementById("legend-normal");
+            const elWarning = document.getElementById("legend-warning");
+            const elUser = document.getElementById("legend-user");
+
+            if (elNormal) elNormal.textContent = normal;
+            if (elWarning) elWarning.textContent = warning;
+            if (elUser) elUser.textContent = 1;
+        } else {
+            console.log("Belum ada data sensor");
+        }
+    });
+}
+
+function renderDeviceCard(id, dev) {
+    let statusClass = "";
+    let statusLabel = "";
+
+    switch (dev.status) {
+        case "online":
+            statusClass = "online";
+            statusLabel = `● Online (${dev.batteryStatus || 100}%)`;
+            break;
+        case "warning":
+            statusClass = "warning";
+            statusLabel = `⚠ Warning (${dev.batteryStatus || 70}%)`;
+            break;
+        case "offline":
+            statusClass = "offline"
+            statusLabel = `● Offline`;
+            break;
+    }
+
+    return `
+    <div class="device-card ${statusClass}">
+      <div class="device-header">
+        <div class="device-info">
+          <h3>${id}</h3>
+          <p>${dev.name || "Perangkat"} • ${dev.address || "Alamat tidak tersedia"}</p>
+        </div>
+        <div class="device-status ${statusClass}">
+          ${statusLabel}
+        </div>
+      </div>
+    </div>
+    `;
+}
+
+function listenDevices() {
+    const { rtdb, ref, onValue } = window._firebase;
+    const devicesRef = ref(rtdb, "devices");
+
+    onValue(devicesRef, (snapshot) => {
+        const listEl = document.getElementById("devicesContainer");
+        if (!listEl) return;
+
+        listEl.innerHTML = ""; 
+
+        if (snapshot.exists()) {
+            const devices = snapshot.val();
+            Object.entries(devices).forEach(([id, dev]) => {
+                listEl.innerHTML += renderDeviceCard(id, dev);
+            });
+        } else {
+            listEl.innerHTML = "<p>Tidak ada perangkat yang terhubung</p>";
+        }
+    });
+}
+
 // ===== Map =====
+let markers = [];
+let userMarker = null;
+
 function initializeMap() {
   try {
-    if (typeof L === 'undefined') {
+    if (typeof L === "undefined") {
       setTimeout(initializeMap, 100);
       return;
     }
 
-    map = L.map('map').setView(surakartaCenter, 13);
+    map = L.map("map").setView(surakartaCenter, 13);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
 
-    devices.forEach(device => {
-      const marker = L.marker([device.lat, device.lng]).addTo(map);
-      marker.bindPopup(`<b>${device.name}</b><br>${device.category}`);
+    const { rtdb, ref, onValue } = window._firebase;
+    const devicesRef = ref(rtdb, "devices");
+
+    onValue(devicesRef, (snapshot) => {
+        markers.forEach(m => map.removeLayer(m));
+        markers = [];
+
+        if (snapshot.exists()) {
+            const devices = snapshot.val();
+            Object.entries(devices).forEach(([id, dev]) => {
+                if (dev.lat && dev.lng) {
+                    const marker = L.marker([dev.lat, dev.lng]).addTo(map);
+                    marker.bindPopup(`<b>${id}</b><br>${dev.name}<br>${dev.status}`);
+                    markers.push(marker);
+                }
+            });
+        }
     });
+
+    // untuk pantau lokasi user
+    if (navigator.geolocation) {
+        navigator.geolocation.watchPosition(
+            (pos) => {
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+
+                if (!userMarker) {
+                    userMarker = L.marker([lat, lng], {
+                        icon: L.icon({
+                            iconUrl: "https://maps.gstatic.com/mapfiles/ms2/micons/blue-dot.png",
+                            iconSize: [32, 32]
+                        })
+                    }).addTo(map).bindPopup("📍 Perangkat Anda");
+                } else {
+                    userMarker.setLatLng([lat, lng]);
+                }
+            },
+            (err) => {
+                console.error("Gagal ambil lokasi user:", err);
+                alert("Lokasi tidak bisa diakses. Aktifkan GPS atau izinkan akses lokasi di browser.");
+            },
+            { enableHighAccuracy: true }
+        );
+    }
 
     mapInitialized = true;
   } catch (error) {
-    console.error('Error initializing map:', error);
-    const mapElement = document.getElementById('map');
+    console.error("Error initializing map:", error);
+    const mapElement = document.getElementById("map");
     if (mapElement) {
       mapElement.innerHTML = `
         <div style="display:flex;align-items:center;justify-content:center;height:100%;
@@ -105,118 +244,255 @@ function zoomOut() { if (map) map.zoomOut(); }
 function centerMap() { if (map) map.setView(surakartaCenter, 13); }
 
 // ===== UI helpers =====
-function showNotifications() { alert('Notifikasi akan ditampilkan di sini'); }
-function showDeviceDetail(deviceName) { console.log('Device detail:', deviceName); }
-function showLocationDetail(locationName) { console.log('Location detail:', locationName); }
-function showSetting(settingName) { console.log('Setting:', settingName); }
+function showNotifications() { alert("Notifikasi akan ditampilkan di sini"); }
+function showDeviceDetail(deviceName) { console.log("Device detail:", deviceName); }
+function showLocationDetail(locationName) { console.log("Location detail:", locationName); }
+function showSetting(settingName) { console.log("Setting:", settingName); }
 function showQuickActions() {
-  const el = document.getElementById('quickActions');
-  if (el) el.style.display = el.style.display === 'none' ? 'flex' : 'none';
+  const el = document.getElementById("quickActions");
+  if (el) el.style.display = el.style.display === "none" ? "flex" : "none";
 }
 
 async function logout() {
   try {
-    if (window.auth && typeof window.auth.signOut === 'function') {
+    if (window.auth && typeof window.auth.signOut === "function") {
       await window.auth.signOut();
     }
-    window.location.href = '/login.html';
+    window.location.href = "/login.html";
   } catch (error) {
-    console.error('Error signing out:', error);
-    alert('Gagal keluar. Silakan coba lagi.');
+    console.error("Error signing out:", error);
+    alert("Gagal keluar. Silakan coba lagi.");
   }
 }
 
-function updateStats() {
-  const stats = {
-    activeDevices: Math.floor(Math.random() * 50) + 50,
-    alerts: Math.floor(Math.random() * 10),
-    avgResponse: (Math.random() * 2 + 1).toFixed(2) + 's'
-  };
-  document.querySelectorAll('.stat-value').forEach(el => {
-    const t = el.getAttribute('data-stat');
-    if (t in stats) el.textContent = stats[t];
-  });
+function listenDeviceStats() {
+    const { rtdb, ref, onValue } = window._firebase;
+    const devicesRef = ref(rtdb, "devices");
+
+    onValue(devicesRef, (snapshot) => {
+        if (!snapshot.exists()) return;
+
+        const devices = snapshot.val();
+        let total = 0, online = 0, warning = 0, offline = 0, healthSum = 0;
+
+        Object.values(devices).forEach(dev => {
+            total ++;
+            if (dev.status === "online") online ++;
+            else if (dev.status === "warning") warning++;
+            else if (dev.status === "offline") offline++;
+            if (typeof dev.health === "number") healthSum += dev.health;
+        });
+
+        const avgHealth = total > 0 ? Math.round(healthSum / total) : 0;
+
+        //update stats section (kalau ada)
+        const stats = {
+            activeDevices: total,
+            alert: warning,
+            avgResponse: `${online} Online / ${offline} Offline`
+        };
+        document.querySelectorAll(".stat-value").forEach(el => {
+            const t = el.getAttribute("data-stat");
+            if (t in stats) el.textContent = stats[t];
+        });
+
+        //Update quick stats (home header)
+        const elTotal = document.querySelector(".quick-stat-value[data-stat='total']");
+        const elOnline = document.querySelector(".quick-stat-value[data-stat='online']");
+        const elHealth = document.querySelector(".quick-stat-value[data-stat='health']");
+
+        if (elTotal) elTotal.textContent = total;
+        if (elOnline) elOnline.textContent = online;
+        if (elHealth) elHealth.textContent = avgHealth + "%";
+    });
+}
+
+//Profile Realtime
+function listenUserDevicesCount() {
+    const { rtdb, ref, onValue } = window._firebase;
+    const devicesRef = ref(rtdb, "devices");
+    const user = window._firebase.auth.currentUser;
+
+    if (!user) return;
+
+    onValue(devicesRef, (snapshot) => {
+        if (!snapshot.exists()) return;
+        const devices = snapshot.val();
+        let myCount = 0;
+
+        Object.values(devices).forEach(dev => {
+            if (dev.ownerUid === user.uid) myCount++;
+        });
+
+        const el = document.getElementById("profileDevicesCount");
+        if (el) el.textContent = myCount;
+    });
+}
+
+function updateActiveDays(userCreatedAt) {
+    const now = new Date();
+    const created = new Date(userCreatedAt);
+    const diff = Math.floor((now - created) / (1000 * 60 * 60 * 24));
+
+    const el = document.getElementById("profileActiveDays");
+    if (el) el.textContent = diff;
+}
+
+function listenUserDataUsage() {
+    const { db } = window._firebase;
+    const usageRef = doc(db, "users", uid);
+
+    onSnapshot(usageRef, (snap) => {
+        const usage = snap.data().dataUsage || 0;
+        const el = document.getElementById("profileDataUsage");
+        if (el) el.textContent = `${(usage / (1024*1024*1024)).toFixed(1)}GB`;
+    });
 }
 
 function updateTime() {
   const now = new Date();
-  const timeString = now.getHours().toString().padStart(2, '0') + ':' +
-                     now.getMinutes().toString().padStart(2, '0');
-  const timeElement = document.querySelector('.status-bar div');
+  const timeString = now.getHours().toString().padStart(2, "0") + ":" +
+                     now.getMinutes().toString().padStart(2, "0");
+  const timeElement = document.querySelector(".status-bar div");
   if (timeElement) timeElement.textContent = timeString;
 }
 
 // ===== Sample devices =====
-const devices = [
-  { lat: -7.5694, lng: 110.8192, type: 'normal', name: 'Balai Kota Surakarta', category: 'Pemerintahan' },
-  { lat: -7.5695, lng: 110.8096, type: 'normal', name: 'RSUD Dr. Moewardi', category: 'Rumah Sakit' },
-  { lat: -7.56043, lng: 110.856619, type: 'warning', name: 'UNS Kentingan', category: 'Universitas' },
-  { lat: -7.5648, lng: 110.8242, type: 'normal', name: 'SMAN 1 Surakarta', category: 'Sekolah' },
-];
+// const devices = []
 
-// ===== Profile (ke Beranda & Profil harus tampil) =====
+// ===== Profile =====
 async function updateProfileUI() {
   try {
     const user = await checkAuthState();
+    const greetingName   = document.getElementById("greetingName");
+    const profileName    = document.getElementById("profileName");
+    const profileEmail   = document.getElementById("profileEmail");
+    const profileAvatar  = document.getElementById("profileAvatar");
+    const elDevicesCount = document.getElementById("profileDevicesCount");
+    const elActiveDays   = document.getElementById("profileActiveDays");
+    const elDataUsage    = document.getElementById("profileDataUsage");
+
     if (user) {
-      await user.reload();
+      const displayName = user.displayName || "Pengguna";
+      if (greetingName)  greetingName.textContent  = displayName;
+      if (profileName)   profileName.textContent   = displayName;
+      if (profileEmail)  profileEmail.textContent  = user.email || "";
+      if (profileAvatar) profileAvatar.textContent = (displayName[0] || "U").toUpperCase();
 
-      const displayName = user.displayName || 'Pengguna';
-      const greetingName = document.getElementById('greetingName');
-      const profileName  = document.getElementById('profileName');
-      const profileEmail = document.getElementById('profileEmail');
-      const profileAvatar = document.getElementById('profileAvatar');
+      const { rtdb, ref, onValue } = window._firebase;
 
-      if (greetingName) greetingName.textContent = displayName;
-      if (profileName)  profileName.textContent  = displayName;
-      if (profileEmail) profileEmail.textContent = user.email || '';
-      if (profileAvatar) profileAvatar.textContent = (displayName[0] || 'U').toUpperCase();
+      // 🔹 1. Hitung jumlah perangkat milik user
+      const devicesRef = ref(rtdb, "devices");
+      onValue(devicesRef, (snapshot) => {
+        if (!snapshot.exists()) return;
+        const devices = snapshot.val();
+        let myCount = 0;
+        Object.values(devices).forEach(dev => {
+          if (dev.ownerUid === user.uid) myCount++;
+        });
+        if (elDevicesCount) elDevicesCount.textContent = myCount;
+      });
+
+      // 🔹 2. Hitung hari aktif (pakai tanggal akun dibuat dari Firebase Auth)
+      if (user.metadata?.creationTime) {
+        const created = new Date(user.metadata.creationTime);
+        const diff = Math.floor((Date.now() - created) / (1000 * 60 * 60 * 24));
+        if (elActiveDays) elActiveDays.textContent = diff;
+      }
+
+      // 🔹 3. Data usage
+      const userRef = ref(rtdb, `users/${user.uid}/dataUsage`);
+      onValue(userRef, (snap) => {
+        if (snap.exists()) {
+          // Kalau ada dataUsage → langsung pakai
+          const usage = snap.val(); // byte
+          const gb = (usage / (1024*1024*1024)).toFixed(1);
+          if (elDataUsage) elDataUsage.textContent = `${gb}GB`;
+        } else {
+          // 🔹 Fallback: hitung dari semua perangkat user
+          const devicesRef = ref(rtdb, "devices");
+          onValue(devicesRef, (snapshot) => {
+            if (!snapshot.exists()) return;
+            const devices = snapshot.val();
+            let totalBytes = 0;
+
+            Object.values(devices).forEach(dev => {
+              if (dev.ownerUid === user.uid && dev.dataUsage) {
+                totalBytes += dev.dataUsage; // asumsinya tiap device simpan dataUsage
+              }
+            });
+
+            const gb = (totalBytes / (1024*1024*1024)).toFixed(1);
+            if (elDataUsage) elDataUsage.textContent = `${gb}GB`;
+          });
+        }
+      });
+
     } else {
-      // [NEW] Fallback biar gak "Memuat..." terus
-      const greetingName = document.getElementById('greetingName');
-      const profileName  = document.getElementById('profileName');
-      const profileEmail = document.getElementById('profileEmail');
-      const profileAvatar = document.getElementById('profileAvatar');
-
-      if (greetingName) greetingName.textContent = 'Tamu';
-      if (profileName)  profileName.textContent  = 'Tamu';
-      if (profileEmail) profileEmail.textContent = '—';
-      if (profileAvatar) profileAvatar.textContent = 'T';
+      // 🔹 User belum login
+      if (greetingName)  greetingName.textContent  = "Tamu";
+      if (profileName)   profileName.textContent   = "Tamu";
+      if (profileEmail)  profileEmail.textContent  = "—";
+      if (profileAvatar) profileAvatar.textContent = "T";
+      if (elDevicesCount) elDevicesCount.textContent = "0";
+      if (elActiveDays)   elActiveDays.textContent   = "0";
+      if (elDataUsage)    elDataUsage.textContent    = "0GB";
     }
   } catch (error) {
-    console.error('Error in updateProfileUI:', error);
+    console.error("Error in updateProfileUI:", error);
   }
 }
 
-// ===== Chart.js (pastikan muncul) =====
+// ===== Chart.js =====
 function initChart() {
-  const canvas = document.getElementById('myChart');
-  if (!canvas || typeof Chart === 'undefined') return;
+  const canvas = document.getElementById("myChart");
+  if (!canvas || typeof Chart === "undefined") return;
 
   const ctx = canvas.getContext("2d");
-  // (Tetap sama seperti punyamu)
-  new Chart(ctx, {
+  chart = new Chart(ctx, {
     type: "line",
     data: {
-      labels: ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"],
-      datasets: [{
-        label: "Data Sensor",
-        data: [12, 19, 7, 15, 10, 8, 17],
-        borderColor: "rgba(59, 130, 246, 1)",
-        backgroundColor: "rgba(59, 130, 246, 0.3)",
-        fill: true,
-        tension: 0.4
-      }]
+        labels: [],
+        datasets: [
+            {
+                label: "Displacement (cm)",
+                data: [],
+                borderColor: "rgba(59, 130, 246, 1)",
+                backgroundColor: "rgba(59, 130, 246, 0.3)",
+                fill: true,
+                tension: 0.4
+            },
+            {
+                label: "Vibration Magnitude",
+                data: [],
+                borderColor: "rgba(239, 68, 68, 1)",
+                backgroundColor: "rgba(239, 68, 68, 0.3)",
+                fill: true,
+                tension: 0.4
+            }
+        ]
     },
     options: {
-      responsive: true,
-      scales: { y: { beginAtZero: true } }
+        responsive: true,
+        scales: { y: { beginAtZero: true } }
     }
   });
 }
 
-// [FIX] Jangan panggil langsung (dulu: document.addEventListener("DOMContentLoaded", initChart()))
-document.addEventListener("DOMContentLoaded", initChart);
+// (biar chart aman, kita inisialisasi ulang pas masuk home)
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("SeismoSens app initialized");
+
+  initApp();
+  updateProfileUI();
+  loadForumPosts();
+
+  document.querySelectorAll(".device-card, .settings-item, .nav-item").forEach(el => {
+    el.addEventListener("touchstart", function(){ this.style.transform = "scale(0.98)"; });
+    el.addEventListener("touchend",   function(){ this.style.transform = ""; });
+    el.addEventListener("touchcancel",function(){ this.style.transform = ""; });
+  });
+});
 
 // ===== Forum =====
 // Tambah postingan
@@ -238,11 +514,11 @@ async function addForumPost() {
 
   try {
     const ref = await addDoc(collection(db, "forumPosts"), {
-        title: titleInput.value.trim(),
-        text: textInput.value.trim(),
-        author: user.displayName || user.email || "Anonim",
-        uid: user.uid,
-        time: serverTimestamp()
+      title: titleInput.value.trim(),
+      text: textInput.value.trim(),
+      author: user.displayName || user.email || "Anonim",
+      uid: user.uid,
+      time: serverTimestamp()
     });
     console.log("Postingan berhasil disimpan, id:", ref.id)
 
@@ -254,62 +530,109 @@ async function addForumPost() {
   }
 }
 
-// Tambah balasan di postingan
-async function addReply(postId, replyText, parentId = null) {
-    const user = window._firebase.auth.currentUser;
-    if (!user) {
-        alert("Anda harus login untuk membalas.");
-        return;
-    }
-    if (!replyText.trim()) return;
+// Tambah balasan (flat, tidak nested)
+async function addReply(postId, replyText) {
+  const user = window._firebase.auth.currentUser;
+  if (!user) {
+    alert("Anda harus login untuk membalas.");
+    return;
+  }
+  if (!replyText.trim()) return;
 
-    try {
-        const postRef = doc(db, "forumPosts", postId);
-        await addDoc(collection(postRef, "replies"), {
-            text: replyText,
-            author: user.displayName || user.email || "Anonim",
-            uid: user.uid,
-            parentId: parentId,
-            time: serverTimestamp()
-        });
-    } catch (error) {
-        console.error("Error menambahkan balasan:", error);
-        alert("Gagal menambahakan balasan.");
+  const input = document.getElementById(`replyInput-${postId}`);
+  const replyToName = input?.getAttribute("data-reply-to") || null;
+
+  // tambahkan @username kalau membalas seseorang
+  let finalText = replyText.trim();
+  if (replyToName) {
+    // cek biar ga dobel @username
+    if (!finalText.startsWith(`@${replyToName}`)) {
+      finalText = `@${replyToName} ${finalText}`;
     }
+  }
+
+  try {
+    const postRef = doc(db, "forumPosts", postId);
+    await addDoc(collection(postRef, "replies"), {
+      text: finalText,
+      author: user.displayName || user.email || "Anonim",
+      uid: user.uid,
+      time: serverTimestamp()
+    });
+
+    // reset input setelah kirim
+    input.value = "";
+    input.removeAttribute("data-reply-to");
+    input.placeholder = "Balas...";
+  } catch (error) {
+    console.error("Error menambahkan balasan:", error);
+    alert("Gagal menambahkan balasan.");
+  }
 }
 
-function renderReply(replyData, container, postId, level = 0) {
+function renderReply(replyData, container, postId) {
   const template = document.getElementById("replyTemplate");
   if (!template) return;
 
   const clone = template.content.cloneNode(true);
-  clone.querySelector(".reply-text").textContent = replyData.text;
-  clone.querySelector(".reply-author").textContent = `${replyData.author} • ${replyData.time?.toDate?.().toLocaleString?.() || "-"}`;
+  const textEl   = clone.querySelector(".reply-text");
+  const authorEl = clone.querySelector(".reply-author");
+  const actionEl = clone.querySelector(".reply-actions");
 
-  // kalau level > 0, kasih class nested
-  if (level > 0) clone.querySelector(".reply-card").classList.add("reply-nested");
+  // isi konten balasan
+  if (textEl) textEl.textContent = replyData.text;
+  if (authorEl) {
+    const timeText = replyData.time?.toDate?.().toLocaleString?.() || "-";
+    authorEl.textContent = `${replyData.author} • ${timeText}`;
+  }
 
-  // Tambahkan interaksi ke tulisan "Balas"
-  const replyAction = clone.querySelector(".reply-actions");
-  replyAction.addEventListener("click", () => {
-    const input = document.getElementById(`replyInput-${postId}`);
-    if (input) {
-      input.placeholder = `Balas ${replyData.author}...`;
-      input.focus();
-      // (opsional) kasih attribute biar nanti tau sedang balas siapa
-      input.setAttribute("data-reply-to", replyData.author);
+  if (actionEl) {
+    // tombol Balas (sudah ada di template HTML)
+    const replyBtn = actionEl.querySelector(".reply-reply");
+    if (replyBtn) {
+      replyBtn.onclick = () => {
+        const input = document.getElementById(`replyInput-${postId}`);
+        if (input) {
+          input.placeholder = `Balas ${replyData.author}...`;
+          input.setAttribute("data-reply-to", replyData.author); // ✅ simpan username
+          input.focus();
+        }
+      };
     }
-  });
+
+    // kalau user pemilik reply → kasih tombol Hapus
+    const user = window._firebase.auth.currentUser;
+    if (user && replyData.uid && user.uid === replyData.uid) {
+      const deleteLink = document.createElement("span");
+      deleteLink.textContent = "Hapus";
+      deleteLink.className = "reply-delete";
+      deleteLink.onclick = async () => {
+        if (confirm("Yakin hapus komentar ini?")) {
+          try {
+            const replyRef = doc(db, "forumPosts", postId, "replies", replyData.id);
+            await deleteDoc(replyRef);
+            console.log("✅ Komentar dihapus:", replyData.id);
+          } catch (err) {
+            console.error("❌ Gagal hapus komentar:", err);
+            alert("Komentar gagal dihapus.");
+          }
+        }
+      };
+
+      actionEl.appendChild(document.createTextNode(" • "));
+      actionEl.appendChild(deleteLink);
+    }
+  }
 
   container.appendChild(clone);
 }
 
 function renderForumPost(postData, container, postId) {
-  const post = document.createElement('div');
+  const post = document.createElement("div");
   post.className = "device-card";
 
   let timeText = "-";
-  if (postData.time && typeof postData.time.toDate === 'function') {
+  if (postData.time && typeof postData.time.toDate === "function") {
     timeText = postData.time.toDate().toLocaleString();
   }
 
@@ -336,12 +659,10 @@ function renderForumPost(postData, container, postId) {
   onSnapshot(q, (snapshot) => {
     repliesContainer.innerHTML = "";
     const replies = [];
-    snapshot.forEach((doc) => {
-        replies.push({ id: doc.id, ...doc.data() });
-    });
+    snapshot.forEach((docSnap) => replies.push({ id: docSnap.id, ...docSnap.data() }));
 
     if (replies.length > 1) {
-      // tampilkan hanya 1 komentar terakhir
+      // tampilkan hanya komentar terakhir
       renderReply(replies[replies.length - 1], repliesContainer, postId);
 
       // tombol "tampilkan lainnya"
@@ -355,39 +676,21 @@ function renderForumPost(postData, container, postId) {
       };
       repliesContainer.prepend(btn);
     } else {
-      // kalau cuma 1 atau 0, tampilkan semua
+      // kalau cuma 1 atau 0 → tampilkan semua
       replies.forEach(r => renderReply(r, repliesContainer, postId));
     }
   });
 }
 
-// untuk menentukan target balasan
-let currentReplyTarget = null;
-function setReplyTarget(postId, replyId, authorName) {
-    const input = document.getElementById(`replyInput-${postId}`);
-    if (input) {
-        input.placeholder = `Balas ${authorName}...`;
-        input.focus();
-        currentReplyTarget = { postId, replyId };
-    }
-}
-
-// fungsii kirim balasan
-window.sendReply = function (postId){
-    const input = document.getElementById(`replyInput-${postId}`);
-    if (input && input.value.trim()) {
-        const replyText = input.value.trim();
-        const parentId = (currentReplyTarget && currentReplyTarget.postId === postId)
-            ? currentReplyTarget.replyId
-            : null;
-
-        addReply(postId, replyText, parentId);
-        input.value = "";
-        input.placeholder = "Tulis balasan...";
-        currentReplyTarget = null;
-    }
+// Kirim balasan
+window.sendReply = function (postId) {
+  const input = document.getElementById(`replyInput-${postId}`);
+  if (input && input.value.trim()) {
+    addReply(postId, input.value.trim());
+  }
 };
 
+// Load semua post
 function loadForumPosts() {
   const postsContainer = document.getElementById('forumPosts');
   if (!postsContainer) return;
@@ -400,45 +703,21 @@ function loadForumPosts() {
     postsContainer.innerHTML = "";
 
     snapshot.forEach((docSnap) => {
-        console.log("Post data:", docSnap.id, docSnap.data());
-        const post = docSnap.data();
-        renderForumPost({
-            title: post.title || "(Tanpa judul)",
-            text: post.text || "",
-            author: post.author || "Anonim",
-            time: post.time || null
-        }, postsContainer, docSnap.id);
+      console.log("Post data:", docSnap.id, docSnap.data());
+      const post = docSnap.data();
+      renderForumPost({
+        title: post.title || "(Tanpa judul)",
+        text: post.text || "",
+        author: post.author || "Anonim",
+        time: post.time || null
+      }, postsContainer, docSnap.id);
     });
   }, (err) => {
     console.error('onSnapshot error:', err);
   });
 }
 
-window.sendReply = function (postId){
-    const input = document.getElementById(`replyInput-${postId}`);
-    if (input && input.value.trim()) {
-        addReply(postId, input.value.trim());
-        input.value = "";
-    }
-};
-
-// ===== DOM Ready =====
-document.addEventListener('DOMContentLoaded', () => {
-  console.log('SeismoSens app initialized');
-
-  initApp();
-
-  document.querySelectorAll('.device-card, .settings-item, .nav-item').forEach(el => {
-    el.addEventListener('touchstart', function(){ this.style.transform = 'scale(0.98)'; });
-    el.addEventListener('touchend',   function(){ this.style.transform = ''; });
-    el.addEventListener('touchcancel',function(){ this.style.transform = ''; });
-  });
-
-  updateProfileUI();
-  loadForumPosts();
-});
-
-// ===== Expose ke window (SATU KALI, rapih) =====
+// ===== Expose ke window =====
 window.switchPage = switchPage;
 window.initApp = initApp;
 window.initializeMap = initializeMap;
@@ -450,47 +729,9 @@ window.showDeviceDetail = showDeviceDetail;
 window.showLocationDetail = showLocationDetail;
 window.showSetting = showSetting;
 window.showQuickActions = showQuickActions;
-window.updateStats = updateStats;
+window.listenDeviceStats = listenDeviceStats;
 window.updateTime = updateTime;
 window.logout = logout;
 window.updateProfileUI = updateProfileUI;
 window.addForumPost = addForumPost;
 window.loadForumPosts = loadForumPosts;
-
-window.deleteAccount = async function () {
-  if (confirm('Apakah Anda yakin ingin menghapus akun ini? Tindakan ini tidak dapat dibatalkan.')) {
-    try {
-      const user = window._firebase.auth.currentUser;
-      if (user) {
-        await deleteUser(user);
-        alert('Akun berhasil dihapus');
-        window.location.href = '/login.html';
-      }
-    } catch (error) {
-      console.error('Error deleting account:', error);
-      alert('Gagal menghapus akun: ' + error.message);
-    }
-  }
-};
-
-// ===== Debug =====
-console.log('Global functions initialized:', {
-  switchPage: typeof window.switchPage,
-  initApp: typeof window.initApp,
-  initializeMap: typeof window.initializeMap,
-  zoomIn: typeof window.zoomIn,
-  zoomOut: typeof window.zoomOut,
-  centerMap: typeof window.centerMap,
-  showNotifications: typeof window.showNotifications,
-  showDeviceDetail: typeof window.showDeviceDetail,
-  showLocationDetail: typeof window.showLocationDetail,
-  showSetting: typeof window.showSetting,
-  showQuickActions: typeof window.showQuickActions,
-  updateStats: typeof window.updateStats,
-  updateTime: typeof window.updateTime,
-  logout: typeof window.logout,
-  updateProfileUI: typeof window.updateProfileUI,
-  addForumPost: typeof window.addForumPost,
-  loadForumPosts: typeof window.loadForumPosts,
-  deleteAccount: typeof window.deleteAccount
-});
