@@ -135,10 +135,6 @@ server.listen(port, '0.0.0.0', () => {
     console.log('Available pages:');
     console.log(`- Login: http://localhost:${port}/public/login.html`);
     console.log(`- Register: http://localhost:${port}/public/register.html`);
-<<<<<<< HEAD
     console.log(`- Main App: http://localhost:${port}/public/index.html`);
     console.log(`- Admin: http://localhost:${port}/admin/admin.html`);
-=======
-    console.log(`- Main App: http://localhost:${port}/public/seismosens.html`);
->>>>>>> 56ad33b7b4ff55894abb36ed371c91bff165cf3b
 });

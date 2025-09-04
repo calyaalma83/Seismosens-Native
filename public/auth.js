@@ -4,6 +4,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
+  deleteUser,
   setPersistence,
   browserSessionPersistence
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
@@ -144,5 +145,6 @@ export {
   requireAdmin,
   signInWithEmailAndPassword,
   updateProfile,
-  logoutUser
+  logoutUser,
+  deleteUser 
 };
