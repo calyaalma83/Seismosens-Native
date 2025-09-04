@@ -1,4 +1,5 @@
 import { 
+  getAuth,
   onAuthStateChanged,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -6,22 +7,22 @@ import {
   updateProfile,
   deleteUser,
   setPersistence,
-  browserSessionPersistence
+  browserSessionPersistence,
+  deleteUser
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 import { 
   doc, 
   setDoc, 
   getDoc, 
-  serverTimestamp 
+  serverTimestamp,
+  getFirestore 
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-// 🔹 Ambil auth & db dari firebase.js
-import { auth, db } from "./firebase.js";
+// ✅ Gunakan app yang sudah diinisialisasi di seismosens.html
+const auth = getAuth(window._firebase.app);
+const db = getFirestore(window._firebase.app);
 
-// ================================
-// PERSIST LOGIN
-// ================================
 setPersistence(auth, browserSessionPersistence);
 
 // Supaya bisa diakses global (opsional untuk debug)
@@ -62,9 +63,6 @@ async function redirectIfAuthenticated() {
   return false;
 }
 
-// ================================
-// REQUIRE ADMIN
-// ================================
 async function requireAdmin() {
   const user = await requireAuth();
   if (!user) return;
@@ -146,5 +144,5 @@ export {
   signInWithEmailAndPassword,
   updateProfile,
   logoutUser,
-  deleteUser 
+  deleteUser
 };

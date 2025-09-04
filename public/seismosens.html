@@ -13,7 +13,8 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
         import { getAuth } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
         import { getFirestore } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-        
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
+
         // Firebase config 
         const firebaseConfig = {
         apiKey: "AIzaSyD07M2-79Yh0CzotaQeGYYy4WLZoevTdWY",
@@ -21,16 +22,18 @@
         projectId: "seismosens-a048e",
         storageBucket: "seismosens-a048e.appspot.com",
         messagingSenderId: "358453169511",
-        appId: "1:358453169511:web:fccc32bf22ede39ff0b3c2"
+        appId: "1:358453169511:web:fccc32bf22ede39ff0b3c2",
+        databaseURL: "https://seismosens-a048e-default-rtdb.asia-southeast1.firebasedatabase.app/"
         };
 
         // Init app
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const rtdb = getDatabase(app);
 
         // Export ke window biar bisa dipakai di seismosens.js
-        window._firebase = { app, auth, db };
+        window._firebase = { app, auth, db, rtdb, ref, onValue };
     </script>
 </head>
 <body>
@@ -57,15 +60,15 @@
                     
                     <div class="quick-stats">
                         <div class="quick-stat">
-                            <div class="quick-stat-value">3</div>
+                            <div class="quick-stat-value" data-stat="total">0</div>
                             <div class="quick-stat-label">Perangkat</div>
                         </div>
                         <div class="quick-stat">
-                            <div class="quick-stat-value">2</div>
+                            <div class="quick-stat-value" data-stat="online">0</div>
                             <div class="quick-stat-label">Online</div>
                         </div>
                         <div class="quick-stat">
-                            <div class="quick-stat-value">92%</div>
+                            <div class="quick-stat-value" data-stat="health">0%</div>
                             <div class="quick-stat-label">Health</div>
                         </div>
                     </div>
@@ -106,37 +109,10 @@
                     </div>
                 </div>
                 
-                <div class="content-section">
-                    <div class="device-card" onclick="showDeviceDetail('SMS-USER-001')">
-                        <div class="device-header">
-                            <div class="device-info">
-                                <h3>SMS-USER-001</h3>
-                                <p>Rumah Tinggal • Jl. Slamet Riyadi No. 234</p>
-                            </div>
-                            <div class="device-status online">● Online (95%)</div>
-                        </div>
-                    </div>
-                    
-                    <div class="device-card warning" onclick="showDeviceDetail('SMS-USER-002')">
-                        <div class="device-header">
-                            <div class="device-info">
-                                <h3>SMS-USER-002</h3>
-                                <p>Kantor • Jl. Dr. Rajiman No. 45</p>
-                            </div>
-                            <div class="device-status warning">⚠ Warning (78%)</div>
-                        </div>
-                    </div>
-                    
-                    <div class="device-card offline" onclick="showDeviceDetail('SMS-USER-003')">
-                        <div class="device-header">
-                            <div class="device-info">
-                                <h3>SMS-USER-003</h3>
-                                <p>Gudang • Jl. Adi Sucipto No. 12</p>
-                            </div>
-                            <div class="device-status offline">● Offline</div>
-                        </div>
-                    </div>
-                </div>
+                <!-- Container kosong untuk diisi lewat JS -->
+                 <div class="content-section" id="devicesContainer">
+                    <p style="text-align: center; color: gray;">Memuat perangkat...</p>
+                 </div>
             </div>
 
             <!-- Map Page -->
@@ -155,19 +131,15 @@
                         <div style="font-weight: 600; margin-bottom: 8px;">SeismoSens Network</div>
                         <div class="legend-item">
                             <div class="legend-dot" style="background: #10b981;"></div>
-                            <span>Normal (1,156)</span>
+                            <span>Normal (<span id="legend-normal">0</span>)</span>
                         </div>
                         <div class="legend-item">
                             <div class="legend-dot" style="background: #f59e0b;"></div>
-                            <span>Warning (23)</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-dot" style="background: #ef4444;"></div>
-                            <span>Offline (8)</span>
+                            <span>Warning (<span id="legend-warning">0</span>)</span>
                         </div>
                         <div class="legend-item">
                             <div class="legend-dot" style="background: #3b82f6;"></div>
-                            <span>Perangkat Anda (3)</span>
+                            <span>Perangkat Anda (<span id="legend-user">0</span>)</span>
                         </div>
                     </div>
                     
@@ -185,7 +157,6 @@
                         <button class="map-filter active" onclick="filterMarkers('all')" style="padding: 6px 12px; border: none; border-radius: 15px; background: #3b82f6; color: white; font-size: 12px; cursor: pointer;">Semua</button>
                         <button class="map-filter" onclick="filterMarkers('normal')" style="padding: 6px 12px; border: 1px solid #e2e8f0; border-radius: 15px; background: white; color: #64748b; font-size: 12px; cursor: pointer;">Normal</button>
                         <button class="map-filter" onclick="filterMarkers('warning')" style="padding: 6px 12px; border: 1px solid #e2e8f0; border-radius: 15px; background: white; color: #64748b; font-size: 12px; cursor: pointer;">Warning</button>
-                        <button class="map-filter" onclick="filterMarkers('offline')" style="padding: 6px 12px; border: 1px solid #e2e8f0; border-radius: 15px; background: white; color: #64748b; font-size: 12px; cursor: pointer;">Offline</button>
                         <button class="map-filter" onclick="filterMarkers('user')" style="padding: 6px 12px; border: 1px solid #e2e8f0; border-radius: 15px; background: white; color: #64748b; font-size: 12px; cursor: pointer;">Milik Saya</button>
                     </div>
                 </div>
@@ -196,75 +167,12 @@
                     <!-- Stats Grid -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
                         <div style="background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                            <div style="font-size: 20px; font-weight: 700; color: #10b981;">1,187</div>
+                            <div style="font-size: 20px; font-weight: 700; color: #10b981;">-</div>
                             <div style="font-size: 11px; color: #64748b;">Total Aktif</div>
                         </div>
                         <div style="background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                            <div style="font-size: 20px; font-weight: 700; color: #3b82f6;">97.4%</div>
+                            <div style="font-size: 20px; font-weight: 700; color: #3b82f6;">-</div>
                             <div style="font-size: 11px; color: #64748b;">Uptime Kota</div>
-                        </div>
-                    </div>
-                    
-                    <div class="device-card" onclick="showLocationDetail('Balai Kota Surakarta')">
-                        <div class="device-header">
-                            <div class="device-info">
-                                <h3>Balai Kota Surakarta</h3>
-                                <p>0.8 km • Pemerintahan • Jl. Jend. Sudirman</p>
-                            </div>
-                            <div class="device-status online">● Normal</div>
-                        </div>
-                    </div>
-                    
-                    <div class="device-card" onclick="showLocationDetail('RSUD Dr. Moewardi')">
-                        <div class="device-header">
-                            <div class="device-info">
-                                <h3>RSUD Dr. Moewardi</h3>
-                                <p>1.2 km • Rumah Sakit • Jl. Kol. Sutarto</p>
-                            </div>
-                            <div class="device-status online">● Normal</div>
-                        </div>
-                    </div>
-                    
-                    <div class="device-card warning" onclick="showLocationDetail('UNS Kentingan')">
-                        <div class="device-header">
-                            <div class="device-info">
-                                <h3>UNS Kentingan</h3>
-                                <p>2.1 km • Universitas • Jl. Ir. Sutami</p>
-                            </div>
-                            <div class="device-status warning">⚠ Warning</div>
-                        </div>
-                    </div>
-                    
-                    <div class="device-card" onclick="showLocationDetail('Keraton Surakarta')">
-                        <div class="device-header">
-                            <div class="device-info">
-                                <h3>Keraton Surakarta</h3>
-                                <p>1.8 km • Budaya • Jl. Brigjen Slamet Riyadi</p>
-                            </div>
-                            <div class="device-status online">● Normal</div>
-                        </div>
-                    </div>
-
-                    <!-- Your Devices in Solo -->
-                    <div style="font-weight: 600; margin: 20px 0 10px; color: #1e293b;">Perangkat Anda di Solo</div>
-                    
-                    <div class="device-card" style="border-left-color: #3b82f6;" onclick="showDeviceDetail('SMS-USER-001')">
-                        <div class="device-header">
-                            <div class="device-info">
-                                <h3>SMS-USER-001</h3>
-                                <p>Rumah Tinggal • Jl. Slamet Riyadi No. 234</p>
-                            </div>
-                            <div class="device-status online" style="background: #eff6ff; color: #3b82f6;">● Milik Anda</div>
-                        </div>
-                        <div class="device-metrics">
-                            <div class="metric">
-                                <div class="metric-value">95%</div>
-                                <div class="metric-label">Health</div>
-                            </div>
-                            <div class="metric">
-                                <div class="metric-value">Online</div>
-                                <div class="metric-label">Status</div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -320,15 +228,15 @@
                     
                     <div style="display: flex; justify-content: space-around; margin-top: 20px;">
                         <div style="text-align: center;">
-                            <div style="font-size: 18px; font-weight: 700; color: white;">3</div>
+                            <div id="profileDevicesCount" style="font-size: 18px; font-weight: 700; color: white;">0</div>
                             <div style="font-size: 11px; opacity: 0.9;">Perangkat</div>
                         </div>
                         <div style="text-align: center;">
-                            <div style="font-size: 18px; font-weight: 700; color: white;">156</div>
+                            <div id="profileActiveDays" style="font-size: 18px; font-weight: 700; color: white;">0</div>
                             <div style="font-size: 11px; opacity: 0.9;">Hari Aktif</div>
                         </div>
                         <div style="text-align: center;">
-                            <div style="font-size: 18px; font-weight: 700; color: white;">2.3GB</div>
+                            <div id="profileDataUsage" style="font-size: 18px; font-weight: 700; color: white;">0GB</div>
                             <div style="font-size: 11px; opacity: 0.9;">Data</div>
                         </div>
                     </div>
@@ -475,7 +383,8 @@
             </div>
         </div>
 
-       
+        <!-- FAB -->
+        <div class="fab" onclick="window.showQuickActions()">+</div>
 
         <!-- Bottom Navigation -->
         <div class="bottom-nav">
