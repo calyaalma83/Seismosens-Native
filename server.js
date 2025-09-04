@@ -26,13 +26,13 @@ const server = http.createServer((req, res) => {
 
     // Handle root URL
     if (req.url === '/') {
-        res.writeHead(302, { 'Location': '/login/login.html' });
+        res.writeHead(302, { 'Location': '/public/login.html' });
         return res.end();
     }
 
     // Handle main app route
     if (req.url === '/app') {
-        res.writeHead(302, { 'Location': '/seismosens.html' });
+        res.writeHead(302, { 'Location': '/public/seismosens.html' });
         return res.end();
     }
 
@@ -133,7 +133,8 @@ server.listen(port, '0.0.0.0', () => {
     console.log(`Server running at http://localhost:${port}/`);
     console.log('Press Ctrl+C to stop the server');
     console.log('Available pages:');
-    console.log(`- Login: http://localhost:${port}/login/login.html`);
-    console.log(`- Register: http://localhost:${port}/register/register.html`);
-    console.log(`- Main App: http://localhost:${port}/seismosens.html`);
+    console.log(`- Login: http://localhost:${port}/public/login.html`);
+    console.log(`- Register: http://localhost:${port}/public/register.html`);
+    console.log(`- Main App: http://localhost:${port}/public/index.html`);
+    console.log(`- Admin: http://localhost:${port}/admin/admin.html`);
 });

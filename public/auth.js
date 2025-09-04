@@ -1,43 +1,35 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { 
-  getAuth, 
   onAuthStateChanged,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
   setPersistence,
-  browserSessionPersistence,
-  deleteUser as fbDeleteUser
+  browserSessionPersistence
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 import { 
-  getFirestore, 
   doc, 
   setDoc, 
   getDoc, 
   serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-// 🔹 Firebase config
-const firebaseConfig = {
-  apiKey: "AIzaSyD07M2-79Yh0CzotaQeGYYy4WLZoevTdWY",
-  authDomain: "seismosens-a048e.firebaseapp.com",
-  projectId: "seismosens-a048e",
-  storageBucket: "seismosens-a048e.appspot.com",
-  messagingSenderId: "358453169511",
-  appId: "1:358453169511:web:fccc32bf22ede39ff0b3c2"
-};
+// 🔹 Ambil auth & db dari firebase.js
+import { auth, db } from "./firebase.js";
 
-// 🔹 Init
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-// Set persistence supaya login nggak hilang setelah refresh
+// ================================
+// PERSIST LOGIN
+// ================================
 setPersistence(auth, browserSessionPersistence);
 
+// Supaya bisa diakses global (opsional untuk debug)
 window.auth = auth;
+window.db = db;
 
+// ================================
+// CEK STATE AUTH
+// ================================
 function checkAuthState() {
   return new Promise((resolve) => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -51,61 +43,97 @@ function checkAuthState() {
 async function requireAuth() {
   const user = await checkAuthState();
   if (!user) {
-    window.location.href = '/login/login.html';
+    window.location.href = "/public/login.html";
     return false;
   }
   return user;
 }
 
-// Redirect ke home kalau sudah login
+// 🔹 Redirect ke home kalau sudah login
 async function redirectIfAuthenticated() {
   const user = await checkAuthState();
   const fromDelete = sessionStorage.getItem("fromDeleteAccount") === "true";
 
-  // Hanya redirect normal kalau user sudah login dan bukan proses delete
   if (user && !fromDelete) {
-    window.location.href = '/seismosens.html';
+    window.location.href = "./seismosens.html"; 
     return true;
   }
-
-  // Jangan hapus flag di sini, biar login + delete tetap aman
   return false;
 }
 
-
-// ==================================================
-// 🔑 Tambahan untuk Role Management (user / admin)
-// ==================================================
-
-// Register user baru (default: role=user)
-async function registerUser(email, password, role = "user") {
-  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-  const user = userCredential.user;
-
-  // Simpan ke Firestore
-  await setDoc(doc(db, "users", user.uid), {
-    email,
-    role,
-    createdAt: serverTimestamp()
-  });
-
-  return user;
-}
-
-// Cek apakah user admin
+// ================================
+// REQUIRE ADMIN
+// ================================
 async function requireAdmin() {
   const user = await requireAuth();
   if (!user) return;
 
-  const snap = await getDoc(doc(db, "users", user.uid));
-  if (!snap.exists() || snap.data().role !== "admin") {
-    alert("Akses ditolak. Anda bukan admin.");
-    window.location.href = "/seismosens.html";
-    return false;
+  try {
+    const snap = await getDoc(doc(db, "users", user.uid));
+    if (!snap.exists()) {
+      console.warn("❌ User tidak ada di Firestore");
+      alert("Akun belum terdaftar di database.");
+      window.location.href = "/public/seismosens.html";
+      return false;
+    }
+
+    const role = snap.data().role;
+    console.log("👤 Login sebagai:", user.email, "| Role:", role);
+
+    if (role !== "admin") {
+      alert("Akses ditolak. Kamu bukan admin.");
+      window.location.href = "/public/seismosens.html";
+      return false;
+    }
+    return user;
+  } catch (err) {
+    console.error("❌ Error requireAdmin:", err);
+    alert("Gagal memeriksa hak akses admin.");
+    window.location.href = "/public/login.html";
   }
-  return user;
 }
 
+// ================================
+// REGISTER USER
+// ================================
+async function registerUser(email, password, nama, role = "user") {
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    const user = cred.user;
+
+    await setDoc(doc(db, "users", user.uid), {
+      email,
+      nama,
+      role,
+      createdAt: serverTimestamp()
+    });
+
+    await updateProfile(user, { displayName: nama });
+
+    console.log("✅ Register berhasil:", email);
+    return user;
+  } catch (err) {
+    console.error("❌ Error registerUser:", err);
+    throw err;
+  }
+}
+
+// ================================
+// LOGOUT USER
+// ================================
+async function logoutUser() {
+  try {
+    await signOut(auth);
+    console.log("✅ User logout");
+    window.location.href = "/public/login.html";
+  } catch (err) {
+    console.error("❌ Error logoutUser:", err);
+  }
+}
+
+// ================================
+// EXPORT
+// ================================
 export { 
   auth,
   db,
@@ -114,9 +142,7 @@ export {
   redirectIfAuthenticated,
   registerUser,
   requireAdmin,
-  createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  signOut,
   updateProfile,
-  fbDeleteUser as deleteUser
+  logoutUser
 };

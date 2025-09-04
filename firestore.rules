@@ -1,0 +1,47 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (isOwner(userId) || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true);
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update, delete: if isAuthenticated() && isOwner(userId);
+    }
+    
+    // News collection
+    match /news/{newsId} {
+      allow read: if true;  // Public read access
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && resource.data.authorId == request.auth.uid;
+    }
+    
+    // Forum posts
+    match /posts/{postId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && resource.data.authorId == request.auth.uid;
+      
+      // Replies to posts
+      match /replies/{replyId} {
+        allow read: if true;
+        allow create: if isAuthenticated();
+        allow update, delete: if isAuthenticated() && resource.data.authorId == request.auth.uid;
+      }
+    }
+    
+    // Devices collection
+    match /devices/{deviceId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+  }
+}

@@ -1,22 +1,40 @@
-import { auth, createUserWithEmailAndPassword, updateProfile, signInWithEmailAndPassword, redirectIfAuthenticated } from "./auth.js";
+import { auth, db, registerUser, redirectIfAuthenticated } from "./auth.js"; 
+// ✅ karena register.js & auth.js sama-sama di /public/
 
 console.log("Register script loaded");
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // Redirect jika sudah login
+  // 🔹 Redirect kalau sudah login
   await redirectIfAuthenticated();
 
   const form = document.getElementById("registerForm");
   if (!form) {
-    console.error('Register form not found!');
+    console.error("Register form not found!");
     return;
   }
 
+  // 🔹 Toggle show/hide password
+  document.querySelectorAll(".toggle-password").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const input = document.getElementById(btn.getAttribute("data-target"));
+      if (!input) return;
+
+      if (input.type === "password") {
+        input.type = "text";
+        btn.textContent = "🙈"; // ubah jadi hide
+      } else {
+        input.type = "password";
+        btn.textContent = "👁️"; // ubah jadi show
+      }
+    });
+  });
+
+  // 🔹 Handle submit form
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const nama = document.getElementById("nama").value;
-    const email = document.getElementById("email").value;
+    const nama = document.getElementById("nama").value.trim();
+    const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
     const confirmPassword = document.getElementById("confirmPassword").value;
 
@@ -27,57 +45,33 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     try {
       console.log("Registering user:", email);
-      
-      // Buat user baru
-      console.log('Creating user with email:', email);
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      console.log('User created, updating profile with name:', nama);
-      
-      // Pastikan user sudah terautentikasi sebelum update profile
-      if (auth.currentUser) {
-        // Update profile dengan nama
-        await updateProfile(auth.currentUser, { 
-          displayName: nama 
-        });
-        
-        // Refresh token untuk memastikan data terupdate
-        await auth.currentUser.reload();
-        
-        console.log('Profile updated, verifying displayName:', auth.currentUser.displayName);
-      } else {
-        console.error('No authenticated user found after registration');
-        throw new Error('Authentication failed after registration');
-      }
 
-      // Login otomatis setelah registrasi tidak diperlukan karena sudah login
-      console.log('Registration successful, user data:', {
-        displayName: auth.currentUser.displayName,
-        email: auth.currentUser.email,
-        uid: auth.currentUser.uid
-      });
-      
-      // Redirect ke halaman utama
-      console.log('Redirecting to main page');
-      window.location.href = '/seismosens.html';
-      
+      // 🔹 Buat user baru + simpan ke Firestore & Auth
+      await registerUser(email, password, nama);
+
+      console.log("Registrasi berhasil:", { nama, email });
+
+      // 🔹 Redirect ke halaman utama setelah sukses
+      window.location.href = "./seismosens.html"; // ✅ karena seismosens.html ada di /public/
+
     } catch (error) {
       console.error("Registration error:", error);
       let errorMessage = "Registrasi gagal: ";
-      
+
       switch (error.code) {
-        case "auth/email-already-in-use": 
-          errorMessage = "Email sudah terdaftar"; 
+        case "auth/email-already-in-use":
+          errorMessage = "Email sudah terdaftar";
           break;
-        case "auth/weak-password": 
-          errorMessage = "Password terlalu lemah, minimal 6 karakter"; 
+        case "auth/weak-password":
+          errorMessage = "Password terlalu lemah, minimal 6 karakter";
           break;
-        case "auth/invalid-email": 
-          errorMessage = "Format email tidak valid"; 
+        case "auth/invalid-email":
+          errorMessage = "Format email tidak valid";
           break;
-        default: 
+        default:
           errorMessage += error.message;
       }
-      
+
       alert(errorMessage);
     }
   });

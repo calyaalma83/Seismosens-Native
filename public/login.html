@@ -68,14 +68,16 @@
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    
-    console.log('Firebase initialized');
+
+    console.log("✅ Firebase initialized:", app.name); 
+    console.log("🔗 Auth connected:", auth.app.name);
+
 
     // Check if user is already logged in
     onAuthStateChanged(auth, (user) => {
       if (user) {
         // User is signed in, redirect to home page
-        window.location.href = '/seismosens.html';
+        window.location.href = '/public/seismosens.html';
       }
     });
 
@@ -117,7 +119,7 @@
         // Small delay to show success message
         await new Promise(resolve => setTimeout(resolve, 1000));
         
-        window.location.href = '/seismosens.html';
+        window.location.href = '/public/seismosens.html';
       } catch (error) {
         console.error('Error:', error);
         let errorMessage = 'Login gagal: ';

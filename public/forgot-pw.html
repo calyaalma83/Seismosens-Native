@@ -64,7 +64,7 @@
       try {
         await sendPasswordResetEmail(auth, email);
         alert('Link reset password telah dikirim ke email Anda. Silakan periksa kotak masuk Anda.');
-        window.location.href = '/login.html';
+        window.location.href = '/public/login.html';
       } catch (error) {
         console.error('Error:', error);
         let errorMessage = 'Gagal mengirim email reset password: ';
