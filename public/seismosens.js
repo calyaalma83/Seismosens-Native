@@ -16,7 +16,7 @@ let chart;
 function switchPage(pageName, event) {
   if (event) event.preventDefault();
 
-  document.querySelectorAll(".nav-item").forEach(item => item.classList.remove("active"));
+  document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
 
   let clickedItem = null;
   if (event) {
@@ -36,7 +36,7 @@ function switchPage(pageName, event) {
     if (pageName === "map" && !mapInitialized) setTimeout(initializeMap, 300);
     if (pageName === "home") initChart(); // [FIX] chart di-refresh tiap buka home
   } else {
-    console.error("Target page not found:", `${pageName}-page`);
+    console.error('Target page not found:', `${pageName}-page`);
   }
 }
 
@@ -57,6 +57,7 @@ async function initApp() {
     listenDeviceStats();
     listenSensorData();
     listenDevices();
+    loadForumPosts();
 
     if (window.location.hash === "#map") initializeMap();
   } catch (error) {
@@ -482,16 +483,7 @@ function initChart() {
 // (biar chart aman, kita inisialisasi ulang pas masuk home)
 document.addEventListener("DOMContentLoaded", () => {
   console.log("SeismoSens app initialized");
-
   initApp();
-  updateProfileUI();
-  loadForumPosts();
-
-  document.querySelectorAll(".device-card, .settings-item, .nav-item").forEach(el => {
-    el.addEventListener("touchstart", function(){ this.style.transform = "scale(0.98)"; });
-    el.addEventListener("touchend",   function(){ this.style.transform = ""; });
-    el.addEventListener("touchcancel",function(){ this.style.transform = ""; });
-  });
 });
 
 // ===== Forum =====
@@ -735,3 +727,41 @@ window.logout = logout;
 window.updateProfileUI = updateProfileUI;
 window.addForumPost = addForumPost;
 window.loadForumPosts = loadForumPosts;
+
+window.deleteAccount = async function () {
+  if (confirm('Apakah Anda yakin ingin menghapus akun ini? Tindakan ini tidak dapat dibatalkan.')) {
+    try {
+      const user = window._firebase.auth.currentUser;
+      if (user) {
+        await deleteUser(user);
+        alert('Akun berhasil dihapus');
+        window.location.href = '/login.html';
+      }
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      alert('Gagal menghapus akun: ' + error.message);
+    }
+  }
+};
+
+// ===== Debug =====
+console.log('Global functions initialized:', {
+  switchPage: typeof window.switchPage,
+  initApp: typeof window.initApp,
+  initializeMap: typeof window.initializeMap,
+  zoomIn: typeof window.zoomIn,
+  zoomOut: typeof window.zoomOut,
+  centerMap: typeof window.centerMap,
+  showNotifications: typeof window.showNotifications,
+  showDeviceDetail: typeof window.showDeviceDetail,
+  showLocationDetail: typeof window.showLocationDetail,
+  showSetting: typeof window.showSetting,
+  showQuickActions: typeof window.showQuickActions,
+  updateStats: typeof window.updateStats,
+  updateTime: typeof window.updateTime,
+  logout: typeof window.logout,
+  updateProfileUI: typeof window.updateProfileUI,
+  addForumPost: typeof window.addForumPost,
+  loadForumPosts: typeof window.loadForumPosts,
+  deleteAccount: typeof window.deleteAccount
+});

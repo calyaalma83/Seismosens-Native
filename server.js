@@ -26,13 +26,13 @@ const server = http.createServer((req, res) => {
 
     // Root route -> login.html
     if (req.url === '/') {
-        res.writeHead(302, { 'Location': '/login.html' });
+        res.writeHead(302, { 'Location': '/login/login.html' });
         return res.end();
     }
 
     // Shortcut route -> main app
     if (req.url === '/app') {
-        res.writeHead(302, { 'Location': '/seismosens.html' });
+        res.writeHead(302, { 'Location': '/public/seismosens.html' });
         return res.end();
     }
 
@@ -81,7 +81,7 @@ server.listen(port, '0.0.0.0', () => {
     console.log(`Server running at http://localhost:${port}/`);
     console.log('Press Ctrl+C to stop the server');
     console.log('Available pages:');
-    console.log(`- Login: http://localhost:${port}/login.html`);
-    console.log(`- Register: http://localhost:${port}/register.html`);
-    console.log(`- Main App: http://localhost:${port}/seismosens.html`);
+    console.log(`- Login: http://localhost:${port}/public/login.html`);
+    console.log(`- Register: http://localhost:${port}/public/register.html`);
+    console.log(`- Main App: http://localhost:${port}/public/seismosens.html`);
 });

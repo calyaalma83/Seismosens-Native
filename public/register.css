@@ -94,6 +94,33 @@ body {
   transition: transform 0.2s ease;
 }
 
+.password-group {
+  position: relative;
+}
+
+.password-group input {
+  width: 100%;
+  padding-right: 44px; /* ruang untuk tombol 👁️ */
+  box-sizing: border-box;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  z-index: 3;            /* pastikan di atas input */
+  padding: 4px;
+}
+
+.toggle-password:focus { outline: none; }
+
+
 .register-button:hover {
   transform: scale(1.05);
 }

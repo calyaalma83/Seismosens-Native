@@ -1,5 +1,5 @@
 import { 
-  getAuth, 
+  getAuth,
   onAuthStateChanged,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -7,26 +7,30 @@ import {
   updateProfile,
   setPersistence,
   browserSessionPersistence,
-  deleteUser as fbDeleteUser
+  deleteUser
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 import { 
-  getFirestore, 
   doc, 
   setDoc, 
   getDoc, 
-  serverTimestamp 
+  serverTimestamp,
+  getFirestore 
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 // ✅ Gunakan app yang sudah diinisialisasi di seismosens.html
 const auth = getAuth(window._firebase.app);
 const db = getFirestore(window._firebase.app);
 
-// Set persistence supaya login nggak hilang setelah refresh
 setPersistence(auth, browserSessionPersistence);
 
+// Supaya bisa diakses global (opsional untuk debug)
 window.auth = auth;
+window.db = db;
 
+// ================================
+// CEK STATE AUTH
+// ================================
 function checkAuthState() {
   return new Promise((resolve) => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -40,53 +44,94 @@ function checkAuthState() {
 async function requireAuth() {
   const user = await checkAuthState();
   if (!user) {
-    window.location.href = '/login/login.html';
+    window.location.href = "/public/login.html";
     return false;
   }
   return user;
 }
 
-// Redirect ke home kalau sudah login
+// 🔹 Redirect ke home kalau sudah login
 async function redirectIfAuthenticated() {
   const user = await checkAuthState();
   const fromDelete = sessionStorage.getItem("fromDeleteAccount") === "true";
 
   if (user && !fromDelete) {
-    window.location.href = '/seismosens.html';
+    window.location.href = "./seismosens.html"; 
     return true;
   }
   return false;
-}
-
-// ==================================================
-// 🔑 Role Management (user / admin)
-// ==================================================
-async function registerUser(email, password, role = "user") {
-  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-  const user = userCredential.user;
-
-  await setDoc(doc(db, "users", user.uid), {
-    email,
-    role,
-    createdAt: serverTimestamp()
-  });
-
-  return user;
 }
 
 async function requireAdmin() {
   const user = await requireAuth();
   if (!user) return;
 
-  const snap = await getDoc(doc(db, "users", user.uid));
-  if (!snap.exists() || snap.data().role !== "admin") {
-    alert("Akses ditolak. Anda bukan admin.");
-    window.location.href = "/seismosens.html";
-    return false;
+  try {
+    const snap = await getDoc(doc(db, "users", user.uid));
+    if (!snap.exists()) {
+      console.warn("❌ User tidak ada di Firestore");
+      alert("Akun belum terdaftar di database.");
+      window.location.href = "/public/seismosens.html";
+      return false;
+    }
+
+    const role = snap.data().role;
+    console.log("👤 Login sebagai:", user.email, "| Role:", role);
+
+    if (role !== "admin") {
+      alert("Akses ditolak. Kamu bukan admin.");
+      window.location.href = "/public/seismosens.html";
+      return false;
+    }
+    return user;
+  } catch (err) {
+    console.error("❌ Error requireAdmin:", err);
+    alert("Gagal memeriksa hak akses admin.");
+    window.location.href = "/public/login.html";
   }
-  return user;
 }
 
+// ================================
+// REGISTER USER
+// ================================
+async function registerUser(email, password, nama, role = "user") {
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    const user = cred.user;
+
+    await setDoc(doc(db, "users", user.uid), {
+      email,
+      nama,
+      role,
+      createdAt: serverTimestamp()
+    });
+
+    await updateProfile(user, { displayName: nama });
+
+    console.log("✅ Register berhasil:", email);
+    return user;
+  } catch (err) {
+    console.error("❌ Error registerUser:", err);
+    throw err;
+  }
+}
+
+// ================================
+// LOGOUT USER
+// ================================
+async function logoutUser() {
+  try {
+    await signOut(auth);
+    console.log("✅ User logout");
+    window.location.href = "/public/login.html";
+  } catch (err) {
+    console.error("❌ Error logoutUser:", err);
+  }
+}
+
+// ================================
+// EXPORT
+// ================================
 export { 
   auth,
   db,
@@ -95,9 +140,8 @@ export {
   redirectIfAuthenticated,
   registerUser,
   requireAdmin,
-  createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  signOut,
   updateProfile,
-  fbDeleteUser as deleteUser
+  logoutUser,
+  deleteUser
 };

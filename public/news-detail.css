@@ -1,0 +1,75 @@
+/* General layout */
+body {
+    font-family: "Segoe UI", Roboto, sans-serif;
+    margin: 0;
+    background: #f9f9fc;
+    color: #222;
+  }
+  
+  /* Header style mirip dashboard */
+  .news-header {
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    color: white;
+    padding: 2rem;
+    text-align: center;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  }
+  
+  .news-header h1 {
+    margin: 0;
+    font-size: 2rem;
+  }
+  
+  .news-header p {
+    margin-top: .5rem;
+    font-size: .9rem;
+    opacity: 0.9;
+  }
+  
+  /* Content card */
+  .news-container {
+    max-width: 800px;
+    margin: -40px auto 40px;
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+  }
+  
+  .news-container h2 {
+    margin-top: 0;
+    font-size: 1.6rem;
+    color: #333;
+  }
+  
+  .news-meta {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 1.2rem;
+  }
+  
+  .news-content {
+    font-size: 1rem;
+    line-height: 1.6;
+    text-align: justify;
+  }
+  
+  /* Button back */
+  .btn-back {
+    display: inline-block;
+    margin-top: 2rem;
+    padding: 0.6rem 1.2rem;
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: 0.2s;
+  }
+  
+  .btn-back:hover {
+    opacity: 0.9;
+  }
+  

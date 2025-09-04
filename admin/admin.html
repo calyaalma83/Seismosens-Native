@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SeismoSens - Admin Dashboard</title>
-  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="admin.css" />
 </head>
 <body>
 
@@ -12,6 +12,7 @@
   <header class="admin-header">
     <h1 class="admin-title">Dashboard Admin</h1>
     <p class="admin-subtitle">Kelola pengguna & berita terkini</p>
+    <p id="admin-info" class="admin-info"></p>
   </header>
 
   <!-- MAIN -->
@@ -27,13 +28,15 @@
           <table class="table">
             <thead>
               <tr>
+                <th>Nama</th>
                 <th>Email</th>
                 <th>Role</th>
                 <th>Tanggal Daftar</th>
+                <th>Aksi</th>
               </tr>
             </thead>
             <tbody id="user-list">
-              <!-- akan diisi dari admin.js -->
+              <!-- diisi dari admin.js -->
             </tbody>
           </table>
         </div>
@@ -47,12 +50,37 @@
       </div>
       <div class="section-body">
         <form id="news-form" class="form">
-          <input id="title" type="text" class="input" placeholder="Judul Berita" required>
+          <input id="title" type="text" class="input" placeholder="Judul Berita" required />
           <textarea id="content" class="textarea" placeholder="Isi berita..." required></textarea>
           <button type="submit" class="btn btn-primary">Simpan Berita</button>
         </form>
       </div>
     </section>
+
+    <!-- DAFTAR BERITA -->
+<section class="section">
+  <div class="section-header">
+    <h2 class="section-title">Daftar Berita</h2>
+  </div>
+  <div class="section-body">
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Judul</th>
+            <th>Isi</th>
+            <th>Tanggal</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="news-list">
+          <!-- diisi dari admin.js -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
 
   </main>
 
