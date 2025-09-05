@@ -16,23 +16,6 @@ let chart;
 function switchPage(pageName, event) {
   if (event) event.preventDefault();
 
-<<<<<<< HEAD
-  // reset active
-  document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-
-  // tandai nav aktif
-  if (event && event.currentTarget) {
-    event.currentTarget.classList.add('active');
-  } else {
-    const nav = document.querySelector(`.nav-item[onclick*="${pageName}"]`);
-    if (nav) nav.classList.add('active');
-  }
-
-  // sembunyikan semua halaman
-  document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
-
-  // tampilkan target
-=======
   document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
 
   let clickedItem = null;
@@ -46,7 +29,6 @@ function switchPage(pageName, event) {
 
   document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
 
->>>>>>> 56ad33b7b4ff55894abb36ed371c91bff165cf3b
   const targetPage = document.getElementById(`${pageName}-page`);
   if (targetPage) {
     targetPage.classList.add("active");
@@ -54,18 +36,10 @@ function switchPage(pageName, event) {
     if (pageName === "map" && !mapInitialized) setTimeout(initializeMap, 300);
     if (pageName === "home") initChart(); // [FIX] chart di-refresh tiap buka home
   } else {
-<<<<<<< HEAD
     console.error("❌ Target page tidak ditemukan:", `${pageName}-page`);
   }
 }
 
-
-=======
-    console.error('Target page not found:', `${pageName}-page`);
-  }
-}
-
->>>>>>> 56ad33b7b4ff55894abb36ed371c91bff165cf3b
 // ===== App Init =====
 async function initApp() {
   try {
@@ -471,6 +445,31 @@ async function updateProfileUI() {
 }
 
 // ===== Chart.js =====
+// Chart variable is already declared at the top of the file
+
+function updateChart(displacement, vibration) {
+  if (!chart) return;
+  
+  // Add new data point
+  const now = new Date();
+  const timeLabel = now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds();
+  
+  // Add new data
+  chart.data.labels.push(timeLabel);
+  chart.data.datasets[0].data.push(displacement);
+  chart.data.datasets[1].data.push(vibration);
+  
+  // Keep only last 20 data points for performance
+  const maxDataPoints = 20;
+  if (chart.data.labels.length > maxDataPoints) {
+    chart.data.labels.shift();
+    chart.data.datasets[0].data.shift();
+    chart.data.datasets[1].data.shift();
+  }
+  
+  chart.update();
+}
+
 function initChart() {
   const canvas = document.getElementById("myChart");
   if (!canvas || typeof Chart === "undefined") return;
