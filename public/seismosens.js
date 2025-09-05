@@ -1,5 +1,5 @@
 import { auth, checkAuthState, deleteUser } from "./auth.js";
-import { collection, addDoc, onSnapshot, serverTimestamp, query, orderBy, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { collection, addDoc, onSnapshot, serverTimestamp, query, orderBy, doc, deleteDoc, getDocs, where } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 const db = window._firebase.db;
 if (!db) {
@@ -733,8 +733,39 @@ window.deleteAccount = async function () {
     try {
       const user = window._firebase.auth.currentUser;
       if (user) {
+        const uid = user.uid;
+        const db = window._firebase.db;
+
+        // 🔹 1. Hapus semua posting user di forum
+        const postsSnap = await getDocs(query(collection(db, "forumPosts"), where("uid", "==", uid)));
+        for (const postDoc of postsSnap.docs) {
+          // hapus semua replies di dalam post ini
+          const repliesSnap = await getDocs(collection(db, "forumPosts", postDoc.id, "replies"));
+          for (const replyDoc of repliesSnap.docs) {
+            await deleteDoc(doc(db, "forumPosts", postDoc.id, "replies", replyDoc.id));
+          }
+          // hapus posting utamanya
+          await deleteDoc(doc(db, "forumPosts", postDoc.id));
+        }
+
+        // 🔹 2. Hapus semua komentar user di posting orang lain
+        const allPostsSnap = await getDocs(collection(db, "forumPosts"));
+        for (const postDoc of allPostsSnap.docs) {
+          const repliesSnap = await getDocs(collection(db, "forumPosts", postDoc.id, "replies"));
+          for (const replyDoc of repliesSnap.docs) {
+            if (replyDoc.data().uid === uid) {
+              await deleteDoc(doc(db, "forumPosts", postDoc.id, "replies", replyDoc.id));
+            }
+          }
+        }
+
+        // 🔹 3. Hapus dokumen user di Firestore
+        await deleteDoc(doc(db, "users", uid));
+
+        // 🔹 4. Hapus akun di Firebase Auth
         await deleteUser(user);
-        alert('Akun berhasil dihapus');
+
+        alert('Akun & semua posting/komentar berhasil dihapus');
         window.location.href = '/login.html';
       }
     } catch (error) {
