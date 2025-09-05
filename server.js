@@ -24,29 +24,45 @@ const mimeTypes = {
 const server = http.createServer((req, res) => {
     console.log('Request for ' + req.url);
 
-    // Root route -> login.html
+    // --- Redirect routes ---
     if (req.url === '/') {
-        res.writeHead(302, { 'Location': '/login/login.html' });
+        res.writeHead(302, { 'Location': '/login.html' });
         return res.end();
     }
 
-    // Shortcut route -> main app
     if (req.url === '/app') {
-        res.writeHead(302, { 'Location': '/public/seismosens.html' });
+        res.writeHead(302, { 'Location': '/seismosens.html' });
         return res.end();
     }
 
-    // Semua file diambil dari folder public
-    let filePath = path.join(__dirname, 'public', req.url.split('?')[0]);
+    // Admin route
+    if (req.url === '/admin' || req.url === '/admin/') {
+        res.writeHead(302, { 'Location': '/admin/admin.html' });
+        return res.end();
+    }
 
-    // Kalau request ke folder, coba cari index.html
+    // --- Handle favicon.ico supaya nggak error ---
+    if (req.url === '/favicon.ico') {
+        res.writeHead(204); // No Content
+        return res.end();
+    }
+
+    // --- Normal file serving ---
+    let requestPath = req.url.split('?')[0];
+
+    // Kalau URL ada "/public/", hapus biar nggak double public/public
+    if (requestPath.startsWith('/public/')) {
+        requestPath = requestPath.replace('/public/', '');
+    }
+
+    let filePath = path.join(__dirname, 'public', requestPath);
+
     try {
         const stat = fs.statSync(filePath);
         if (stat.isDirectory()) {
             filePath = path.join(filePath, 'index.html');
         }
     } catch (err) {
-        // Kalau path tidak ada, coba tambahkan .html
         if (!path.extname(filePath)) {
             filePath += '.html';
         }
@@ -81,7 +97,8 @@ server.listen(port, '0.0.0.0', () => {
     console.log(`Server running at http://localhost:${port}/`);
     console.log('Press Ctrl+C to stop the server');
     console.log('Available pages:');
-    console.log(`- Login: http://localhost:${port}/public/login.html`);
-    console.log(`- Register: http://localhost:${port}/public/register.html`);
-    console.log(`- Main App: http://localhost:${port}/public/seismosens.html`);
+    console.log(`- Login: http://localhost:${port}/login.html`);
+    console.log(`- Register: http://localhost:${port}/register.html`);
+    console.log(`- Main App: http://localhost:${port}/index.html`);
+    console.log(`- Admin: http://localhost:${port}/admin/admin.html`);
 });

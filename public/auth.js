@@ -1,3 +1,4 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { 
   getAuth,
   onAuthStateChanged,
@@ -5,9 +6,9 @@ import {
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
+  deleteUser,
   setPersistence,
-  browserSessionPersistence,
-  deleteUser
+  browserSessionPersistence
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 import { 
@@ -18,9 +19,37 @@ import {
   getFirestore 
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-// ✅ Gunakan app yang sudah diinisialisasi di seismosens.html
-const auth = getAuth(window._firebase.app);
-const db = getFirestore(window._firebase.app);
+// Initialize Firebase with a check for existing app
+let app;
+let auth;
+let db;
+
+// Check if Firebase app is already initialized
+if (window._firebase && window._firebase.app) {
+    app = window._firebase.app;
+    auth = getAuth(app);
+    db = getFirestore(app);
+} else {
+    // Fallback initialization if not loaded via seismosens.html
+    const firebaseConfig = {
+        apiKey: "AIzaSyD07M2-79Yh0CzotaQeGYYy4WLZoevTdWY",
+        authDomain: "seismosens-a048e.firebaseapp.com",
+        projectId: "seismosens-a048e",
+        storageBucket: "seismosens-a048e.appspot.com",
+        messagingSenderId: "358453169511",
+        appId: "1:358453169511:web:fccc32bf22ede39ff0b3c2"
+    };
+    
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+    
+    // Store for other scripts if needed
+    window._firebase = window._firebase || {};
+    window._firebase.app = app;
+    window._firebase.auth = auth;
+    window._firebase.db = db;
+}
 
 setPersistence(auth, browserSessionPersistence);
 
