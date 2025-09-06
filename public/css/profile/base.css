@@ -1,0 +1,208 @@
+/* ===========================================
+   PROFILE BASE STYLES
+   =========================================== */
+
+/* Profile Container */
+.profile-container {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 16px;
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+/* Profile Header */
+.profile-header {
+    position: relative;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+}
+
+.profile-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 32px;
+    font-weight: 600;
+    margin-right: 16px;
+}
+
+.profile-info h2 {
+    margin: 0 0 4px 0;
+    font-size: 18px;
+    color: #1a1a1a;
+}
+
+.profile-info p {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+}
+
+/* Stats Section */
+.profile-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin: 16px 0;
+}
+
+.stat-item {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.stat-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Settings Sections */
+.settings-section {
+    background: #ffffff;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.settings-header {
+    padding: 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+/* Settings Items */
+.setting-item {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid #f5f5f5;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.setting-item:last-child {
+    border-bottom: none;
+}
+
+.setting-item:hover {
+    background-color: #f9f9f9;
+}
+
+.setting-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background-color: #f0f7ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    color: #3b82f6;
+    font-size: 18px;
+}
+
+.setting-info {
+    flex: 1;
+}
+
+.setting-info h4 {
+    margin: 0 0 4px 0;
+    font-size: 15px;
+    font-weight: 500;
+    color: #1a1a1a;
+}
+
+.setting-info p {
+    margin: 0;
+    font-size: 13px;
+    color: #666;
+}
+
+.setting-arrow {
+    color: #999;
+    font-size: 20px;
+    margin-left: 8px;
+}
+
+/* Back Button */
+.btn-back {
+    display: inline-flex;
+    align-items: center;
+    background: none;
+    border: none;
+    color: #3b82f6;
+    font-size: 15px;
+    padding: 8px 0;
+    margin-bottom: 16px;
+    cursor: pointer;
+}
+
+.btn-back i {
+    margin-right: 6px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 480px) {
+    .profile-container {
+        padding: 12px;
+    }
+    
+    .profile-header {
+        padding: 16px;
+    }
+    
+    .profile-avatar {
+        width: 64px;
+        height: 64px;
+        font-size: 24px;
+    }
+    
+    .profile-info h2 {
+        font-size: 16px;
+    }
+    
+    .profile-info p {
+        font-size: 13px;
+    }
+    
+    .stat-value {
+        font-size: 16px;
+    }
+    
+    .stat-label {
+        font-size: 11px;
+    }
+    
+    .setting-item {
+        padding: 14px 12px;
+    }
+}
