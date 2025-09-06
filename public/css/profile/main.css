@@ -48,7 +48,7 @@
 
 /* Import Component Styles */
 @import 'base.css';
-@import 'profile-page.css';
+@import '_profile-page.css';
 @import 'edit-profile.css';
 @import 'settings.css';
 
