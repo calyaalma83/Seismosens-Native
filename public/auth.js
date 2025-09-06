@@ -73,7 +73,7 @@ function checkAuthState() {
 async function requireAuth() {
   const user = await checkAuthState();
   if (!user) {
-    window.location.href = "/public/login.html";
+    window.location.href = "/login.html";
     return false;
   }
   return user;
@@ -85,7 +85,7 @@ async function redirectIfAuthenticated() {
   const fromDelete = sessionStorage.getItem("fromDeleteAccount") === "true";
 
   if (user && !fromDelete) {
-    window.location.href = "./seismosens.html"; 
+    window.location.href = "/seismosens.html"; 
     return true;
   }
   return false;
@@ -100,7 +100,7 @@ async function requireAdmin() {
     if (!snap.exists()) {
       console.warn("❌ User tidak ada di Firestore");
       alert("Akun belum terdaftar di database.");
-      window.location.href = "/public/seismosens.html";
+      window.location.href = "/seismosens.html";
       return false;
     }
 
@@ -109,14 +109,14 @@ async function requireAdmin() {
 
     if (role !== "admin") {
       alert("Akses ditolak. Kamu bukan admin.");
-      window.location.href = "/public/seismosens.html";
+      window.location.href = "/seismosens.html";
       return false;
     }
     return user;
   } catch (err) {
     console.error("❌ Error requireAdmin:", err);
     alert("Gagal memeriksa hak akses admin.");
-    window.location.href = "/public/login.html";
+    window.location.href = "/login.html";
   }
 }
 
@@ -136,8 +136,9 @@ async function registerUser(email, password, nama, role = "user") {
     });
 
     await updateProfile(user, { displayName: nama });
+    await user.reload();
 
-    console.log("✅ Register berhasil:", email);
+    console.log("✅ Register berhasil:", email, "| Nama:", user.displayName);
     return user;
   } catch (err) {
     console.error("❌ Error registerUser:", err);
@@ -152,7 +153,7 @@ async function logoutUser() {
   try {
     await signOut(auth);
     console.log("✅ User logout");
-    window.location.href = "/public/login.html";
+    window.location.href = "/login.html";
   } catch (err) {
     console.error("❌ Error logoutUser:", err);
   }

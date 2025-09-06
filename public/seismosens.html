@@ -225,7 +225,7 @@
                         <div id="profileName" style="font-size: 22px; font-weight: 700; margin-bottom: 5px;">Memuat...</div>
                         <div id="profileEmail" style="font-size: 14px; opacity: 0.9;">Memuat email...</div>
                     </div>
-                    
+
                     <div style="display: flex; justify-content: space-around; margin-top: 20px;">
                         <div style="text-align: center;">
                             <div id="profileDevicesCount" style="font-size: 18px; font-weight: 700; color: white;">0</div>
@@ -237,14 +237,15 @@
                         </div>
                         <div style="text-align: center;">
                             <div id="profileDataUsage" style="font-size: 18px; font-weight: 700; color: white;">0GB</div>
-                            <div style="font-size: 11px; opacity: 0.9;">Data</div>
+                                <div style="font-size: 11px; opacity: 0.9;">Data</div>
                         </div>
                     </div>
                 </div>
 
+                <!-- Profil Saya -->
                 <div class="settings-section">
                     <div class="settings-header">Profil Saya</div>
-                    <div class="settings-item" onclick="showSetting('Edit Profil')">
+                    <div class="settings-item" onclick="document.getElementById('editProfileModal').style.display='flex'">
                         <div class="settings-item-left">
                             <div class="settings-icon" style="background: #3b82f6; color: white;">👤</div>
                             <div class="settings-text">
@@ -254,7 +255,7 @@
                         </div>
                         <span>›</span>
                     </div>
-                    <div class="settings-item" onclick="showSetting('Keamanan')">
+                    <div class="settings-item" onclick="document.getElementById('securityModal').style.display='flex'">
                         <div class="settings-item-left">
                             <div class="settings-icon" style="background: #10b981; color: white;">🔒</div>
                             <div class="settings-text">
@@ -266,6 +267,7 @@
                     </div>
                 </div>
 
+                <!-- Perangkat -->
                 <div class="settings-section">
                     <div class="settings-header">Perangkat</div>
                     <div class="settings-item" onclick="showSetting('Konfigurasi Perangkat')">
@@ -276,7 +278,6 @@
                                 <p>Atur nama, lokasi, dan parameter</p>
                             </div>
                         </div>
-                        <span></span>
                     </div>
                     <div class="settings-item" onclick="showSetting('Update Firmware')">
                         <div class="settings-item-left">
@@ -286,7 +287,6 @@
                                 <p>v2.1.0 tersedia</p>
                             </div>
                         </div>
-                        <span></span>
                     </div>
                     <div class="settings-item" onclick="showSetting('Koneksi WiFi')">
                         <div class="settings-item-left">
@@ -296,13 +296,15 @@
                                 <p>Terhubung ke SeismoSens_Network</p>
                             </div>
                         </div>
-                        <span></span>
                     </div>
                 </div>
 
+                <!-- Data & Storage -->
                 <div class="settings-section">
                     <div class="settings-header">Data & Storage</div>
-                    <div class="settings-item" onclick="showSetting('Manage Data')">
+
+                    <!-- Manage Data -->
+                    <div class="settings-item" onclick="openDataStorage('manage')">
                         <div class="settings-item-left">
                             <div class="settings-icon" style="background: #06b6d4; color: white;">📊</div>
                             <div class="settings-text">
@@ -310,9 +312,10 @@
                                 <p>Export, Backup, dan Analisis</p>
                             </div>
                         </div>
-                        <span></span>
                     </div>
-                    <div class="settings-item" onclick="showSetting('Storage')">
+
+                    <!-- Storage -->
+                    <div class="settings-item" onclick="openDataStorage('storage')">
                         <div class="settings-item-left">
                             <div class="settings-icon" style="background: #8b5cf6; color: white;">💾</div>
                             <div class="settings-text">
@@ -320,10 +323,20 @@
                                 <p>2.3GB dari 8GB terpakai</p>
                             </div>
                         </div>
-                        <span></span>
                     </div>
                 </div>
 
+                <!-- Modal dummy Data & Storage -->
+                <div id="dataStorageModal" class="modal">
+                    <div class="modal-content">
+                        <span class="close" onclick="closeDataStorage()">&times;</span>
+                        <div id="dataStorageContent">
+                        <!-- Konten dinamis akan diisi lewat JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Aplikasi -->
                 <div class="settings-section">
                     <div class="settings-header">Aplikasi</div>
                     <div class="settings-item" onclick="showSetting('Notifikasi')">
@@ -334,20 +347,19 @@
                                 <p>Alert dan Peringatan Sistem</p>
                             </div>
                         </div>
-                        <span></span>
                     </div>
                     <div class="settings-item" onclick="showSetting('Bantuan')">
                         <div class="settings-item-left">
                             <div class="settings-icon" style="background: #64748b; color: white;">❓</div>
                             <div class="settings-text">
                                 <h4>Bantuan & FAQ</h4>
-                                <p>Panduan pengguaan aplikasi</p>
+                                <p>Panduan penggunaan aplikasi</p>
                             </div>
                         </div>
-                        <span></span>
                     </div>
                 </div>
 
+                <!-- Support -->
                 <div class="settings-section">
                     <div class="settings-header">Support</div>
                     <div class="settings-item" onclick="showSetting('Hubungi Support')">
@@ -356,9 +368,8 @@
                             <div class="settings-text">
                                 <h4>Hubungi Support</h4>
                                 <p>Chat 24/7 dengan tim teknis</p>
-                            </div>
+                         </div>
                         </div>
-                        <span>›</span>
                     </div>
                     <div class="settings-item" onclick="showSetting('About SeismoSens')">
                         <div class="settings-item-left">
@@ -368,44 +379,79 @@
                                 <p>Versi 2.1.0 • Tim Pengembang</p>
                             </div>
                         </div>
-                        <span>›</span>
                     </div>
                 </div>
 
+                <!-- Logout & Delete -->
                 <div style="padding: 20px; text-align: center;">
-                    <button onclick="window.logout()" style="background: #ef4444; color: white; border: none; padding: 12px 30px; border-radius: 25px; font-weight: 600; cursor: pointer;">
-                        Keluar dari Akun
-                    </button>
-                    <button onclick="deleteAccount()" class="btn-delete-account">
-                        🗑 Hapus Akun
-                    </button>
+                    <button onclick="window.logout()" style="background: #ef4444; color: white; border: none; padding: 12px 30px; border-radius: 25px; font-weight: 600; cursor: pointer;">Keluar dari Akun</button>
+                    <button onclick="deleteAccount()" class="btn-delete-account">🗑 Hapus Akun</button>
+                </div>
+            </div>
+
+            <!-- 🔹 Modal Edit Profil -->
+            <div id="editProfileModal" class="modal" style="display:none; align-items:center; justify-content:center;">
+                <div class="modal-content" style="background:white; padding:20px; border-radius:10px; width:90%; max-width:400px;">
+                    <h2>Edit Profil</h2>
+
+                    <!-- Nama -->
+                    <label for="profileNameInput">Nama</label>
+                    <input type="text" id="profileNameInput" placeholder="Masukkan nama baru">
+
+                    <!-- Email -->
+                    <label for="profileEmailInput">Email</label>
+                    <input type="email" id="profileEmailInput" placeholder="Masukkan email baru">
+
+                    <!-- Password -->
+                    <label for="profilePassword">Password (wajib kalau ganti email)</label>
+                    <input type="password" id="profilePassword" placeholder="Masukkan password saat ini">
+
+                    <!-- Tombol -->
+                    <div style="margin-top:15px; text-align:right;">
+                        <button onclick="closeEditProfile()">Batal</button>
+                        <button onclick="saveProfile()">Simpan</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 🔹 Modal Keamanan -->
+            <div id="securityModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center;">
+                <div style="background:white; padding:20px; border-radius:10px; width:90%; max-width:400px; margin:auto;">
+                    <h3>Keamanan</h3>
+                    <input type="password" id="newPassword" placeholder="Password baru" style="width:100%; padding:10px; margin:10px 0; border:1px solid #ddd; border-radius:5px;">
+                    <div style="display:flex; justify-content:space-between; margin-top:15px;">
+                        <button onclick="document.getElementById('securityModal').style.display='none'" style="padding:10px 20px; background:#64748b; color:white; border:none; border-radius:5px; cursor:pointer;">Batal</button>
+                        <button onclick="updateUserPassword(document.getElementById('newPassword').value)" style="padding:10px 20px; background:#10b981; color:white; border:none; border-radius:5px; cursor:pointer;">Ubah Password</button>
+                    </div>
+                    <hr style="margin:15px 0;">
+                    <button onclick="resetPassword(document.getElementById('profileEmail').innerText)" style="width:100%; padding:10px; background:#f59e0b; color:white; border:none; border-radius:5px; cursor:pointer;">Kirim Reset Password ke Email</button>
                 </div>
             </div>
         </div>
 
         <!-- Bottom Navigation -->
         <div class="bottom-nav">
-            <div class="nav-item active" onclick="window.switchPage('home', event)">
+            <div class="nav-item active" onclick="switchPage('home', event)">
                 <div class="nav-icon">🏠</div>
                 <div class="nav-label">Beranda</div>
             </div>
-            <div class="nav-item" onclick="window.switchPage('devices', event)">
+            <div class="nav-item" onclick="switchPage('devices', event)">
                 <div class="nav-icon">📱</div>
                 <div class="nav-label">Perangkat</div>
             </div>
-            <div class="nav-item" onclick="window.switchPage('map', event)">
+            <div class="nav-item" onclick="switchPage('map', event)">
                 <div class="nav-icon">🗺</div>
                 <div class="nav-label">Peta</div>
             </div>
-            <div class="nav-item" onclick="window.switchPage('forum', event)">
+            <div class="nav-item" onclick="switchPage('forum', event)">
                 <div class="nav-icon">💬</div>
                 <div class="nav-label">Forum</div>
             </div>
-            <div class="nav-item" onclick="window.switchPage('profile', event)">
+            <div class="nav-item" onclick="switchPage('profile', event)">
                 <div class="nav-icon">👤</div>
                 <div class="nav-label">Profil</div>
             </div>
-    </div>
+        </div>
 
   <!-- Firebase and App Scripts -->
   <!-- Load Leaflet first -->

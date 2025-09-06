@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         window.location.href = "../admin/admin.html";
       } else {
         console.log("Login as normal user");
-        window.location.href = '/public/seismosens.html';
+        window.location.href = "/seismosens.html";
       }
       
     } catch (error) {
@@ -76,7 +76,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           await deleteUser(userCredential?.user);
           alert("✅ Akun berhasil dihapus permanen");
           sessionStorage.removeItem("fromDeleteAccount");
-          window.location.href = '/public/index.html';
+          window.location.href = '/index.html';
         } catch (err) {
           console.error("Delete account error:", err);
           alert("❌ Gagal menghapus akun: " + err.message);

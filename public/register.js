@@ -52,7 +52,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.log("Registrasi berhasil:", { nama, email });
 
       // 🔹 Redirect ke halaman utama setelah sukses
-      window.location.href = "./seismosens.html"; // ✅ karena seismosens.html ada di /public/
+      window.location.href = "/seismosens.html"; // ✅ karena seismosens.html ada di /public/
 
     } catch (error) {
       console.error("Registration error:", error);
@@ -60,8 +60,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       switch (error.code) {
         case "auth/email-already-in-use":
-          errorMessage = "Email sudah terdaftar";
-          break;
+          errorMessage = "Email sudah terdaftar. Silahkan login";
+          alert(errorMessage);
+          window.location.href = "/login.html";
+          return;
         case "auth/weak-password":
           errorMessage = "Password terlalu lemah, minimal 6 karakter";
           break;

@@ -1,5 +1,6 @@
 import { auth, checkAuthState, deleteUser } from "./auth.js";
-import { collection, addDoc, onSnapshot, serverTimestamp, query, orderBy, doc, deleteDoc, getDocs, where } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { updateProfile, updateEmail, updatePassword, sendPasswordResetEmail, EmailAuthProvider, reauthenticateWithCredential } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import { collection, addDoc, onSnapshot, serverTimestamp, query, orderBy, doc, deleteDoc, getDocs, where, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 const db = window._firebase.db;
 if (!db) {
@@ -20,14 +21,14 @@ function switchPage(pageName, event) {
 
   let clickedItem = null;
   if (event) {
-    clickedItem = event.target.closest(".nav-item") ||
-      (event.target.closest(".bottom-nav")?.querySelector(`[onclick*="${pageName}"]`) ?? null);
+    clickedItem = event.target.closest('.nav-item') ||
+      (event.target.closest('.bottom-nav')?.querySelector(`[onclick*="${pageName}"]`) ?? null);
   } else {
     clickedItem = document.querySelector(`.nav-item[onclick*="${pageName}"]`);
   }
-  if (clickedItem) clickedItem.classList.add("active");
+  if (clickedItem) clickedItem.classList.add('active');
 
-  document.querySelectorAll(".page-content").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
 
   const targetPage = document.getElementById(`${pageName}-page`);
   if (targetPage) {
@@ -36,7 +37,7 @@ function switchPage(pageName, event) {
     if (pageName === "map" && !mapInitialized) setTimeout(initializeMap, 300);
     if (pageName === "home") initChart(); // [FIX] chart di-refresh tiap buka home
   } else {
-    console.error('Target page not found:', `${pageName}-page`);
+    console.error("❌ Target page tidak ditemukan:", `${pageName}-page`);
   }
 }
 
@@ -374,15 +375,42 @@ async function updateProfileUI() {
     const elDataUsage    = document.getElementById("profileDataUsage");
 
     if (user) {
-      const displayName = user.displayName || "Pengguna";
+      let displayName = "Pengguna"; // default aman
+      let email = user.email || "";
+      let photoURL = user.photoURL || null;  // [TAMBAHAN]
+
+      // 🔹 1. Ambil nama & email dari Firestore
+      try {
+        const snap = await getDoc(doc(window._firebase.db, "users", user.uid));
+        if (snap.exists()) {
+          const data = snap.data();
+          displayName = data.nama || user.displayName || "Pengguna";
+          email = data.email || user.email || "";
+          photoURL = data.photoURL || user.photoURL || null;  // [TAMBAHAN]
+        } else {
+          displayName = user.displayName || "Pengguna";
+        }
+      } catch (err) {
+        console.error("❌ Gagal ambil nama dari Firestore:", err);
+        displayName = user.displayName || "Pengguna";
+      }
+
+      // 🔹 2. Update ke UI
       if (greetingName)  greetingName.textContent  = displayName;
       if (profileName)   profileName.textContent   = displayName;
-      if (profileEmail)  profileEmail.textContent  = user.email || "";
-      if (profileAvatar) profileAvatar.textContent = (displayName[0] || "U").toUpperCase();
+      if (profileEmail)  profileEmail.textContent  = email;
 
+      // [UBAHAN] tampilkan foto kalau ada, fallback huruf
+      if (profileAvatar) {
+        if (photoURL) {
+          profileAvatar.innerHTML = `<img src="${photoURL}" alt="Foto Profil" style="width:40px;height:40px;border-radius:50%;">`;
+        } else {
+          profileAvatar.textContent = (displayName[0] || "U").toUpperCase();
+        }
+      }
+
+      // 🔹 3. Hitung jumlah perangkat
       const { rtdb, ref, onValue } = window._firebase;
-
-      // 🔹 1. Hitung jumlah perangkat milik user
       const devicesRef = ref(rtdb, "devices");
       onValue(devicesRef, (snapshot) => {
         if (!snapshot.exists()) return;
@@ -394,43 +422,27 @@ async function updateProfileUI() {
         if (elDevicesCount) elDevicesCount.textContent = myCount;
       });
 
-      // 🔹 2. Hitung hari aktif (pakai tanggal akun dibuat dari Firebase Auth)
+      // 🔹 4. Hitung hari aktif
       if (user.metadata?.creationTime) {
         const created = new Date(user.metadata.creationTime);
         const diff = Math.floor((Date.now() - created) / (1000 * 60 * 60 * 24));
         if (elActiveDays) elActiveDays.textContent = diff;
       }
 
-      // 🔹 3. Data usage
+      // 🔹 5. Data usage (Realtime DB)
       const userRef = ref(rtdb, `users/${user.uid}/dataUsage`);
       onValue(userRef, (snap) => {
         if (snap.exists()) {
-          // Kalau ada dataUsage → langsung pakai
-          const usage = snap.val(); // byte
+          const usage = snap.val();
           const gb = (usage / (1024*1024*1024)).toFixed(1);
           if (elDataUsage) elDataUsage.textContent = `${gb}GB`;
         } else {
-          // 🔹 Fallback: hitung dari semua perangkat user
-          const devicesRef = ref(rtdb, "devices");
-          onValue(devicesRef, (snapshot) => {
-            if (!snapshot.exists()) return;
-            const devices = snapshot.val();
-            let totalBytes = 0;
-
-            Object.values(devices).forEach(dev => {
-              if (dev.ownerUid === user.uid && dev.dataUsage) {
-                totalBytes += dev.dataUsage; // asumsinya tiap device simpan dataUsage
-              }
-            });
-
-            const gb = (totalBytes / (1024*1024*1024)).toFixed(1);
-            if (elDataUsage) elDataUsage.textContent = `${gb}GB`;
-          });
+          if (elDataUsage) elDataUsage.textContent = "0GB";
         }
       });
 
     } else {
-      // 🔹 User belum login
+      // 🔹 User belum login → fallback Tamu
       if (greetingName)  greetingName.textContent  = "Tamu";
       if (profileName)   profileName.textContent   = "Tamu";
       if (profileEmail)  profileEmail.textContent  = "—";
@@ -445,6 +457,31 @@ async function updateProfileUI() {
 }
 
 // ===== Chart.js =====
+// Chart variable is already declared at the top of the file
+
+function updateChart(displacement, vibration) {
+  if (!chart) return;
+  
+  // Add new data point
+  const now = new Date();
+  const timeLabel = now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds();
+  
+  // Add new data
+  chart.data.labels.push(timeLabel);
+  chart.data.datasets[0].data.push(displacement);
+  chart.data.datasets[1].data.push(vibration);
+  
+  // Keep only last 20 data points for performance
+  const maxDataPoints = 20;
+  if (chart.data.labels.length > maxDataPoints) {
+    chart.data.labels.shift();
+    chart.data.datasets[0].data.shift();
+    chart.data.datasets[1].data.shift();
+  }
+  
+  chart.update();
+}
+
 function initChart() {
   const canvas = document.getElementById("myChart");
   if (!canvas || typeof Chart === "undefined") return;
@@ -709,6 +746,139 @@ function loadForumPosts() {
   });
 }
 
+async function editProfile({ nama, email, password }) {
+  const user = window._firebase.auth.currentUser;
+  if (!user) return alert("Kamu harus login dulu!");
+
+  try {
+    // 🔹 Kalau ganti email → disable dulu / kasih alert
+    if (email && email !== user.email) {
+      alert("Fitur update email belum diaktifkan di Firebase Console.");
+    }
+
+    // 🔹 Update displayName (nama)
+    if (nama) {
+      await updateProfile(user, { displayName: nama });
+    }
+
+    const userRef = doc(window._firebase.db, "users", user.uid);
+    const snap = await getDoc(userRef);
+
+    if (snap.exists()) {
+      // Kalau sudah ada → update
+      await updateDoc(userRef, {
+        nama: nama || user.displayName,
+        email: user.email
+      });
+    } else {
+      // Kalau belum ada → bikin baru
+      await setDoc(userRef, {
+        nama: nama || user.displayName,
+        email: user.email,
+        createdAt: new Date()
+      });
+    }
+
+    // 🔹 Simpan ke Realtime DB juga
+    const { rtdb, ref, set } = window._firebase;
+    await set(ref(rtdb, `users/${user.uid}/profile`), {
+      nama: nama || user.displayName,
+      email: user.email
+    });
+
+    alert("✅ Profil berhasil diperbarui");
+    updateProfileUI();
+  } catch (err) {
+    console.error("❌ Gagal update profil:", err);
+    alert("Gagal update profil: " + err.message);
+  }
+}
+
+async function updateUserPassword(newPassword) {
+  const user = window._firebase.auth.currentUser;
+  if (!user) return alert("❌ Kamu harus login dulu!");
+
+  try {
+    // Minta password lama
+    const oldPassword = prompt("Masukkan password lama untuk konfirmasi:");
+    if (!oldPassword) return alert("Password lama wajib diisi!");
+
+    // Re-authenticate dulu
+    const credential = EmailAuthProvider.credential(user.email, oldPassword);
+    await reauthenticateWithCredential(user, credential);
+
+    // Update password baru
+    await updatePassword(user, newPassword);
+
+    alert("✅ Password berhasil diubah!");
+    document.getElementById("securityModal").style.display = "none";
+  } catch (err) {
+    console.error("Gagal ubah password:", err);
+    alert("❌ Gagal ubah password: " + err.message);
+  }
+}
+
+async function resetPassword(email) {
+  try {
+    await sendPasswordResetEmail(window._firebase.auth, email);
+    alert("✅ Link reset password sudah dikirim ke email");
+  } catch (err) {
+    console.error("❌ Gagal reset password:", err);
+    alert("Gagal reset password: " + err.message);
+  }
+}
+
+// 🔹 Simpan perubahan profil
+async function saveProfile() {
+  const nama = document.getElementById("profileNameInput").value.trim();
+  const email = document.getElementById("profileEmailInput").value.trim();
+  const password = document.getElementById("profilePassword").value.trim();
+
+  try {
+    await editProfile({ nama, email, password }); // ✅ langsung pakai versi fix
+    await updateProfileUI();  // refresh tampilan setelah update
+    closeEditProfile();       // tutup modal
+  } catch (err) {
+    console.error("❌ Gagal simpan profil:", err);
+    alert("Gagal menyimpan profil: " + err.message);
+  }
+}
+
+function closeEditProfile() {
+  document.getElementById("editProfileModal").style.display = "none";
+}
+
+function openDataStorage(type) {
+  const modal = document.getElementById("dataStorageModal");
+  const content = document.getElementById("dataStorageContent");
+
+  if (type === "manage") {
+    content.innerHTML = `
+      <h3>📊 Manage Data</h3>
+      <p>Fitur Export, Backup, dan Analisis akan tersedia di sini.</p>
+      <button onclick="alert('Export data belum aktif')">Export Data</button>
+      <button onclick="alert('Backup belum aktif')">Backup Data</button>
+      <button onclick="alert('Analisis belum aktif')">Analisis</button>
+    `;
+  } else if (type === "storage") {
+    content.innerHTML = `
+      <h3>💾 Storage</h3>
+      <p>Total kapasitas: 8GB</p>
+      <p>Terpakai: 2.3GB</p>
+      <div style="margin-top:10px; background:#eee; border-radius:6px; overflow:hidden;">
+        <div style="width:30%; background:#3b82f6; color:white; padding:5px; text-align:center;">30%</div>
+      </div>
+      <p><i>(Dummy tampilan progress storage)</i></p>
+    `;
+  }
+
+  modal.style.display = "block";
+}
+
+function closeDataStorage() {
+  document.getElementById("dataStorageModal").style.display = "none";
+}
+
 // ===== Expose ke window =====
 window.switchPage = switchPage;
 window.initApp = initApp;
@@ -727,6 +897,13 @@ window.logout = logout;
 window.updateProfileUI = updateProfileUI;
 window.addForumPost = addForumPost;
 window.loadForumPosts = loadForumPosts;
+window.editProfile = editProfile;
+window.saveProfile = saveProfile;
+window.updateUserPassword = updateUserPassword;
+window.resetPassword = resetPassword;
+window.closeEditProfile = closeEditProfile;
+window.openDataStorage = openDataStorage;
+window.closeDataStorage = closeDataStorage;
 
 window.deleteAccount = async function () {
   if (confirm('Apakah Anda yakin ingin menghapus akun ini? Tindakan ini tidak dapat dibatalkan.')) {
