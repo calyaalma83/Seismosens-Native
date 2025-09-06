@@ -2,7 +2,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import { getDatabase } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
+import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
 
 // Konfigurasi Firebase
 export const firebaseConfig = {
@@ -28,6 +28,8 @@ window._firebase.app = app;
 window._firebase.auth = auth;
 window._firebase.db = db;
 window._firebase.rtdb = rtdb;
-window._firebase.storage = storage;
+window._firebase.ref = ref;
+window._firebase.onValue = onValue;
+window._firebase.set = set;
 
-export { auth, db, rtdb, storage };
+export { auth, db, rtdb };

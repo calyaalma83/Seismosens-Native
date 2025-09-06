@@ -1399,5 +1399,59 @@ body {
     font-size: 13px;
     color: #64748b;
     margin-bottom: 12px;
-  }
+}
+
+.logout-section {
+  display: flex;
+  justify-content: center;
+  gap: 15px; /* jarak antar tombol */
+  margin-top: 20px;
+}
+
+.btn-logout,
+.btn-delete {
+  min-width: 120px;
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+}
+
+.btn-logout {
+  display: flex;
+  align-items: center;      /* vertikal center */
+  justify-content: center;  /* horizontal center */
+  gap: 8px;                 /* jarak antara icon & teks */
   
+  background: white;
+  border: 1px solid #ccc;
+  color: black;
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  min-width: 150px;         /* biar cukup lebar */
+  text-align: center;
+}
+
+.btn-delete {
+  display: flex;
+  align-items: center;      /* vertikal center */
+  justify-content: center;  /* horizontal center */
+  gap: 8px;                 /* jarak antara icon & teks */
+  
+  background: red;
+  border: 1px solid #ccc;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  min-width: 150px;         /* biar cukup lebar */
+  text-align: center;
+}
+
+.btn-delete:hover {
+  background: #dc2626;
+}

@@ -65,14 +65,17 @@
                     </div>
                     
                     <div class="welcome-text">
-                        <div class="welcome-title">Halo, <span id="greetingName">Memuat...</span> 👋</div>
-                        <div class="welcome-subtitle">Sistem monitoring berjalan optimal</div>
+                        <div class="welcome-title">
+                            <span data-i18n="greeting">Halo</span>, 
+                            <span id="greetingName">Memuat...</span> 👋
+                        </div>
+                        <div class="welcome-subtitle" data-i18n="system">Sistem monitoring berjalan optimal</div>
                     </div>
                     
                     <div class="quick-stats">
                         <div class="quick-stat">
                             <div class="quick-stat-value" data-stat="total">0</div>
-                            <div class="quick-stat-label">Perangkat</div>
+                            <div class="quick-stat-label" data-i18n="devices">Perangkat</div>
                         </div>
                         <div class="quick-stat">
                             <div class="quick-stat-value" data-stat="online">0</div>
@@ -86,22 +89,20 @@
                 </div>
 
                 <div class="alert-banner">
-                    <div class="alert-title">⚠ Perhatian</div>
-                    <div class="alert-text">SMS-USER-003 offline sejak 2 jam lalu</div>
+                    <div class="alert-title">⚠ <span data-i18n="danger">Perhatian</span></div>
+                    <div class="alert-text" data-i18n="load">Memuat status...</div>
                 </div>
 
                 <!-- Section Berita Terkini -->
                 <div class="content-section">
-                    <div class="section-title">
-                    <span>Berita Terkini</span>
-                    </div>
+                    <div class="section-title" data-i18n="news">Berita Terkini</div>
                     <div id="news-list">
                     <!-- berita dari news.js akan muncul di sini -->
                     </div>
                 </div>
             
                 <div class="content-section">
-                    <div class="section-title">
+                    <div class="section-title" data-i18n="statistic">
                         <span>Statistik Harian</span>
                     </div>
                     <div class="chart-container">
@@ -115,23 +116,21 @@
             <div class="page-content" id="devices-page">
                 <div class="header">
                     <div class="welcome-text">
-                        <div class="welcome-title">Perangkat Saya 📱</div>
-                        <div class="welcome-subtitle">Kelola semua perangkat SeismoSens</div>
+                        <div class="welcome-title" data-i18n="my_device">Perangkat Saya 📱</div>
+                        <div class="welcome-subtitle" data-i18n="kelola">Kelola semua perangkat SeismoSens</div>
                     </div>
                 </div>
                 
                 <!-- Container kosong untuk diisi lewat JS -->
-                 <div class="content-section" id="devicesContainer">
-                    <p style="text-align: center; color: gray;">Memuat perangkat...</p>
-                 </div>
+                 <div class="content-section" id="devicesContainer"></div>
             </div>
 
             <!-- Map Page -->
             <div class="page-content" id="map-page">
                 <div class="header">
                     <div class="welcome-text">
-                        <div class="welcome-title">Smart City Map 🗺</div>
-                        <div class="welcome-subtitle">Monitoring kota Surakarta (Solo)</div>
+                        <div class="welcome-title" data-i18n="city">Smart City Map 🗺</div>
+                        <div class="welcome-subtitle" data-i18n="monitoring">Monitoring kota Surakarta (Solo)</div>
                     </div>
                 </div>
 
@@ -142,15 +141,15 @@
                         <div style="font-weight: 600; margin-bottom: 8px;">SeismoSens Network</div>
                         <div class="legend-item">
                             <div class="legend-dot" style="background: #10b981;"></div>
-                            <span>Normal (<span id="legend-normal">0</span>)</span>
+                            <span data-i18n="normal">Normal (<span id="legend-normal">0</span>)</span>
                         </div>
                         <div class="legend-item">
                             <div class="legend-dot" style="background: #f59e0b;"></div>
-                            <span>Warning (<span id="legend-warning">0</span>)</span>
+                            <span data-i18n="warning">Warning (<span id="legend-warning">0</span>)</span>
                         </div>
                         <div class="legend-item">
                             <div class="legend-dot" style="background: #3b82f6;"></div>
-                            <span>Perangkat Anda (<span id="legend-user">0</span>)</span>
+                            <span data-i18n="perangkat">Perangkat Anda (<span id="legend-user">0</span>)</span>
                         </div>
                     </div>
                     
@@ -163,7 +162,7 @@
 
                 <!-- Filter Controls -->
                 <div style="margin: 0 20px 20px; background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                    <div style="font-weight: 600; margin-bottom: 10px; color: #1e293b;">Filter Peta</div>
+                    <div style="font-weight: 600; margin-bottom: 10px; color: #1e293b;" data-i18n="filter_peta">Filter Peta</div>
                     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                         <button class="map-filter active" onclick="filterMarkers('all')" style="padding: 6px 12px; border: none; border-radius: 15px; background: #3b82f6; color: white; font-size: 12px; cursor: pointer;">Semua</button>
                         <button class="map-filter" onclick="filterMarkers('normal')" style="padding: 6px 12px; border: 1px solid #e2e8f0; border-radius: 15px; background: white; color: #64748b; font-size: 12px; cursor: pointer;">Normal</button>
@@ -173,7 +172,7 @@
                 </div>
 
                 <div class="content-section">
-                    <div class="section-title">Perangkat di Surakarta</div>
+                    <div class="section-title" data-i18n="dev_ska">Perangkat di Surakarta</div>
                     
                     <!-- Stats Grid -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
@@ -193,18 +192,18 @@
             <div class="page-content" id="forum-page">
                 <div class="header">
                     <div class="welcome-text">
-                        <div class="welcome-title">Forum Diskusi 💬</div>
-                        <div class="welcome-subtitle">Diskusi bersama pengguna lain</div>
+                        <div class="welcome-title" data-i18n="discussion">Forum Diskusi 💬</div>
+                        <div class="welcome-subtitle" data-i18n="disc_user">Diskusi bersama pengguna lain</div>
                     </div>
                 </div>
 
                 <!-- Forum Post -->
                 <div class="settings-section">
-                    <div class="settings-header">Buat Post Baru</div>
+                    <div class="settings-header" data-i18n="post">Buat Post Baru</div>
                     <div style="padding: 15px;">
                         <input id="forumTitle" placeholder="Judul posting..." style="width:100%; padding:12px; border-radius:8px; border:1px solid #e2e8f0; font-size:14px; margin-bottom:10px;">
                         <textarea id="forumInput" placeholder="Tulis sesuatu..." style="width:100%; padding:12px; border-radius:8px; border:1px solid #e2e8f0; font-size:14px;"></textarea>
-                        <button onclick="addForumPost()" style="margin-top:10px; width:100%; background:#3b82f6; color:white; border:none; padding:10px; border-radius:8px; font-weight:600; cursor:pointer;">
+                        <button onclick="addForumPost()" style="margin-top:10px; width:100%; background:#3b82f6; color:white; border:none; padding:10px; border-radius:8px; font-weight:600; cursor:pointer;" data-i18n="kirim">
                           Kirim
                         </button>
                     </div>
@@ -212,7 +211,7 @@
 
                 <!-- Daftar Post -->
                 <div class="content-section">
-                    <div class="section-title">
+                    <div class="section-title" data-i18n="post_baru">
                         <span>Postingan Terbaru</span>
                     </div>
                     <div id="forumPosts"></div>
@@ -223,7 +222,7 @@
                     <div class="reply-card">
                         <p class="reply-text"></p>
                         <small class="reply-author"></small>
-                        <span class="reply-actions">Balas</span>
+                        <span class="reply-actions" data-i18n="balas">Balas</span>
                     </div>
                 </template>
             </div>
@@ -240,16 +239,16 @@
                 </div>
                 <div class="profile-stats">
                     <div class="stat-item">
-                        <div class="stat-value" id="devicesCount">1</div>
-                        <div class="stat-label">Device</div>
+                        <div class="stat-value" id="devicesCount">0</div>
+                        <div class="stat-label" data-i18n="dev_profile">Device</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-value" id="activeDays">1</div>
-                        <div class="stat-label">Active Days</div>
+                        <div class="stat-value" id="activeDays">0</div>
+                        <div class="stat-label" data-i18n="aktif">Active Days</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-value" id="dataUsage">0 MB</div>
-                        <div class="stat-label">Data Usage</div>
+                        <div class="stat-value" id="dataUsage">0 GB</div>
+                        <div class="stat-label" data-i18n="data">Data Usage</div>
                     </div>
                 </div>
 
@@ -260,7 +259,7 @@
                             <img src="assets/icons/edit-profile.svg" alt="Edit Profile">
                         </div>
                         <div class="setting-info">
-                            <h3>Edit Profil</h3>
+                            <h3 data-i18n="edit">Edit Profil</h3>
                             <p>Ubah informasi akun Anda</p>
                         </div>
                         <div class="setting-arrow">›</div>
@@ -271,7 +270,7 @@
                             <img src="assets/icons/notifications.svg" alt="Notifications">
                         </div>
                         <div class="setting-info">
-                            <h3>Notifikasi</h3>
+                            <h3 data-i18n="notif">Notifikasi</h3>
                             <p>Kelola pemberitahuan</p>
                         </div>
                         <div class="setting-arrow">›</div>
@@ -282,7 +281,7 @@
                             <img src="assets/icons/language.svg" alt="Language">
                         </div>
                         <div class="setting-info">
-                            <h3>Bahasa</h3>
+                            <h3 data-i18n="bahasa">Bahasa</h3>
                             <p>Pilih bahasa yang diinginkan</p>
                         </div>
                         <div class="setting-arrow">›</div>
@@ -293,7 +292,7 @@
                             <img src="assets/icons/theme.svg" alt="Theme">
                         </div>
                         <div class="setting-info">
-                            <h3>Tema</h3>
+                            <h3 data-i18n="tema">Tema</h3>
                             <p>Ubah tampilan aplikasi</p>
                         </div>
                         <div class="setting-arrow">›</div>
@@ -304,7 +303,7 @@
                             <img src="assets/icons/help.svg" alt="Help">
                         </div>
                         <div class="setting-info">
-                            <h3>Bantuan</h3>
+                            <h3 data-i18n="bantuan">Bantuan</h3>
                             <p>Pusat bantuan dan dukungan</p>
                         </div>
                         <div class="setting-arrow">›</div>
@@ -314,8 +313,8 @@
                         <div class="setting-icon">
                             <img src="assets/icons/info.svg" alt="About">
                         </div>
-                        <div class="setting-info">
-                            <h3>Tentang Aplikasi</h3>
+                        <div class="setting-info"> 
+                            <h3  data-i18n="about">Tentang Aplikasi</h3>
                             <p>Versi dan informasi pengembang</p>
                         </div>
                         <div class="setting-arrow">›</div>
@@ -324,9 +323,13 @@
 
                 <!-- Logout Button -->
                 <div class="logout-section">
-                    <button class="btn-logout" onclick="logout()">
+                    <button class="btn-logout">
                         <img src="assets/icons/logout.svg" alt="Logout">
-                        <span>Keluar</span>
+                        <span data-i18n="logout">Keluar</span>
+                    </button>
+
+                    <button class="btn-delete" onclick="deleteAccountFlow()">
+                        🗑 <span data-i18n="deleteAccount">Hapus Akun</span>
                     </button>
                 </div>
             </div>
@@ -335,23 +338,23 @@
             <div class="bottom-nav">
                 <div class="nav-item active" onclick="switchPage('home', event)">
                     <div class="nav-icon">🏠</div>
-                    <div class="nav-label">Beranda</div>
+                    <div class="nav-label" data-i18n="home">Beranda</div>
                 </div>
                 <div class="nav-item" onclick="switchPage('devices', event)">
                     <div class="nav-icon">📱</div>
-                    <div class="nav-label">Perangkat</div>
+                    <div class="nav-label" data-i18n="devices">Perangkat</div>
                 </div>
                 <div class="nav-item" onclick="switchPage('map', event)">
                     <div class="nav-icon">🗺</div>
-                    <div class="nav-label">Peta</div>
+                    <div class="nav-label" data-i18n="map">Peta</div>
                 </div>
                 <div class="nav-item" onclick="switchPage('forum', event)">
                     <div class="nav-icon">💬</div>
-                    <div class="nav-label">Forum</div>
+                    <div class="nav-label" data-i18n="forum">Forum</div>
                 </div>
                 <div class="nav-item" onclick="switchPage('profile', event)">
                     <div class="nav-icon">👤</div>
-                    <div class="nav-label">Profil</div>
+                    <div class="nav-label" data-i18n="profile">Profil</div>
                 </div>
         </div>
 

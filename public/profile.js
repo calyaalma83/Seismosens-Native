@@ -1,15 +1,15 @@
-// profile.js
+import { ref, set } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
 import {
   updateProfile,
   EmailAuthProvider,
   reauthenticateWithCredential
-} from "firebase/auth";
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {
   doc,
   getDoc,
   updateDoc,
   setDoc
-} from "firebase/firestore";
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 // 🔹 Simpan perubahan username
 export async function saveProfile() {
@@ -46,11 +46,13 @@ export async function saveProfile() {
     }
 
     // 🔹 Simpan ke Realtime DB
-    const { rtdb, ref, set } = window._firebase;
-    await set(ref(rtdb, `users/${user.uid}/profile`), {
-      username: username,
-      email: user.email
-    });
+    await set (
+      ref(window._firebase.rtdb, `users/${user.uid}/profile`),
+      {
+        username: username,
+        email: user.email
+      }
+    );
 
     // 🔹 Refresh UI
     if (window.updateProfileUI) window.updateProfileUI();
@@ -88,33 +90,6 @@ export function updateProfileUI() {
     avatarElement.textContent = initial;
   }
 }
-
-// 🔹 Tambahkan form edit username + password konfirmasi
-document.addEventListener("DOMContentLoaded", () => {
-  const container = document.createElement("div");
-  container.id = "edit-profile-page";
-  container.className = "page-content";
-  container.innerHTML = `
-    <h2>Edit Profil</h2>
-    <label>Username Baru:<br>
-      <input id="editUsername" type="text" placeholder="Masukkan username baru">
-    </label><br><br>
-    <label>Password Lama (untuk konfirmasi):<br>
-      <input id="confirmPassword" type="password" placeholder="Masukkan password lama">
-    </label><br><br>
-    <button onclick="saveProfile()">💾 Simpan Perubahan</button>
-    <button onclick="showSetting('Profile')">⬅ Batal</button>
-  `;
-  document.body.appendChild(container);
-
-  // Update UI saat awal
-  if (window.updateProfileUI) window.updateProfileUI();
-
-  // Listener auth state
-  window._firebase?.auth?.onAuthStateChanged((user) => {
-    if (user && window.updateProfileUI) window.updateProfileUI();
-  });
-});
 
 // 🔹 Biar fungsi bisa dipanggil dari HTML
 window.saveProfile = saveProfile;
