@@ -1,0 +1,121 @@
+/* Profile Header */
+.profile-header {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    padding: 32px 24px 24px;
+    text-align: center;
+    color: white;
+    position: relative;
+    border-radius: 0 0 32px 32px;
+    box-shadow: 0 4px 20px rgba(79, 70, 229, 0.2);
+}
+
+.profile-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #8b5cf6, #ec4899);
+    margin: 0 auto 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    font-weight: 600;
+    color: white;
+    position: relative;
+    border: 4px solid rgba(255, 255, 255, 0.2);
+}
+
+.edit-avatar {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    background: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    font-size: 16px;
+    color: #4f46e5;
+}
+
+.profile-header h1 {
+    margin: 0 0 4px;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.profile-header p {
+    margin: 0 0 16px;
+    opacity: 0.9;
+    font-size: 14px;
+}
+
+/* Profile Stats */
+.profile-stats {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 16px;
+    margin: 16px -8px 0;
+    display: flex;
+    justify-content: space-around;
+    gap: 8px;
+}
+
+.stat-item {
+    text-align: center;
+    flex: 1;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    backdrop-filter: blur(4px);
+}
+
+.stat-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 4px;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.9);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+    .profile-header {
+        padding: 24px 16px 16px;
+    }
+    
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+        font-size: 32px;
+    }
+    
+    .profile-stats {
+        padding: 12px 8px;
+        margin: 12px -4px 0;
+        border-radius: 12px;
+    }
+    
+    .stat-item {
+        padding: 6px 4px;
+    }
+    
+    .stat-value {
+        font-size: 14px;
+    }
+    
+    .stat-label {
+        font-size: 10px;
+    }
+}

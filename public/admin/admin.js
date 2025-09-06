@@ -140,6 +140,54 @@ window.deleteUser = async (userId) => {
   }
 };
 
+// ============= SUPPORT MESSAGES =============
+async function loadSupportMessages() {
+  try {
+    const snapshot = await getDocs(collection(db, "supportMessages"));
+    const supportList = document.getElementById("support-list");
+    supportList.innerHTML = "";
+
+    snapshot.forEach(docSnap => {
+      const data = docSnap.data();
+      const date = data.time?.toDate().toLocaleString("id-ID") ?? "-";
+
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${data.uid || "-"}</td>
+        <td>${data.email || "-"}</td>
+        <td>${data.message || "-"}</td>
+        <td>${date}</td>
+        <td>
+          <button class="btn btn-small btn-danger delete-support" data-id="${docSnap.id}">🗑 Hapus</button>
+        </td>
+      `;
+      supportList.appendChild(row);
+    });
+
+    // tombol hapus pesan
+    document.querySelectorAll(".delete-support").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-id");
+        if (confirm("Yakin mau hapus pesan ini?")) {
+          try {
+            await deleteDoc(doc(db, "supportMessages", id));
+            alert("✅ Pesan support dihapus!");
+            loadSupportMessages();
+          } catch (err) {
+            console.error("❌ Gagal hapus pesan:", err);
+            alert("Tidak bisa menghapus pesan.");
+          }
+        }
+      });
+    });
+
+  } catch (err) {
+    console.error("❌ Gagal load support:", err);
+    alert("Tidak bisa memuat pesan support.");
+  }
+}
+
+
 // ============= DAFTAR BERITA =============
 async function loadNewsAdmin() {
   try {

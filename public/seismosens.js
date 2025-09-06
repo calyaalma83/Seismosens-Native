@@ -1,6 +1,5 @@
 import { auth, checkAuthState, deleteUser } from "./auth.js";
-import { updateProfile, updateEmail, updatePassword, sendPasswordResetEmail, EmailAuthProvider, reauthenticateWithCredential } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-import { collection, addDoc, onSnapshot, serverTimestamp, query, orderBy, doc, deleteDoc, getDocs, where, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { collection, addDoc, onSnapshot, serverTimestamp, query, orderBy, doc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 const db = window._firebase.db;
 if (!db) {
@@ -17,29 +16,332 @@ let chart;
 function switchPage(pageName, event) {
   if (event) event.preventDefault();
 
-  document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+  // reset nav
+  document.querySelectorAll(".nav-item").forEach(item => item.classList.remove("active"));
+  const clickedItem = event?.target.closest(".nav-item") ||
+    document.querySelector(`.nav-item[onclick*="${pageName}"]`);
+  if (clickedItem) clickedItem.classList.add("active");
 
-  let clickedItem = null;
-  if (event) {
-    clickedItem = event.target.closest('.nav-item') ||
-      (event.target.closest('.bottom-nav')?.querySelector(`[onclick*="${pageName}"]`) ?? null);
-  } else {
-    clickedItem = document.querySelector(`.nav-item[onclick*="${pageName}"]`);
-  }
-  if (clickedItem) clickedItem.classList.add('active');
-
-  document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+  // reset pages
+  document.querySelectorAll(".page-content").forEach(p => p.classList.remove("active"));
 
   const targetPage = document.getElementById(`${pageName}-page`);
   if (targetPage) {
     targetPage.classList.add("active");
 
+    // refresh map & chart
     if (pageName === "map" && !mapInitialized) setTimeout(initializeMap, 300);
-    if (pageName === "home") initChart(); // [FIX] chart di-refresh tiap buka home
+    if (pageName === "home") initChart();
   } else {
-    console.error("❌ Target page tidak ditemukan:", `${pageName}-page`);
+    console.warn(`switchPage: Halaman "${pageName}-page" tidak ditemukan`);
   }
 }
+
+// ===== Profile & Settings Functions =====
+
+/**
+ * Show a specific setting/page in the profile section
+ * @param {string} settingName - The name of the setting/page to show
+ */
+function showSetting(settingName) {
+    // Hide all page contents first
+    document.querySelectorAll('.page-content').forEach(page => {
+        page.classList.remove('active');
+    });
+
+    // Show the selected page
+    const pageId = `${settingName.toLowerCase().replace(/\s+/g, '-')}-page`;
+    const targetPage = document.getElementById(pageId);
+    
+    if (targetPage) {
+        targetPage.classList.add('active');
+        return;
+    }
+
+    // If page doesn't exist, create it
+    const pageContent = getSettingContent(settingName);
+    if (!pageContent) {
+        console.warn(`No content found for setting: ${settingName}`);
+        return;
+    }
+
+    // Create and append the new page
+    const newPage = document.createElement('div');
+    newPage.id = pageId;
+    newPage.className = 'page-content';
+    newPage.innerHTML = `
+        <div class="page-header">
+            <button class="btn-back" onclick="showSetting('Profile')">
+                <i class="icon-arrow">←</i> Kembali
+            </button>
+            <h2>${settingName}</h2>
+        </div>
+        <div class="page-content-inner">
+            ${pageContent}
+        </div>
+    `;
+    
+    document.querySelector('.main-content').appendChild(newPage);
+    newPage.classList.add('active');
+}
+
+/**
+ * Get the HTML content for a specific setting
+ * @param {string} settingName - The name of the setting
+ * @returns {string} The HTML content for the setting
+ */
+function getSettingContent(settingName) {
+    const contents = {
+        'Edit Profil': `
+            <div class="edit-profile-container">
+                <div class="profile-form">
+                    <div class="form-group">
+                        <label class="form-label">Nama Lengkap</label>
+                        <input type="text" id="editName" class="form-control" placeholder="Masukkan nama lengkap">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Username</label>
+                        <input type="text" id="editUsername" class="form-control" placeholder="Masukkan username">
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn-primary" onclick="saveProfile()">Simpan Perubahan</button>
+                        <button class="btn btn-outline" onclick="showSetting('Profile')">Batal</button>
+                    </div>
+                </div>
+            </div>
+        `,
+        'Notifikasi': `
+            <div class="settings-section">
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h3>Notifikasi Aplikasi</h3>
+                        <p>Aktifkan atau nonaktifkan notifikasi</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="notificationsEnabled" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h3>Notifikasi Email</h3>
+                        <p>Terima pemberitahuan melalui email</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="emailNotificationsEnabled" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+        `,
+        'Tema': `
+            <div class="settings-section">
+                <div class="setting-item" onclick="setTheme('light')">
+                    <div class="setting-icon">☀️</div>
+                    <div class="setting-info">
+                        <h3>Terang</h3>
+                        <p>Tema terang standar</p>
+                    </div>
+                    <div class="setting-arrow">›</div>
+                </div>
+                <div class="setting-item" onclick="setTheme('dark')">
+                    <div class="setting-icon">🌙</div>
+                    <div class="setting-info">
+                        <h3>Gelap</h3>
+                        <p>Tema gelap yang nyaman di malam hari</p>
+                    </div>
+                    <div class="setting-arrow">›</div>
+                </div>
+                <div class="setting-item" onclick="setTheme('system')">
+                    <div class="setting-icon">🖥️</div>
+                    <div class="setting-info">
+                        <h3>Sesuai Perangkat</h3>
+                        <p>Mengikuti pengaturan tema perangkat</p>
+                    </div>
+                    <div class="setting-arrow">›</div>
+                </div>
+            </div>
+        `,
+        'Bantuan': `
+            <div class="help-section">
+                <h3>Pusat Bantuan</h3>
+                <p>Berikut adalah beberapa pertanyaan yang sering diajukan:</p>
+                
+                <div class="help-item">
+                    <div class="help-content">
+                        <h4>Bagaimana cara mengubah password?</h4>
+                        <p>Untuk mengubah password, buka Pengaturan > Keamanan > Ubah Password.</p>
+                    </div>
+                </div>
+                
+                <div class="help-item">
+                    <div class="help-content">
+                        <h4>Bagaimana cara menghubungi dukungan?</h4>
+                        <p>Anda dapat menghubungi tim dukungan kami melalui email di support@seismosens.id</p>
+                    </div>
+                </div>
+                
+                <div class="contact-support">
+                    <p>Tidak menemukan jawaban yang Anda cari?</p>
+                    <button class="btn btn-primary" onclick="showSetting('Hubungi Kami')">Hubungi Dukungan</button>
+                </div>
+            </div>
+        `,
+        'Tentang': `
+            <div class="about-container">
+                <div class="app-logo">🌋</div>
+                <h1>SeismoSens</h1>
+                <p class="version">Versi 2.1.0</p>
+                
+                <div class="about-section">
+                    <p>SeismoSens adalah aplikasi monitoring gempa yang membantu Anda tetap aman dengan memberikan peringatan dini dan informasi gempa terkini.</p>
+                </div>
+                
+                <div class="about-section">
+                    <h3>Tim Pengembang</h3>
+                    <p>Dikembangkan dengan ❤️ oleh Tim SeismoSens</p>
+                </div>
+                
+                <div class="about-links">
+                    <a href="#" class="link">Kebijakan Privasi</a>
+                    <span>•</span>
+                    <a href="#" class="link">Syarat & Ketentuan</a>
+                </div>
+                
+                <p class="copyright">© 2023 SeismoSens. Seluruh hak cipta dilindungi.</p>
+            </div>
+        `
+    };
+
+    return contents[settingName] || null;
+}
+
+/**
+ * Save profile changes
+ */
+function saveProfile() {
+    try {
+        // Get form values
+        const fullName = document.getElementById('editName')?.value || '';
+        const username = document.getElementById('editUsername')?.value || '';
+        
+        // Get the current user from Firebase
+        const user = auth.currentUser;
+        
+        if (!user) {
+            console.error('No user is signed in');
+            alert('Anda harus masuk terlebih dahulu');
+            return;
+        }
+        
+        // Update the user's profile
+        updateProfile(user, {
+            displayName: fullName,
+            // Note: To update email, you need to re-authenticate the user
+        }).then(() => {
+            // Update successful
+            console.log('Profile updated successfully');
+            alert('Profil berhasil diperbarui');
+            
+            // Update the UI
+            if (fullName) {
+                const profileName = document.getElementById('profileName');
+                if (profileName) profileName.textContent = fullName;
+                
+                // Update avatar initial
+                const avatar = document.getElementById('profileAvatar');
+                if (avatar) avatar.textContent = fullName.charAt(0).toUpperCase();
+            }
+            
+            // Return to profile page
+            showSetting('Profile');
+            
+        }).catch((error) => {
+            // An error occurred
+            console.error('Error updating profile:', error);
+            alert('Gagal memperbarui profil: ' + error.message);
+        });
+        
+    } catch (error) {
+        console.error('Error in saveProfile:', error);
+        alert('Terjadi kesalahan saat menyimpan profil');
+    }
+}
+
+/**
+ * Set the application theme
+ * @param {string} theme - The theme to set ('light', 'dark', or 'system')
+ */
+function setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    // TODO: Save theme preference to localStorage
+    console.log('Theme set to:', theme);
+}
+
+/**
+ * Initialize the profile page with user data
+ */
+function initProfile() {
+    try {
+        const user = window._firebase?.auth.currentUser;
+        if (!user) {
+            console.log('No user is signed in');
+            return;
+        }
+
+        // Update profile info
+        const profileName = document.getElementById('profileName');
+        const profileEmail = document.getElementById('profileEmail');
+        const profileAvatar = document.getElementById('profileAvatar');
+
+        if (profileName) profileName.textContent = user.displayName || 'Pengguna';
+        if (profileEmail) profileEmail.textContent = user.email || '';
+        if (profileAvatar) {
+            profileAvatar.textContent = (user.displayName || user.email || 'U').charAt(0).toUpperCase();
+            // Add random gradient
+            const colors = ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981"];
+            const color1 = colors[Math.floor(Math.random() * colors.length)];
+            const color2 = colors[Math.floor(Math.random() * colors.length)];
+            profileAvatar.style.background = `linear-gradient(45deg, ${color1}, ${color2})`;
+        }
+
+        // Update profile stats
+        updateProfileStats();
+        
+    } catch (error) {
+        console.error('Error initializing profile:', error);
+    }
+}
+
+/**
+ * Update the profile statistics
+ */
+function updateProfileStats() {
+    // TODO: Load real stats from your data source
+    const stats = {
+        devices: 3,
+        activeDays: 42,
+        dataUsage: '1.2 GB'
+    };
+    
+    document.getElementById('devicesCount').textContent = stats.devices;
+    document.getElementById('activeDays').textContent = stats.activeDays;
+    document.getElementById('dataUsage').textContent = stats.dataUsage;
+}
+
+// Initialize profile when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    initProfile();
+    
+    // Set initial theme
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    setTheme(savedTheme);
+});
+
+// Make functions available globally
+window.showSetting = showSetting;
+window.saveProfile = saveProfile;
+window.setTheme = setTheme;
 
 // ===== App Init =====
 async function initApp() {
@@ -64,99 +366,6 @@ async function initApp() {
   } catch (error) {
     console.error("Error initializing app:", error);
   }
-}
-
-function listenSensorData() {
-    const { rtdb, ref, onValue } = window._firebase;
-    const sensorRef = ref(rtdb, "sensor/data");
-
-    onValue(sensorRef, (snapshot) => {
-        if (snapshot.exists()) {
-            const data = snapshot.val();
-            console.log("Data sensor realtime: ", data);
-
-            // contoh update ke UI
-            const el = document.getElementById("sensorData");
-            if (el) el.textContent = JSON.stringify(data, null, 2);
-
-            //masukin ke grafik
-            if (data.displacement_cm !== undefined && data.vibrationMagnitude !== undefined) {
-                updateChart(data.displacement_cm, data.vibrationMagnitude);
-            }
-
-            let normal = 0, warning = 0;
-            if (data.vibrationMagnitude > 0.5 || data.displacement_cm > 1) {
-                warning++;
-            } else {
-                normal ++;
-            }
-
-            const elNormal = document.getElementById("legend-normal");
-            const elWarning = document.getElementById("legend-warning");
-            const elUser = document.getElementById("legend-user");
-
-            if (elNormal) elNormal.textContent = normal;
-            if (elWarning) elWarning.textContent = warning;
-            if (elUser) elUser.textContent = 1;
-        } else {
-            console.log("Belum ada data sensor");
-        }
-    });
-}
-
-function renderDeviceCard(id, dev) {
-    let statusClass = "";
-    let statusLabel = "";
-
-    switch (dev.status) {
-        case "online":
-            statusClass = "online";
-            statusLabel = `● Online (${dev.batteryStatus || 100}%)`;
-            break;
-        case "warning":
-            statusClass = "warning";
-            statusLabel = `⚠ Warning (${dev.batteryStatus || 70}%)`;
-            break;
-        case "offline":
-            statusClass = "offline"
-            statusLabel = `● Offline`;
-            break;
-    }
-
-    return `
-    <div class="device-card ${statusClass}">
-      <div class="device-header">
-        <div class="device-info">
-          <h3>${id}</h3>
-          <p>${dev.name || "Perangkat"} • ${dev.address || "Alamat tidak tersedia"}</p>
-        </div>
-        <div class="device-status ${statusClass}">
-          ${statusLabel}
-        </div>
-      </div>
-    </div>
-    `;
-}
-
-function listenDevices() {
-    const { rtdb, ref, onValue } = window._firebase;
-    const devicesRef = ref(rtdb, "devices");
-
-    onValue(devicesRef, (snapshot) => {
-        const listEl = document.getElementById("devicesContainer");
-        if (!listEl) return;
-
-        listEl.innerHTML = ""; 
-
-        if (snapshot.exists()) {
-            const devices = snapshot.val();
-            Object.entries(devices).forEach(([id, dev]) => {
-                listEl.innerHTML += renderDeviceCard(id, dev);
-            });
-        } else {
-            listEl.innerHTML = "<p>Tidak ada perangkat yang terhubung</p>";
-        }
-    });
 }
 
 // ===== Map =====
@@ -249,7 +458,6 @@ function centerMap() { if (map) map.setView(surakartaCenter, 13); }
 function showNotifications() { alert("Notifikasi akan ditampilkan di sini"); }
 function showDeviceDetail(deviceName) { console.log("Device detail:", deviceName); }
 function showLocationDetail(locationName) { console.log("Location detail:", locationName); }
-function showSetting(settingName) { console.log("Setting:", settingName); }
 function showQuickActions() {
   const el = document.getElementById("quickActions");
   if (el) el.style.display = el.style.display === "none" ? "flex" : "none";
@@ -746,142 +954,12 @@ function loadForumPosts() {
   });
 }
 
-async function editProfile({ nama, email, password }) {
-  const user = window._firebase.auth.currentUser;
-  if (!user) return alert("Kamu harus login dulu!");
-
-  try {
-    // 🔹 Kalau ganti email → disable dulu / kasih alert
-    if (email && email !== user.email) {
-      alert("Fitur update email belum diaktifkan di Firebase Console.");
-    }
-
-    // 🔹 Update displayName (nama)
-    if (nama) {
-      await updateProfile(user, { displayName: nama });
-    }
-
-    const userRef = doc(window._firebase.db, "users", user.uid);
-    const snap = await getDoc(userRef);
-
-    if (snap.exists()) {
-      // Kalau sudah ada → update
-      await updateDoc(userRef, {
-        nama: nama || user.displayName,
-        email: user.email
-      });
-    } else {
-      // Kalau belum ada → bikin baru
-      await setDoc(userRef, {
-        nama: nama || user.displayName,
-        email: user.email,
-        createdAt: new Date()
-      });
-    }
-
-    // 🔹 Simpan ke Realtime DB juga
-    const { rtdb, ref, set } = window._firebase;
-    await set(ref(rtdb, `users/${user.uid}/profile`), {
-      nama: nama || user.displayName,
-      email: user.email
-    });
-
-    alert("✅ Profil berhasil diperbarui");
-    updateProfileUI();
-  } catch (err) {
-    console.error("❌ Gagal update profil:", err);
-    alert("Gagal update profil: " + err.message);
-  }
-}
-
-async function updateUserPassword(newPassword) {
-  const user = window._firebase.auth.currentUser;
-  if (!user) return alert("❌ Kamu harus login dulu!");
-
-  try {
-    // Minta password lama
-    const oldPassword = prompt("Masukkan password lama untuk konfirmasi:");
-    if (!oldPassword) return alert("Password lama wajib diisi!");
-
-    // Re-authenticate dulu
-    const credential = EmailAuthProvider.credential(user.email, oldPassword);
-    await reauthenticateWithCredential(user, credential);
-
-    // Update password baru
-    await updatePassword(user, newPassword);
-
-    alert("✅ Password berhasil diubah!");
-    document.getElementById("securityModal").style.display = "none";
-  } catch (err) {
-    console.error("Gagal ubah password:", err);
-    alert("❌ Gagal ubah password: " + err.message);
-  }
-}
-
-async function resetPassword(email) {
-  try {
-    await sendPasswordResetEmail(window._firebase.auth, email);
-    alert("✅ Link reset password sudah dikirim ke email");
-  } catch (err) {
-    console.error("❌ Gagal reset password:", err);
-    alert("Gagal reset password: " + err.message);
-  }
-}
-
-// 🔹 Simpan perubahan profil
-async function saveProfile() {
-  const nama = document.getElementById("profileNameInput").value.trim();
-  const email = document.getElementById("profileEmailInput").value.trim();
-  const password = document.getElementById("profilePassword").value.trim();
-
-  try {
-    await editProfile({ nama, email, password }); // ✅ langsung pakai versi fix
-    await updateProfileUI();  // refresh tampilan setelah update
-    closeEditProfile();       // tutup modal
-  } catch (err) {
-    console.error("❌ Gagal simpan profil:", err);
-    alert("Gagal menyimpan profil: " + err.message);
-  }
-}
-
-function closeEditProfile() {
-  document.getElementById("editProfileModal").style.display = "none";
-}
-
-function openDataStorage(type) {
-  const modal = document.getElementById("dataStorageModal");
-  const content = document.getElementById("dataStorageContent");
-
-  if (type === "manage") {
-    content.innerHTML = `
-      <h3>📊 Manage Data</h3>
-      <p>Fitur Export, Backup, dan Analisis akan tersedia di sini.</p>
-      <button onclick="alert('Export data belum aktif')">Export Data</button>
-      <button onclick="alert('Backup belum aktif')">Backup Data</button>
-      <button onclick="alert('Analisis belum aktif')">Analisis</button>
-    `;
-  } else if (type === "storage") {
-    content.innerHTML = `
-      <h3>💾 Storage</h3>
-      <p>Total kapasitas: 8GB</p>
-      <p>Terpakai: 2.3GB</p>
-      <div style="margin-top:10px; background:#eee; border-radius:6px; overflow:hidden;">
-        <div style="width:30%; background:#3b82f6; color:white; padding:5px; text-align:center;">30%</div>
-      </div>
-      <p><i>(Dummy tampilan progress storage)</i></p>
-    `;
-  }
-
-  modal.style.display = "block";
-}
-
-function closeDataStorage() {
-  document.getElementById("dataStorageModal").style.display = "none";
-}
-
 // ===== Expose ke window =====
 window.switchPage = switchPage;
+window.showSetting = showSetting;
 window.initApp = initApp;
+
+// fungsi lain tetap di-expose
 window.initializeMap = initializeMap;
 window.zoomIn = zoomIn;
 window.zoomOut = zoomOut;
@@ -889,7 +967,6 @@ window.centerMap = centerMap;
 window.showNotifications = showNotifications;
 window.showDeviceDetail = showDeviceDetail;
 window.showLocationDetail = showLocationDetail;
-window.showSetting = showSetting;
 window.showQuickActions = showQuickActions;
 window.listenDeviceStats = listenDeviceStats;
 window.updateTime = updateTime;
@@ -951,6 +1028,7 @@ window.deleteAccount = async function () {
     }
   }
 };
+
 
 // ===== Debug =====
 console.log('Global functions initialized:', {
