@@ -1,5 +1,5 @@
 import { auth, checkAuthState, deleteUser } from "./auth.js";
-import { collection, addDoc, onSnapshot, serverTimestamp, query, orderBy, doc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { collection, addDoc, onSnapshot, serverTimestamp, query, orderBy, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 const db = window._firebase.db;
 if (!db) {
@@ -583,42 +583,15 @@ async function updateProfileUI() {
     const elDataUsage    = document.getElementById("profileDataUsage");
 
     if (user) {
-      let displayName = "Pengguna"; // default aman
-      let email = user.email || "";
-      let photoURL = user.photoURL || null;  // [TAMBAHAN]
-
-      // 🔹 1. Ambil nama & email dari Firestore
-      try {
-        const snap = await getDoc(doc(window._firebase.db, "users", user.uid));
-        if (snap.exists()) {
-          const data = snap.data();
-          displayName = data.nama || user.displayName || "Pengguna";
-          email = data.email || user.email || "";
-          photoURL = data.photoURL || user.photoURL || null;  // [TAMBAHAN]
-        } else {
-          displayName = user.displayName || "Pengguna";
-        }
-      } catch (err) {
-        console.error("❌ Gagal ambil nama dari Firestore:", err);
-        displayName = user.displayName || "Pengguna";
-      }
-
-      // 🔹 2. Update ke UI
+      const displayName = user.displayName || "Pengguna";
       if (greetingName)  greetingName.textContent  = displayName;
       if (profileName)   profileName.textContent   = displayName;
-      if (profileEmail)  profileEmail.textContent  = email;
+      if (profileEmail)  profileEmail.textContent  = user.email || "";
+      if (profileAvatar) profileAvatar.textContent = (displayName[0] || "U").toUpperCase();
 
-      // [UBAHAN] tampilkan foto kalau ada, fallback huruf
-      if (profileAvatar) {
-        if (photoURL) {
-          profileAvatar.innerHTML = `<img src="${photoURL}" alt="Foto Profil" style="width:40px;height:40px;border-radius:50%;">`;
-        } else {
-          profileAvatar.textContent = (displayName[0] || "U").toUpperCase();
-        }
-      }
-
-      // 🔹 3. Hitung jumlah perangkat
       const { rtdb, ref, onValue } = window._firebase;
+
+      // 🔹 1. Hitung jumlah perangkat milik user
       const devicesRef = ref(rtdb, "devices");
       onValue(devicesRef, (snapshot) => {
         if (!snapshot.exists()) return;
@@ -630,27 +603,43 @@ async function updateProfileUI() {
         if (elDevicesCount) elDevicesCount.textContent = myCount;
       });
 
-      // 🔹 4. Hitung hari aktif
+      // 🔹 2. Hitung hari aktif (pakai tanggal akun dibuat dari Firebase Auth)
       if (user.metadata?.creationTime) {
         const created = new Date(user.metadata.creationTime);
         const diff = Math.floor((Date.now() - created) / (1000 * 60 * 60 * 24));
         if (elActiveDays) elActiveDays.textContent = diff;
       }
 
-      // 🔹 5. Data usage (Realtime DB)
+      // 🔹 3. Data usage
       const userRef = ref(rtdb, `users/${user.uid}/dataUsage`);
       onValue(userRef, (snap) => {
         if (snap.exists()) {
-          const usage = snap.val();
+          // Kalau ada dataUsage → langsung pakai
+          const usage = snap.val(); // byte
           const gb = (usage / (1024*1024*1024)).toFixed(1);
           if (elDataUsage) elDataUsage.textContent = `${gb}GB`;
         } else {
-          if (elDataUsage) elDataUsage.textContent = "0GB";
+          // 🔹 Fallback: hitung dari semua perangkat user
+          const devicesRef = ref(rtdb, "devices");
+          onValue(devicesRef, (snapshot) => {
+            if (!snapshot.exists()) return;
+            const devices = snapshot.val();
+            let totalBytes = 0;
+
+            Object.values(devices).forEach(dev => {
+              if (dev.ownerUid === user.uid && dev.dataUsage) {
+                totalBytes += dev.dataUsage; // asumsinya tiap device simpan dataUsage
+              }
+            });
+
+            const gb = (totalBytes / (1024*1024*1024)).toFixed(1);
+            if (elDataUsage) elDataUsage.textContent = `${gb}GB`;
+          });
         }
       });
 
     } else {
-      // 🔹 User belum login → fallback Tamu
+      // 🔹 User belum login
       if (greetingName)  greetingName.textContent  = "Tamu";
       if (profileName)   profileName.textContent   = "Tamu";
       if (profileEmail)  profileEmail.textContent  = "—";
@@ -954,6 +943,7 @@ function loadForumPosts() {
   });
 }
 
+
 // ===== Expose ke window =====
 window.switchPage = switchPage;
 window.showSetting = showSetting;
@@ -974,52 +964,14 @@ window.logout = logout;
 window.updateProfileUI = updateProfileUI;
 window.addForumPost = addForumPost;
 window.loadForumPosts = loadForumPosts;
-window.editProfile = editProfile;
-window.saveProfile = saveProfile;
-window.updateUserPassword = updateUserPassword;
-window.resetPassword = resetPassword;
-window.closeEditProfile = closeEditProfile;
-window.openDataStorage = openDataStorage;
-window.closeDataStorage = closeDataStorage;
 
 window.deleteAccount = async function () {
   if (confirm('Apakah Anda yakin ingin menghapus akun ini? Tindakan ini tidak dapat dibatalkan.')) {
     try {
       const user = window._firebase.auth.currentUser;
       if (user) {
-        const uid = user.uid;
-        const db = window._firebase.db;
-
-        // 🔹 1. Hapus semua posting user di forum
-        const postsSnap = await getDocs(query(collection(db, "forumPosts"), where("uid", "==", uid)));
-        for (const postDoc of postsSnap.docs) {
-          // hapus semua replies di dalam post ini
-          const repliesSnap = await getDocs(collection(db, "forumPosts", postDoc.id, "replies"));
-          for (const replyDoc of repliesSnap.docs) {
-            await deleteDoc(doc(db, "forumPosts", postDoc.id, "replies", replyDoc.id));
-          }
-          // hapus posting utamanya
-          await deleteDoc(doc(db, "forumPosts", postDoc.id));
-        }
-
-        // 🔹 2. Hapus semua komentar user di posting orang lain
-        const allPostsSnap = await getDocs(collection(db, "forumPosts"));
-        for (const postDoc of allPostsSnap.docs) {
-          const repliesSnap = await getDocs(collection(db, "forumPosts", postDoc.id, "replies"));
-          for (const replyDoc of repliesSnap.docs) {
-            if (replyDoc.data().uid === uid) {
-              await deleteDoc(doc(db, "forumPosts", postDoc.id, "replies", replyDoc.id));
-            }
-          }
-        }
-
-        // 🔹 3. Hapus dokumen user di Firestore
-        await deleteDoc(doc(db, "users", uid));
-
-        // 🔹 4. Hapus akun di Firebase Auth
-        await deleteUser(user);
-
-        alert('Akun & semua posting/komentar berhasil dihapus');
+        await fbDeleteUser(user);
+        alert('Akun berhasil dihapus');
         window.location.href = '/login.html';
       }
     } catch (error) {
@@ -1029,6 +981,13 @@ window.deleteAccount = async function () {
   }
 };
 
+function listenSensorData() {
+  console.log("listenSensorData dummy aktif.");
+}
+
+function listenDevices() {
+  console.log("listenDevices dummy aktif.");
+}
 
 // ===== Debug =====
 console.log('Global functions initialized:', {

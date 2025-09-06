@@ -235,185 +235,125 @@
                     <div class="profile-avatar" id="profileAvatar">
                         <span class="edit-avatar">✏️</span>
                     </div>
-                    <h1 id="profileName">memuat</h1>
+                    <h1 id="profileName">memuat</h1> 
                     <p id="profileEmail">memuat@gmail.com</p>
-                    <div class="profile-stats">
-                        <div class="stat-item">
-                            <div class="stat-value" id="devicesCount">1</div>
-                            <div class="stat-label">Device</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value" id="activeDays">1</div>
-                            <div class="stat-label">Active Days</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value" id="dataUsage">0 MB</div>
-                            <div class="stat-label">Data Usage</div>
-                        </div>
+                </div>
+                <div class="profile-stats">
+                    <div class="stat-item">
+                        <div class="stat-value" id="devicesCount">1</div>
+                        <div class="stat-label">Device</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="activeDays">1</div>
+                        <div class="stat-label">Active Days</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="dataUsage">0 MB</div>
+                        <div class="stat-label">Data Usage</div>
                     </div>
                 </div>
 
+                <!-- Settings Section -->
                 <div class="settings-section">
-                    <div class="settings-header">Profil Saya</div>
                     <div class="settings-item" onclick="showSetting('Edit Profil')">
-                        <div class="settings-item-left">
-                            <div class="settings-icon" style="background: #3b82f6; color: white;">👤</div>
-                            <div class="settings-text">
-                                <h4>Edit Profil</h4>
-                                <p>Nama, email, foto profil</p>
-                            </div>
+                        <div class="setting-icon">
+                            <img src="assets/icons/edit-profile.svg" alt="Edit Profile">
                         </div>
-                        <span>›</span>
-                    </div>
-                    <div class="settings-item" onclick="showSetting('Keamanan')">
-                        <div class="settings-item-left">
-                            <div class="settings-icon" style="background: #10b981; color: white;">🔒</div>
-                            <div class="settings-text">
-                                <h4>Keamanan</h4>
-                                <p>Password dan autentikasi</p>
-                            </div>
+                        <div class="setting-info">
+                            <h3>Edit Profil</h3>
+                            <p>Ubah informasi akun Anda</p>
                         </div>
                         <div class="setting-arrow">›</div>
                     </div>
 
-                <div class="settings-section">
-                    <div class="settings-header">Perangkat</div>
-                    <div class="settings-item" onclick="showSetting('Konfigurasi Perangkat')">
-                        <div class="settings-item-left">
-                            <div class="settings-icon" style="background: #3b82f6; color: white;">📱</div>
-                            <div class="settings-text">
-                                <h4>Konfigurasi Perangkat</h4>
-                                <p>Atur nama, lokasi, dan parameter</p>
-                            </div>
+                    <div class="settings-item" onclick="showSetting('Notifikasi')">
+                        <div class="setting-icon">
+                            <img src="assets/icons/notifications.svg" alt="Notifications">
                         </div>
-                        <span></span>
-                    </div>
-                    <div class="settings-item" onclick="showSetting('Update Firmware')">
-                        <div class="settings-item-left">
-                            <div class="settings-icon" style="background: #f59e0b; color: white;">🔄</div>
-                            <div class="settings-text">
-                                <h4>Update Firmware</h4>
-                                <p>v2.1.0 tersedia</p>
-                            </div>
+                        <div class="setting-info">
+                            <h3>Notifikasi</h3>
+                            <p>Kelola pemberitahuan</p>
                         </div>
-                        <span></span>
+                        <div class="setting-arrow">›</div>
                     </div>
 
                     <div class="settings-item" onclick="showSetting('Bahasa')">
                         <div class="setting-icon">
                             <img src="assets/icons/language.svg" alt="Language">
                         </div>
-                        <span></span>
+                        <div class="setting-info">
+                            <h3>Bahasa</h3>
+                            <p>Pilih bahasa yang diinginkan</p>
+                        </div>
+                        <div class="setting-arrow">›</div>
                     </div>
-                </div>
 
-                <div class="settings-section">
-                    <div class="settings-header">Data & Storage</div>
-                    <div class="settings-item" onclick="showSetting('Manage Data')">
-                        <div class="settings-item-left">
-                            <div class="settings-icon" style="background: #06b6d4; color: white;">📊</div>
-                            <div class="settings-text">
-                                <h4>Manage Data</h4>
-                                <p>Export, Backup, dan Analisis</p>
-                            </div>
+                    <div class="settings-item" onclick="showSetting('Tema')">
+                        <div class="setting-icon">
+                            <img src="assets/icons/theme.svg" alt="Theme">
                         </div>
-                        <span></span>
-                    </div>
-                    <div class="settings-item" onclick="showSetting('Storage')">
-                        <div class="settings-item-left">
-                            <div class="settings-icon" style="background: #8b5cf6; color: white;">💾</div>
-                            <div class="settings-text">
-                                <h4>Storage</h4>
-                                <p>2.3GB dari 8GB terpakai</p>
-                            </div>
+                        <div class="setting-info">
+                            <h3>Tema</h3>
+                            <p>Ubah tampilan aplikasi</p>
                         </div>
-                        <span></span>
-                    </div>
-                </div>
-
-                <div class="settings-section">
-                    <div class="settings-header">Aplikasi</div>
-                    <div class="settings-item" onclick="showSetting('Notifikasi')">
-                        <div class="settings-item-left">
-                            <div class="settings-icon" style="background: #ef4444; color: white;">🔔</div>
-                            <div class="settings-text">
-                                <h4>Notifikasi</h4>
-                                <p>Alert dan Peringatan Sistem</p>
-                            </div>
-                        </div>
-                        <span></span>
+                        <div class="setting-arrow">›</div>
                     </div>
 
                     <div class="settings-item" onclick="showSetting('Bantuan')">
-                        <div class="settings-item-left">
-                            <div class="settings-icon" style="background: #64748b; color: white;">❓</div>
-                            <div class="settings-text">
-                                <h4>Bantuan & FAQ</h4>
-                                <p>Panduan pengguaan aplikasi</p>
-                            </div>
+                        <div class="setting-icon">
+                            <img src="assets/icons/help.svg" alt="Help">
                         </div>
-                        <span></span>
+                        <div class="setting-info">
+                            <h3>Bantuan</h3>
+                            <p>Pusat bantuan dan dukungan</p>
+                        </div>
+                        <div class="setting-arrow">›</div>
+                    </div>
+
+                    <div class="settings-item" onclick="showSetting('Tentang')">
+                        <div class="setting-icon">
+                            <img src="assets/icons/info.svg" alt="About">
+                        </div>
+                        <div class="setting-info">
+                            <h3>Tentang Aplikasi</h3>
+                            <p>Versi dan informasi pengembang</p>
+                        </div>
+                        <div class="setting-arrow">›</div>
                     </div>
                 </div>
 
-                <div class="settings-section">
-                    <div class="settings-header">Support</div>
-                    <div class="settings-item" onclick="showSetting('Hubungi Support')">
-                        <div class="settings-item-left">
-                            <div class="settings-icon" style="background: #06b6d4; color: white;">💬</div>
-                            <div class="settings-text">
-                                <h4>Hubungi Support</h4>
-                                <p>Chat 24/7 dengan tim teknis</p>
-                            </div>
-                        </div>
-                        <span>›</span>
-                    </div>
-                    <div class="settings-item" onclick="showSetting('About SeismoSens')">
-                        <div class="settings-item-left">
-                            <div class="settings-icon" style="background: #1e293b; color: white;">ℹ</div>
-                            <div class="settings-text">
-                                <h4>About SeismoSens</h4>
-                                <p>Versi 2.1.0 • Tim Pengembang</p>
-                            </div>
-                        </div>
-                        <span>›</span>
-                    </div>
-                </div>
-
-                <div style="padding: 20px; text-align: center;">
-                    <button onclick="window.logout()" style="background: #ef4444; color: white; border: none; padding: 12px 30px; border-radius: 25px; font-weight: 600; cursor: pointer;">
-                        Keluar dari Akun
-                    </button>
-                    <button onclick="deleteAccount()" class="btn-delete-account">
-                        🗑 Hapus Akun
+                <!-- Logout Button -->
+                <div class="logout-section">
+                    <button class="btn-logout" onclick="logout()">
+                        <img src="assets/icons/logout.svg" alt="Logout">
+                        <span>Keluar</span>
                     </button>
                 </div>
             </div>
+            
+            <!-- Bottom Navigation -->
+            <div class="bottom-nav">
+                <div class="nav-item active" onclick="switchPage('home', event)">
+                    <div class="nav-icon">🏠</div>
+                    <div class="nav-label">Beranda</div>
+                </div>
+                <div class="nav-item" onclick="switchPage('devices', event)">
+                    <div class="nav-icon">📱</div>
+                    <div class="nav-label">Perangkat</div>
+                </div>
+                <div class="nav-item" onclick="switchPage('map', event)">
+                    <div class="nav-icon">🗺</div>
+                    <div class="nav-label">Peta</div>
+                </div>
+                <div class="nav-item" onclick="switchPage('forum', event)">
+                    <div class="nav-icon">💬</div>
+                    <div class="nav-label">Forum</div>
+                </div>
+                <div class="nav-item" onclick="switchPage('profile', event)">
+                    <div class="nav-icon">👤</div>
+                    <div class="nav-label">Profil</div>
+                </div>
         </div>
-
-        <!-- Bottom Navigation -->
-        <div class="bottom-nav">
-            <div class="nav-item active" onclick="switchPage('home', event)">
-                <div class="nav-icon">🏠</div>
-                <div class="nav-label">Beranda</div>
-            </div>
-            <div class="nav-item" onclick="switchPage('devices', event)">
-                <div class="nav-icon">📱</div>
-                <div class="nav-label">Perangkat</div>
-            </div>
-            <div class="nav-item" onclick="switchPage('map', event)">
-                <div class="nav-icon">🗺</div>
-                <div class="nav-label">Peta</div>
-            </div>
-            <div class="nav-item" onclick="switchPage('forum', event)">
-                <div class="nav-icon">💬</div>
-                <div class="nav-label">Forum</div>
-            </div>
-            <div class="nav-item" onclick="switchPage('profile', event)">
-                <div class="nav-icon">👤</div>
-                <div class="nav-label">Profil</div>
-            </div>
-    </div>
 
   <!-- Firebase and App Scripts -->
   <!-- Load Leaflet first -->
