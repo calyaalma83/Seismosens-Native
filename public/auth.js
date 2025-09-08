@@ -7,7 +7,11 @@ import {
   signOut,
   updateProfile,
   deleteUser,
-  setPersistence,
+  setPersistence, 
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   browserSessionPersistence
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
@@ -159,6 +163,41 @@ async function logoutUser() {
   }
 }
 
+// Buat provider Google
+const provider = new GoogleAuthProvider();
+
+// Login dengan popup
+async function loginWithGoogle() {
+  try {
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
+
+    console.log("✅ Login Google berhasil:", user);
+
+    // Simpan user ke Firestore (jika belum ada)
+    const snap = await getDoc(doc(db, "users", user.uid));
+    if (!snap.exists()) {
+      await setDoc(doc(db, "users", user.uid), {
+        email: user.email,
+        nama: user.displayName || "Pengguna",
+        role: "user",
+        createdAt: serverTimestamp()
+      });
+    }
+
+    // Redirect ke dashboard
+    window.location.href = "./seismosens.html";
+
+  } catch (error) {
+    console.error("❌ Error login Google:", error);
+    alert("Login dengan Google gagal: " + error.message);
+  }
+}
+
+// biar bisa dipanggil langsung dari HTML
+window.loginWithGoogle = loginWithGoogle;
+
+
 // ================================
 // EXPORT
 // ================================
@@ -173,5 +212,6 @@ export {
   signInWithEmailAndPassword,
   updateProfile,
   logoutUser,
+  loginWithGoogle,
   deleteUser
 };

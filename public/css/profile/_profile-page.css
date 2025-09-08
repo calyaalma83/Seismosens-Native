@@ -27,8 +27,8 @@
     width: 100px;
     height: 100px;
     border-radius: 50%;
-    background: linear-gradient(45deg, #8b5cf6, #ec4899);
-    margin: 0 auto 16px;
+    background: linear-gradient(45deg, #e7df70, #fdecf4);
+    margin: 0 auto 19px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -79,7 +79,7 @@
     background: rgba(255, 255, 255, 0.15);
     border-radius: 16px;
     padding: 16px;
-    margin: 16px -8px 0;
+    margin: 16px -8px 16px;
     display: flex;
     justify-content: space-around;
     gap: 8px;
@@ -125,7 +125,7 @@
     
     .profile-stats {
         padding: 12px 8px;
-        margin: 12px -4px 0;
+        margin: 12px 10px 12px;
         border-radius: 12px;
     }
     

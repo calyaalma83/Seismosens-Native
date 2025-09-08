@@ -43,5 +43,27 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow write: if isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
+    
+    // Support tickets collection
+    match /support/{ticketId} {
+      // Allow users to create their own support tickets
+      allow create: if isAuthenticated() && 
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.status == 'new';
+      
+      // Allow users to read their own tickets and admins to read all tickets
+      allow read: if isAuthenticated() && 
+        (resource.data.userId == request.auth.uid || 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin");
+      
+      // Allow users to update their own tickets and admins to update any ticket
+      allow update: if isAuthenticated() && 
+        (resource.data.userId == request.auth.uid || 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin");
+      
+      // Only admins can delete tickets
+      allow delete: if isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+    }
   }
 }

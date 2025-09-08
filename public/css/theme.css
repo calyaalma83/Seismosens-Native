@@ -1,0 +1,189 @@
+/* Theme Variables */
+:root {
+    /* Light Theme (Default) */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --bg-tertiary: #f0f2f5;
+    --text-primary: #1a1a1a;
+    --text-secondary: #4b5563;
+    --text-muted: #6b7280;
+    --border-color: #e5e7eb;
+    --card-bg: #ffffff;
+    --card-hover: #f9fafb;
+    --shadow: 0 1px 3px rgba(0,0,0,0.1);
+    --primary: #4f46e5;
+    --primary-hover: #4338ca;
+    --header-bg: linear-gradient(135deg, #4f46e5, #7c3aed);
+    --header-text: #ffffff;
+}
+
+/* Force dark theme styles with higher specificity */
+html[data-theme="dark"],
+html[data-theme="dark"] body {
+    --bg-primary: #121212 !important;
+    --bg-secondary: #1e1e1e !important;
+    --text-primary: #f3f4f6 !important;
+    --text-secondary: #9ca3af !important;
+    --border-color: #374151 !important;
+    --card-bg: #1e1e1e !important;
+    --header-bg: linear-gradient(135deg, #2d2d2d, #1a1a1a) !important;
+}
+
+/* Apply theme to body */
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+/* Force text color on all elements */
+* {
+    color: var(--text-primary) !important;
+}
+
+/* Base Styles */
+/* Header */
+.header, .profile-header {
+    background: var(--header-bg) !important;
+}
+
+/* Logo Text - Force white color */
+.logo-text,
+.header .logo-text {
+    color: #ffffff !important;
+}
+
+/* Quick Stats - Force white text */
+.quick-stat,
+.quick-stat *,
+.quick-stat-value,
+.quick-stat-label {
+    color: #ffffff !important;
+}
+
+/* Welcome Text - Force white color */
+.welcome-text,
+.header .welcome-text,
+.welcome-text *,
+.header .welcome-text * {
+    color: #ffffff !important;
+}
+
+/* Header Title - More specific selector */
+.header .welcome-title,
+.header h1.welcome-title,
+.header > h1,
+.header h1 {
+    color: white !important;
+    text-shadow: none !important;
+}
+
+/* Profile Email - Force white color */
+.profile-email,
+.profile-email p,
+.profile-email span,
+.profile-email div,
+#profileEmail,
+[class*="profile-email"] {
+    color: white !important;
+}
+
+/* News Section */
+.news-card {
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+    border-left: 4px solid var(--primary);
+}
+
+.news-title {
+    color: var(--text-primary) !important;
+}
+
+.news-meta {
+    color: var(--text-secondary) !important;
+}
+
+/* Content Sections */
+.content-section, .settings-section, .card {
+    background-color: var(--card-bg) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Navigation */
+.bottom-nav {
+    background-color: var(--card-bg);
+    border-top: 1px solid var(--border-color);
+}
+
+.nav-item {
+    color: var(--text-secondary);
+}
+
+.nav-item.active {
+    color: var(--primary);
+}
+
+.nav-label {
+    color: var(--text-secondary);
+}
+
+.nav-item.active .nav-label {
+    color: var(--primary);
+}
+
+/* Settings */
+.settings-item h3 {
+    color: var(--text-primary) !important;
+}
+
+.settings-item p {
+    color: var(--text-secondary) !important;
+}
+
+/* Inputs */
+input, textarea, select {
+    background-color: var(--bg-secondary) !important;
+    border-color: var(--border-color) !important;
+}
+
+input:focus, textarea:focus, select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+    border-color: var(--primary-hover);
+}
+
+/* Back Button - Make text blue and center */
+.back-button,
+.btn-back,
+[class*="back"] {
+    color: #2563eb !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+}
+
+/* Increase Merapi mountain icon size more */
+.mountain-icon,
+.merapi-icon,
+[class*="mountain"],
+[class*="merapi"] {
+    font-size: 2.5em !important;  /* Even larger size */
+    vertical-align: middle;
+    display: inline-block !important;
+}
+
+/* Utility Classes */
+.text-muted {
+    color: var(--text-muted) !important;
+}

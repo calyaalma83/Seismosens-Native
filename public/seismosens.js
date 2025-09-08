@@ -236,6 +236,102 @@ function getSettingContent(settingName) {
                 </div>
             </div>
         `,
+        'Hubungi Kami': `
+            <div class="contact-container">
+                <h3>Kirim Pesan ke Tim Dukungan</h3>
+                <p>Silakan isi form di bawah ini untuk menghubungi tim dukungan kami.</p>
+                
+                <form id="supportForm" class="contact-form">
+                    <div class="form-group">
+                        <label for="contactName">Nama Lengkap</label>
+                        <input type="text" id="contactName" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="contactEmail">Email</label>
+                        <input type="email" id="contactEmail" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="contactSubject">Subjek</label>
+                        <input type="text" id="contactSubject" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="contactMessage">Pesan</label>
+                        <textarea id="contactMessage" rows="5" class="form-control" required></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Kirim Pesan</button>
+                </form>
+                
+                <div id="contactSuccess" class="success-message" style="display: none;">
+                    <p>Terima kasih! Pesan Anda telah terkirim. Tim kami akan segera merespons.</p>
+                </div>
+                
+                <div class="contact-info">
+                    <h4>Atau hubungi kami melalui:</h4>
+                    <p>📧 Email: support@seismosens.id</p>
+                    <p>📱 WhatsApp: +62 812-3456-7890</p>
+                    <p>🕒 Jam Operasional: Senin - Jumat, 09:00 - 17:00 WIB</p>
+                </div>
+            </div>
+            
+            <style>
+                .contact-container {
+                    max-width: 600px;
+                    margin: 0 auto;
+                    padding: 20px;
+                }
+                
+                .contact-form {
+                    background: #fff;
+                    padding: 20px;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    margin: 20px 0;
+                }
+                
+                .form-group {
+                    margin-bottom: 15px;
+                }
+                
+                .form-group label {
+                    display: block;
+                    margin-bottom: 5px;
+                    font-weight: 500;
+                }
+                
+                .form-control {
+                    width: 100%;
+                    padding: 10px;
+                    border: 1px solid #ddd;
+                    border-radius: 4px;
+                    font-size: 16px;
+                }
+                
+                textarea.form-control {
+                    min-height: 120px;
+                    resize: vertical;
+                }
+                
+                .contact-info {
+                    margin-top: 30px;
+                    padding: 20px;
+                    background: #f8f9fa;
+                    border-radius: 8px;
+                }
+                
+                .success-message {
+                    background: #d4edda;
+                    color: #155724;
+                    padding: 15px;
+                    border-radius: 4px;
+                    margin: 15px 0;
+                    text-align: center;
+                }
+            </style>
+        `,
         'Tentang': `
             <div class="about-container">
                 <div class="app-logo">🌋</div>
@@ -371,6 +467,82 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set initial theme
     const savedTheme = localStorage.getItem('theme') || 'light';
     setTheme(savedTheme);
+
+// Update the form submission handler to use the correct collection name and add better error handling
+document.addEventListener('submit', async (e) => {
+  if (e.target && e.target.id === 'supportForm') {
+      e.preventDefault();
+      
+      const form = e.target;
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const successMessage = document.getElementById('contactSuccess');
+      
+      try {
+          // Show loading state
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = 'Mengirim...';
+          
+          // Get current user
+          const user = window._firebase?.auth.currentUser;
+          if (!user) {
+              throw new Error('Anda harus login terlebih dahulu');
+          }
+
+          // Get form data
+          const formData = {
+              name: document.getElementById('contactName')?.value.trim() || 'No Name',
+              email: user.email || document.getElementById('contactEmail')?.value.trim() || 'no-email@example.com',
+              subject: document.getElementById('contactSubject')?.value.trim() || 'No Subject',
+              message: document.getElementById('contactMessage')?.value.trim() || 'No Message',
+              status: 'new',
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              userId: user.uid,
+              userEmail: user.email || '',
+              resolved: false
+          };
+
+          console.log('Attempting to save support ticket:', formData);
+
+          // Import Firestore functions
+          const { getFirestore, collection, addDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js');
+          
+          // Get Firestore instance
+          const db = getFirestore();
+          
+          // Add the document to the 'support' collection (matching your rules)
+          const docRef = await addDoc(collection(db, 'support'), {
+              ...formData,
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp()
+          });
+
+          console.log('Support ticket submitted with ID:', docRef.id);
+          
+          // Show success message
+          if (form) form.style.display = 'none';
+          if (successMessage) successMessage.style.display = 'block';
+          
+          // Reset form
+          if (form) form.reset();
+          
+      } catch (error) {
+          console.error('Error details:', {
+              name: error.name,
+              message: error.message,
+              code: error.code,
+              stack: error.stack
+          });
+          alert(`Gagal mengirim pesan: ${error.message || 'Terjadi kesalahan. Silakan coba lagi nanti.'}`);
+      } finally {
+          // Reset button state
+          if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.innerHTML = 'Kirim Pesan';
+          }
+      }
+  }
+});
 });
 
 // Make functions available globally
