@@ -45,45 +45,65 @@ function switchPage(pageName, event) {
  * @param {string} settingName - The name of the setting/page to show
  */
 function showSetting(settingName) {
-    // Hide all page contents first
-    document.querySelectorAll('.page-content').forEach(page => {
-        page.classList.remove('active');
-    });
+  // Hide semua page-content dulu
+  document.querySelectorAll('.page-content').forEach(page => {
+    page.classList.remove('active');
+  });
 
-    // Show the selected page
-    const pageId = `${settingName.toLowerCase().replace(/\s+/g, '-')}-page`;
-    const targetPage = document.getElementById(pageId);
-    
-    if (targetPage) {
-        targetPage.classList.add('active');
-        return;
-    }
+  // buat id untuk page
+  const pageId = `${settingName.toLowerCase().replace(/\s+/g, '-')}-page`;
+  const targetPage = document.getElementById(pageId);
 
-    // If page doesn't exist, create it
-    const pageContent = getSettingContent(settingName);
-    if (!pageContent) {
-        console.warn(`No content found for setting: ${settingName}`);
-        return;
-    }
+  if (targetPage) {
+    targetPage.classList.add('active');
+    return;
+  }
 
-    // Create and append the new page
-    const newPage = document.createElement('div');
-    newPage.id = pageId;
-    newPage.className = 'page-content';
-    newPage.innerHTML = `
-        <div class="page-header">
-            <button class="btn-back" onclick="showSetting('Profile')">
-                <i class="icon-arrow">←</i> Kembali
-            </button>
-            <h2>${settingName}</h2>
-        </div>
-        <div class="page-content-inner">
-            ${pageContent}
-        </div>
-    `;
-    
-    document.querySelector('.main-content').appendChild(newPage);
-    newPage.classList.add('active');
+  // ambil konten setting dari mapping
+  const pageContent = getSettingContent(settingName);
+  if (!pageContent) {
+    console.warn(`No content found for setting: ${settingName}`);
+    return;
+  }
+
+  // mapping key judul berdasarkan settingName
+  const titleKeys = {
+    "Edit Profil": "edit_title",
+    "Notifikasi": "notif_title",
+    "Bahasa": "bahasa_title",
+    "Tema": "tema_title",
+    "Bantuan": "bantuan_title",
+    "Tentang": "about_title"
+  };
+
+  const titleKey = titleKeys[settingName] || "";
+
+  // Create and append the new page
+  const newPage = document.createElement('div');
+  newPage.id = pageId;
+  newPage.className = 'page-content';
+  newPage.innerHTML = `
+    <div class="page-header">
+      <button class="btn-back" onclick="showSetting('Profile')">
+        <i class="icon-arrow">←</i> <span data-i18n="back">Kembali</span>
+      </button>
+      <h2 data-i18n="${titleKey}">${settingName}</h2>
+    </div>
+    <div class="page-content-inner">
+      ${pageContent}
+    </div>
+  `;
+
+  document.querySelector('.main-content').appendChild(newPage);
+  newPage.classList.add('active');
+
+  // 🔹 langsung apply translate ke halaman baru
+  if (typeof applyTranslations === "function") {
+    const savedLang = localStorage.getItem("lang") || "id";
+    fetch(`./lang/${savedLang}.json`)
+      .then(res => res.json())
+      .then(translations => applyTranslations(translations));
+  }
 }
 
 /**
@@ -97,16 +117,16 @@ function getSettingContent(settingName) {
             <div class="edit-profile-container">
                 <div class="profile-form">
                     <div class="form-group">
-                        <label class="form-label">Username</label>
-                        <input type="text" id="editUsername" class="form-control" placeholder="Masukkan username">
+                        <label class="form-label" data-i18n="usn_edit">Username</label>
+                        <input type="text" id="editUsername" class="form-control" placeholder="Masukkan username" data-i18n-placeholder="masuk_usn">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Password Lama (Untuk konfirmasi)</label>
-                        <input type="password" id="confirmPassword" class="form-control" placeholder="Masukkan password lama">
+                        <label class="form-label" data-i18n="pw_edit">Password Lama (Untuk konfirmasi)</label>
+                        <input type="password" id="confirmPassword" class="form-control" placeholder="Masukkan password lama" data-i18n-placeholder="pw_lama">
                     </div>
                     <div class="form-actions">
-                        <button class="btn btn-primary" onclick="saveProfile()">Simpan Perubahan</button>
-                        <button class="btn btn-outline" onclick="showSetting('Profile')">Batal</button>
+                        <button class="btn btn-primary" onclick="saveProfile()" data-i18n="save_btn">Simpan Perubahan</button>
+                        <button class="btn btn-outline" onclick="showSetting('Profile')" data-i18n="cancel_btn">Batal</button>
                     </div>
                 </div>
             </div>
@@ -115,8 +135,8 @@ function getSettingContent(settingName) {
             <div class="settings-section">
                 <div class="setting-item">
                     <div class="setting-info">
-                        <h3>Notifikasi Aplikasi</h3>
-                        <p>Aktifkan atau nonaktifkan notifikasi</p>
+                        <h3 data-i18n="notif_app">Notifikasi Aplikasi</h3>
+                        <p data-i18n="notif_desc">Aktifkan atau nonaktifkan notifikasi</p>
                     </div>
                     <label class="toggle-switch">
                         <input type="checkbox" id="notificationsEnabled" checked>
@@ -125,8 +145,8 @@ function getSettingContent(settingName) {
                 </div>
                 <div class="setting-item">
                     <div class="setting-info">
-                        <h3>Notifikasi Email</h3>
-                        <p>Terima pemberitahuan melalui email</p>
+                        <h3 data-i18n="notif_email">Notifikasi Email</h3>
+                        <p data-i18n="notif_email_desc">Terima pemberitahuan melalui email</p>
                     </div>
                     <label class="toggle-switch">
                         <input type="checkbox" id="emailNotificationsEnabled" checked>
@@ -155,6 +175,12 @@ function getSettingContent(settingName) {
                   <h3>日本語</h3>
                 </div>
               </div>
+              <div class="setting-item" onclick="setLanguage('ko')">
+                <div class="setting-icon">🇰🇷</div>
+                <div class="setting-info">
+                  <h3>한국어</h3>
+                </div>
+              </div>
             </div>
         `,
         'Tema': `
@@ -162,24 +188,24 @@ function getSettingContent(settingName) {
                 <div class="setting-item" onclick="setTheme('light')">
                     <div class="setting-icon">☀️</div>
                     <div class="setting-info">
-                        <h3>Terang</h3>
-                        <p>Tema terang standar</p>
+                        <h3 data-i18n="tema_light">Terang</h3>
+                        <p data-i18n="tema_light_desc">Tema terang standar</p>
                     </div>
                     <div class="setting-arrow">›</div>
                 </div>
                 <div class="setting-item" onclick="setTheme('dark')">
                     <div class="setting-icon">🌙</div>
                     <div class="setting-info">
-                        <h3>Gelap</h3>
-                        <p>Tema gelap yang nyaman di malam hari</p>
+                        <h3 data-i18n="tema_dark">Gelap</h3>
+                        <p data-i18n="tema_dark_desc">Tema gelap yang nyaman di malam hari</p>
                     </div>
                     <div class="setting-arrow">›</div>
                 </div>
                 <div class="setting-item" onclick="setTheme('system')">
                     <div class="setting-icon">🖥️</div>
                     <div class="setting-info">
-                        <h3>Sesuai Perangkat</h3>
-                        <p>Mengikuti pengaturan tema perangkat</p>
+                        <h3 data-i18n="tema_system">Sesuai Perangkat</h3>
+                        <p data-i18n="tema_system_desc">Mengikuti pengaturan tema perangkat</p>
                     </div>
                     <div class="setting-arrow">›</div>
                 </div>
@@ -187,51 +213,51 @@ function getSettingContent(settingName) {
         `,
         'Bantuan': `
             <div class="help-section">
-                <h3>Pusat Bantuan</h3>
-                <p>Berikut adalah beberapa pertanyaan yang sering diajukan:</p>
+                <h3 data-i18n="help_title">Pusat Bantuan</h3>
+                <p data-i18n="help_desc">Berikut adalah beberapa pertanyaan yang sering diajukan:</p>
                 
                 <div class="help-item">
                     <div class="help-content">
-                        <h4>Bagaimana cara mengubah password?</h4>
-                        <p>Untuk mengubah password, buka Pengaturan > Keamanan > Ubah Password.</p>
+                        <h4 data-i18n="help_q1">Bagaimana cara mengubah password?</h4>
+                        <p data-i18n="help_a1">Untuk mengubah password, buka Pengaturan > Keamanan > Ubah Password.</p>
                     </div>
                 </div>
                 
                 <div class="help-item">
                     <div class="help-content">
-                        <h4>Bagaimana cara menghubungi dukungan?</h4>
-                        <p>Anda dapat menghubungi tim dukungan kami melalui email di support@seismosens.id</p>
+                        <h4 data-i18n="help_q2">Bagaimana cara menghubungi dukungan?</h4>
+                        <p data-i18n="help_a2">Anda dapat menghubungi tim dukungan kami melalui email di support@seismosens.id</p>
                     </div>
                 </div>
                 
                 <div class="contact-support">
-                    <p>Tidak menemukan jawaban yang Anda cari?</p>
-                    <button class="btn btn-primary" onclick="showSetting('Hubungi Kami')">Hubungi Dukungan</button>
+                    <p data-i18n="help_not_found">Tidak menemukan jawaban yang Anda cari?</p>
+                    <button class="btn btn-primary" data-i18n="help_contact_btn"onclick="showSetting('Hubungi Kami')">Hubungi Dukungan</button>
                 </div>
             </div>
         `,
         'Tentang': `
             <div class="about-container">
                 <div class="app-logo">🌋</div>
-                <h1>SeismoSens</h1>
-                <p class="version">Versi 2.1.0</p>
+                <h1 data-i18n="about_seis">SeismoSens</h1>
+                <p class="version" data-i18n="about_version">Versi 2.1.0</p>
                 
                 <div class="about-section">
-                    <p>SeismoSens adalah aplikasi monitoring gempa yang membantu Anda tetap aman dengan memberikan peringatan dini dan informasi gempa terkini.</p>
+                    <p data-i18n="about_desc">SeismoSens adalah aplikasi monitoring gempa yang membantu Anda tetap aman dengan memberikan peringatan dini dan informasi gempa terkini.</p>
                 </div>
                 
                 <div class="about-section">
-                    <h3>Tim Pengembang</h3>
-                    <p>Dikembangkan dengan ❤️ oleh Tim SeismoSens</p>
+                    <h3 data-i18n="about_team_title">Tim Pengembang</h3>
+                    <p data-i18n="about_team_desc">Dikembangkan dengan ❤️ oleh Tim SeismoSens</p>
                 </div>
                 
                 <div class="about-links">
-                    <a href="#" class="link">Kebijakan Privasi</a>
+                    <a href="#" class="link" data-i18n="about_privacy">Kebijakan Privasi</a>
                     <span>•</span>
-                    <a href="#" class="link">Syarat & Ketentuan</a>
+                    <a href="#" class="link" data-i18n="about_terms">Syarat & Ketentuan</a>
                 </div>
                 
-                <p class="copyright">© 2025 SeismoSens. Seluruh hak cipta dilindungi.</p>
+                <p class="copyright" data-i18n="about_copyright">© 2025 SeismoSens. Seluruh hak cipta dilindungi.</p>
             </div>
         `
     };
@@ -960,22 +986,32 @@ async function setLanguage(langCode) {
     const res = await fetch(`./lang/${langCode}.json`);
     const translations = await res.json();
 
-    // Simpan pilihan user ke localStorage
     localStorage.setItem("lang", langCode);
 
-    // Update semua elemen yang punya atribut data-i18n
-    document.querySelectorAll("[data-i18n]").forEach(el => {
-      const key = el.getAttribute("data-i18n");
-      if (translations[key]) {
-        el.textContent = translations[key];
-      }
-    });
+    // 🔹 apply ke semua elemen yg ada di halaman
+    applyTranslations(translations);
 
-    console.log("Bahasa diganti ke:", langCode);
   } catch (err) {
     console.error("Gagal load bahasa:", err);
   }
 }
+
+function applyTranslations(translations) {
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.getAttribute("data-i18n");
+    if (translations[key]) {
+      el.textContent = translations[key];
+    }
+  });
+
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+    const key = el.getAttribute("data-i18n-placeholder");
+    if (translations[key]) {
+      el.setAttribute("placeholder", translations[key]);
+    }
+  });
+}
+
 
 // Saat halaman pertama kali dibuka → load bahasa terakhir dipilih
 document.addEventListener("DOMContentLoaded", () => {
