@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hubungi Dukungan - SeismoSens</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/support.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌍</text></svg>">
+</head>
+<body>
+    <div class="page-header">
+        <button class="btn-back" onclick="window.history.back()">
+            <span>←</span>
+        </button>
+        <h2>Hubungi Dukungan</h2>
+    </div>
+
+    <div class="page-content">
+        <div class="support-container">
+            <div class="support-card">
+                <p class="support-intro">
+                    Silakan sampaikan keluhan atau pertanyaan Anda. Tim dukungan kami akan segera menanggapi.
+                </p>
+                
+                <form id="supportForm" class="support-form">
+                    <div class="form-group">
+                        <label for="name" class="form-label">Nama Lengkap</label>
+                        <input type="text" id="name" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" id="email" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="subject" class="form-label">Subjek</label>
+                        <input type="text" id="subject" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="message" class="form-label">Pesan</label>
+                        <textarea id="message" rows="5" class="form-control" required></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <span class="button-text">Kirim Pesan</span>
+                        <span class="button-loader" style="display: none;">🔄</span>
+                    </button>
+                </form>
+                
+                <div id="successMessage" class="success-message" style="display: none;">
+                    <div class="success-icon">✓</div>
+                    <h3>Terima Kasih!</h3>
+                    <p>Pesan Anda telah terkirim. Tim dukungan kami akan segera menanggapi.</p>
+                    <button onclick="window.location.href='seismosens.html'" class="btn btn-outline">Kembali ke Beranda</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    
+    <!-- Firebase Config -->
+    <script src="firebase-config.js"></script>
+    
+    <!-- Support Script -->
+    <script src="js/support.js" type="module"></script>
+</body>
+</html>

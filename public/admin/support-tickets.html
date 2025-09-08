@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SeismoSens - Manajemen Tiket Dukungan</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌍</text></svg>">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="admin.css" />
+  <style>
+    .ticket-detail {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 20px;
+      border-left: 4px solid #3b82f6;
+    }
+    .ticket-meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .ticket-meta-item {
+      margin-bottom: 10px;
+    }
+    .ticket-meta-label {
+      font-weight: 500;
+      color: #6b7280;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+    .ticket-meta-value {
+      font-weight: 500;
+      color: #111827;
+    }
+    .ticket-content {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 15px;
+    }
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      margin-bottom: 20px;
+      color: #3b82f6;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .back-button i {
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-container">
+    <a href="admin.html" class="back-button">
+      <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
+    </a>
+    
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">Daftar Tiket Dukungan</h2>
+        <div class="section-actions">
+          <button id="refreshTickets" class="btn btn-sm">
+            <i class="fas fa-sync-alt"></i> Muat Ulang
+          </button>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Nama</th>
+                <th>Email</th>
+                <th>Subjek</th>
+                <th>Status</th>
+                <th>Tanggal</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="ticketsTableBody">
+              <tr>
+                <td colspan="6" class="text-center">Memuat tiket dukungan...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ticket Detail Section -->
+    <div id="ticketDetail" class="ticket-detail" style="display: none;">
+      <div class="ticket-meta">
+        <div class="ticket-meta-item">
+          <div class="ticket-meta-label">Dari</div>
+          <div id="ticketFrom" class="ticket-meta-value">-</div>
+        </div>
+        <div class="ticket-meta-item">
+          <div class="ticket-meta-label">Email</div>
+          <div id="ticketEmail" class="ticket-meta-value">-</div>
+        </div>
+        <div class="ticket-meta-item">
+          <div class="ticket-meta-label">Tanggal</div>
+          <div id="ticketDate" class="ticket-meta-value">-</div>
+        </div>
+        <div class="ticket-meta-item">
+          <div class="ticket-meta-label">Status</div>
+          <div id="ticketStatus" class="ticket-meta-value">-</div>
+        </div>
+      </div>
+      <div class="ticket-content">
+        <h3 id="ticketSubject">-</h3>
+        <div class="ticket-message">
+          <p id="ticketMessage">-</p>
+        </div>
+        <div class="button-group" style="margin-top: 20px;">
+          <button id="markResolved" class="btn btn-primary">
+            <i class="fas fa-check"></i> Tandai Selesai
+          </button>
+          <button id="replyTicket" class="btn btn-outline">
+            <i class="fas fa-reply"></i> Balas
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  
+  <!-- App Scripts -->
+  <script src="support.js" type="module"></script>
+</body>
+</html>

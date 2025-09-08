@@ -33,10 +33,42 @@ body {
   opacity: 0.95;
 }
 
+/* ============ TABS ============ */
+.admin-tabs {
+  display: flex;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.tab-btn {
+  padding: 15px 20px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-size: 15px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover {
+  color: #1f2937;
+}
+
+.tab-btn.active {
+  color: #3b82f6;
+  border-bottom-color: #3b82f6;
+  font-weight: 600;
+}
+
 /* ============ MAIN CONTAINER ============ */
 .admin-container {
   max-width: 1000px;
-  margin: 30px auto;
+  margin: 0 auto 30px;
   padding: 0 20px;
 }
 
@@ -132,42 +164,59 @@ body {
   box-shadow: 0 0 4px rgba(102,126,234,0.4);
 }
 
+/* ============ BUTTONS ============ */
 .btn {
-  display: inline-block;
-  padding: 8px 14px;
-  font-size: 14px;
-  font-weight: 600;
+  padding: 10px 20px;
   border: none;
   border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  transition: 0.2s;
+  transition: all 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  text-transform: capitalize;
+}
+
+.btn i {
+  font-size: 14px;
 }
 
 .btn-primary {
-  background: #667eea;
+  background: #3b82f6;
   color: white;
+  border: 1px solid #2563eb;
 }
 
 .btn-primary:hover {
-  background: #5563d0;
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.2);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
 }
 
 .btn-danger {
-  background: #e74c3c;
-  color: white;
+  background: #fff;
+  color: #ef4444;
+  border: 1px solid #ef4444;
 }
 
 .btn-danger:hover {
-  background: #c0392b;
-}
-
-.btn-warning {
-  background: #f39c12;
+  background: #ef4444;
   color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.2);
 }
 
-.btn-warning:hover {
-  background: #d68910;
+.btn-danger:active {
+  transform: translateY(0);
 }
 
 .btn-small {

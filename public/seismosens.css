@@ -25,6 +25,8 @@
 .btn-back {
     position: absolute;
     left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
     background: none;
     border: none;
     font-size: 16px;
@@ -111,9 +113,9 @@
 }
 
 .btn-primary {
-    background-color: #3b82f6;
-    color: white;
-    border: none;
+    background-color: #3b82f6 !important;
+    color: white !important;
+    border: none !important;
 }
 
 .btn-primary:hover {
@@ -471,6 +473,7 @@ body {
 }
 
 .bottom-nav {
+    height: 70px;
     position: fixed;
     bottom: 0;
     left: 0;
@@ -478,7 +481,7 @@ body {
     display: flex;
     justify-content: space-around;
     background: white;
-    padding: 10px 0;
+    padding: 6px 0 10px;
     box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
     z-index: 1000;
 }
@@ -487,10 +490,10 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 8px 0;
+    padding: 6px 0;
     color: #94a3b8;
     text-decoration: none;
-    font-size: 12px;
+    font-size: 11px;
     transition: all 0.2s ease;
     cursor: pointer;
 }
@@ -500,8 +503,8 @@ body {
 }
 
 .nav-icon {
-    font-size: 20px;
-    margin-bottom: 4px;
+    font-size: 18px;
+    margin-bottom: 2px;
 }
 
 .nav-label {
@@ -609,6 +612,7 @@ body {
     font-size: 28px;
     font-weight: 700;
     margin-bottom: 8px;
+    color: white;
 }
 
 .welcome-subtitle {
@@ -768,8 +772,8 @@ body {
 }
 
 .alert-text {
-    font-size: 12px;
-    color: #92400e;
+font-size: 12px;
+color: #92400e;
 }
 
 .chart-container {
@@ -778,15 +782,25 @@ body {
     padding: 20px;
     border-radius: 16px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    height: 320px;
+    display: flex;
+    flex-direction: column;
 }
 
 .chart-placeholder {
-    height: 150px;
+    height: 280px;
     background: white;
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
+color: #64748b;
+font-weight: 600;
+margin-top: 10px;
+position: relative;
+overflow: hidden;
+border: 1px solid #e2e8f0;
+padding: 10px;
     color: #64748b;
     font-weight: 600;
     margin-top: 10px;
@@ -959,6 +973,17 @@ body {
         height: 32px;
         font-size: 14px;
         border-radius: 6px;
+    }
+    
+    .chart-container {
+        height: 220px !important;
+        padding: 12px !important;
+        margin: 0 12px 12px !important;
+    }
+    
+    .chart-placeholder {
+        height: 180px !important;
+        font-size: 14px !important;
     }
 }
 
@@ -1253,7 +1278,7 @@ body {
     bottom: 0;
     left: 0;
     right: 0;
-    height: 85px;
+    height: 95px;
     background: white;
     border-top: 1px solid #e2e8f0;
     display: flex;
@@ -1375,7 +1400,7 @@ body {
     background:rgb(225, 217, 250);
     border-radius: 15px;
     padding: 20px;
-    box-shadow: 0 12px 12px rgba(0,0,0,0.05);
+    box-shadow: 0 5px 5px rgba(0,0,0,0.05);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     border-left: 4px solid rgb(21, 11, 110);
 }

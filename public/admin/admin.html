@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SeismoSens - Admin Dashboard</title>
+  <!-- Favicon Emoji Earth -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌍</text></svg>">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link rel="stylesheet" href="admin.css" />
 </head>
 <body>
@@ -11,15 +14,22 @@
   <!-- HEADER -->
   <header class="admin-header">
     <h1 class="admin-title">Dashboard Admin</h1>
-    <p class="admin-subtitle">Kelola pengguna & berita terkini</p>
+    <p class="admin-subtitle">Kelola pengguna, berita, dan tiket dukungan</p>
     <p id="admin-info" class="admin-info"></p>
   </header>
+
+  <!-- TABS -->
+  <div class="admin-tabs">
+    <button class="tab-btn active" data-tab="users">Pengguna</button>
+    <button class="tab-btn" data-tab="news">Berita</button>
+    <button class="tab-btn" data-tab="support">Tiket Dukungan</button>
+  </div>
 
   <!-- MAIN -->
   <main class="admin-container">
 
     <!-- DAFTAR USER -->
-    <section class="section">
+    <section id="usersSection" class="section" style="display: none;">
       <div class="section-header">
         <h2 class="section-title">Daftar User</h2>
       </div>
@@ -44,7 +54,7 @@
     </section>
 
     <!-- TAMBAH BERITA -->
-    <section class="section">
+    <section id="addNewsSection" class="section" style="display: none;">
       <div class="section-header">
         <h2 class="section-title">Tambah Berita</h2>
       </div>
@@ -52,13 +62,17 @@
         <form id="news-form" class="form">
           <input id="title" type="text" class="input" placeholder="Judul Berita" required />
           <textarea id="content" class="textarea" placeholder="Isi berita..." required></textarea>
-          <button type="submit" class="btn btn-primary">Simpan Berita</button>
+          <div class="button-group">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-save"></i> Simpan Berita
+            </button>
+          </div>
         </form>
       </div>
     </section>
 
     <!-- DAFTAR BERITA -->
-<section class="section">
+<section id="newsSection" class="section" style="display: none;">
   <div class="section-header">
     <h2 class="section-title">Daftar Berita</h2>
   </div>
@@ -84,38 +98,134 @@
 
   </main>
 
+  <!-- SUPPORT TICKETS -->
+  <section id="supportSection" class="section" style="display: none;">
+    <div class="section-header">
+      <h2 class="section-title">Tiket Dukungan</h2>
+      <div class="section-actions">
+        <button id="refreshTickets" class="btn btn-sm">
+          <i class="fas fa-sync-alt"></i> Muat Ulang
+        </button>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Nama</th>
+              <th>Email</th>
+              <th>Subjek</th>
+              <th>Status</th>
+              <th>Tanggal</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="ticketsTableBody">
+            <tr>
+              <td colspan="6" class="text-center">Memuat tiket dukungan...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- TICKET DETAIL MODAL -->
+  <div id="ticketModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="ticketSubject">Detail Tiket</h3>
+        <button class="close-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="ticket-info">
+          <div class="info-row">
+            <span class="info-label">Dari:</span>
+            <span id="ticketFrom">-</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Email:</span>
+            <span id="ticketEmail">-</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Tanggal:</span>
+            <span id="ticketDate">-</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Status:</span>
+            <span id="ticketStatus" class="status-badge">-</span>
+          </div>
+        </div>
+        <div class="ticket-message">
+          <h4>Pesan:</h4>
+          <p id="ticketMessage">-</p>
+        </div>
+        <div class="ticket-actions">
+          <button id="markResolved" class="btn btn-primary">
+            <i class="fas fa-check"></i> Tandai Selesai
+          </button>
+          <button id="replyTicket" class="btn btn-outline">
+            <i class="fas fa-reply"></i> Balas
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- FOOTER ACTIONS -->
   <div class="footer-actions">
+    <div class="button-group">
+      <button class="btn btn-small btn-danger" onclick="deleteUser('${doc.id}')">
+        <i class="fas fa-trash"></i> Hapus
+      </button>
+    </div>
     <button class="btn btn-danger" id="logoutBtn">Keluar</button>
   </div>
 
-  <!-- PESAN SUPPORT -->
-<section class="section">
-  <div class="section-header">
-    <h2 class="section-title">Pesan Support</h2>
+  <!-- Loading Indicator -->
+  <div class="loading" style="display: none;">
+    <div class="spinner"></div>
+    <p>Memuat...</p>
   </div>
-  <div class="section-body">
-    <div class="table-wrap">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>User</th>
-            <th>Email</th>
-            <th>Pesan</th>
-            <th>Waktu</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody id="support-list">
-          <!-- diisi dari admin.js -->
-        </tbody>
-      </table>
-    </div>
-  </div>
-</section>
 
+  <script src="admin.js" type="module"></script>
+  <script src="support.js" type="module"></script>
+  
+  <style>
+    /* Loading spinner */
+    .loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.8);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+    
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #3b82f6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 10px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
 
-  <!-- SCRIPT -->
+  <!-- Scripts -->
   <script type="module" src="admin.js"></script>
+  <script type="module" src="support.js"></script>
 </body>
 </html>

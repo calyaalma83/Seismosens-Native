@@ -37,16 +37,27 @@
     margin-right: 16px;
 }
 
-.profile-info h2 {
+/* Profile Info - Increased specificity */
+.profile-info h2#profileName {
     margin: 0 0 4px 0;
     font-size: 18px;
-    color: #1a1a1a;
+    color: #1a1a1a !important;  /* Force dark color for profile name */
 }
 
-.profile-info p {
+.profile-info p#profileStart {
     margin: 0;
-    color: #666;
+    color: #4f46e5 !important;  /* Force blue color for start date */
     font-size: 14px;
+    font-weight: 500;
+}
+
+/* Update dark theme colors */
+html[data-theme="dark"] .profile-info h2#profileName {
+    color: #ffffff !important;  /* Force white in dark theme */
+}
+
+html[data-theme="dark"] .profile-info p#profileStart {
+    color: #818cf8 !important;  /* Lighter blue in dark theme */
 }
 
 /* Stats Section */
@@ -55,6 +66,7 @@
     grid-template-columns: repeat(3, 1fr);
     gap: 8px;
     margin: 16px 0;
+    margin-bottom: 10px;
 }
 
 .stat-item {

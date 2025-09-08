@@ -66,8 +66,30 @@ onAuthStateChanged(auth, async (user) => {
   
   // User is admin, load admin content
   document.getElementById('admin-info').textContent = `Logged in as: ${user.email}`;
+  
+  // Load initial content
+  showSection('users');
   loadUsers();
-  loadNewsAdmin();
+  
+  // Set up tab switching
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const section = btn.getAttribute('data-tab');
+      showSection(section);
+      
+      // Load the appropriate content
+      if (section === 'users') {
+        loadUsers();
+      } else if (section === 'news') {
+        loadNewsAdmin();
+      } else if (section === 'support') {
+        // Trigger the loadSupportTickets function from support.js
+        if (typeof loadSupportTickets === 'function') {
+          loadSupportTickets();
+        }
+      }
+    });
+  });
   
   // Setup logout button
   document.getElementById('logoutBtn').addEventListener('click', () => {
@@ -116,7 +138,9 @@ async function loadUsers() {
         <td>${user.role || 'user'}</td>
         <td>${user.createdAt?.toDate?.().toLocaleDateString() || '-'}</td>
         <td>
-          <button class="btn btn-small btn-danger" onclick="deleteUser('${doc.id}')">Hapus</button>
+          <button class="btn btn-small btn-danger" onclick="deleteUser('${doc.id}')">
+            <i class="fas fa-trash"></i> Hapus
+          </button>
         </td>
       `;
       userList.appendChild(row);
@@ -286,5 +310,39 @@ async function loadNewsAdmin() {
   }
 }
 
+// Function to show a specific section and hide others
+function showSection(sectionId) {
+  // Hide all sections first
+  document.querySelectorAll('.section').forEach(section => {
+    section.style.display = 'none';
+  });
+  
+  // Remove active class from all buttons
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  
+  // Show the selected section and activate its button
+  const section = document.getElementById(sectionId + 'Section');
+  const button = document.querySelector(`.tab-btn[data-tab="${sectionId}"]`);
+  
+  if (section) section.style.display = 'block';
+  if (button) button.classList.add('active');
+  
+  // Load data for the section if needed
+  if (sectionId === 'users') {
+    loadUsers();
+  } else if (sectionId === 'news') {
+    // Show both add news and news list sections
+    document.getElementById('addNewsSection').style.display = 'block';
+    document.getElementById('newsSection').style.display = 'block';
+    loadNewsAdmin();
+  } else if (sectionId === 'support') {
+    if (typeof loadSupportTickets === 'function') {
+      loadSupportTickets();
+    }
+  }
+}
+
 // panggil saat halaman admin load
-loadNewsAdmin();
+showSection('users');

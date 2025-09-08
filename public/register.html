@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Register - SeismoSens</title>
+  <!-- Favicon Emoji Earth -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌍</text></svg>">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./register.css">
 </head>
@@ -43,6 +45,15 @@
 
         <button type="submit" class="register-button">Daftar SeismoSens</button>
       </form>
+      
+      <div style="margin: 8px 0 5px 0;">
+        <button onclick="loginWithGoogle()" 
+        style="width:100%; background:#f8f9fa; border:1px solid #e0e0e0; padding:10px; border-radius:8px; font-weight:500; cursor:pointer; color:#3c4043; font-size:14px; display:flex; align-items:center; justify-content:center; transition:background-color 0.2s;">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
+              alt="Google" style="width:18px; margin-right:8px;">
+        Lanjutkan dengan Google
+        </button>
+      </div>
 
       <p class="login-text">
         Sudah punya akun? <a href="./login.html">Masuk</a>
