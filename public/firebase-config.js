@@ -1,11 +1,12 @@
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyB1v_3pYp3Z5Z1Z1Z1Z1Z1Z1Z1Z1Z1Z1Z1",
-  authDomain: "seismosens.firebaseapp.com",
-  projectId: "seismosens",
-  storageBucket: "seismosens.appspot.com",
-  messagingSenderId: "1234567890",
-  appId: "1:1234567890:web:abcdef123456"
+  apiKey: "AIzaSyD07M2-79Yh0CzotaQeGYYy4WLZoevTdWY",
+  authDomain: "seismosens-a048e.firebaseapp.com",
+  projectId: "seismosens-a048e",
+  storageBucket: "seismosens-a048e.appspot.com",
+  messagingSenderId: "358453169511",
+  appId: "1:358453169511:web:fccc32bf22ede39ff0b3c2",
+  databaseURL: "https://seismosens-a048e-default-rtdb.asia-southeast1.firebasedatabase.app/"
 };
 
 // Initialize Firebase

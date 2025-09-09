@@ -1,0 +1,117 @@
+/* Full screen */
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: "Inter", sans-serif;
+  background: #f3f4f6; /* abu-abu muda */
+}
+
+/* Container chat */
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  background: #f3f4f6; /* ganti dari putih ke abu-abu */
+}
+
+/* Area pesan */
+.chat-messages {
+  flex: 1;
+  padding: 15px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  padding-bottom: 120px; /* biar tidak ketutup input */
+}
+
+/* Bubble user */
+.message.user {
+  align-self: flex-end;
+  background: #3b82f6;
+  color: white;
+  padding: 10px 14px;
+  border-radius: 18px 18px 4px 18px;
+  max-width: 75%;
+  word-wrap: break-word;
+  font-size: 14px;
+}
+
+/* Bubble AI */
+.message.ai {
+  align-self: flex-start;
+  background: #e5e7eb;
+  color: #1f2937;
+  padding: 10px 14px;
+  border-radius: 18px 18px 18px 4px;
+  max-width: 75%;
+  word-wrap: break-word;
+  font-size: 14px;
+}
+
+/* Input (fixed di atas bottom nav) */
+.chat-input {
+  display: flex;
+  padding: 10px;
+  border-top: 1px solid #e5e7eb;
+  background: #fff;
+
+  position: fixed;
+  bottom: 67px; /* ubah ini jadi lebih besar */
+  left: 0;
+  right: 0;
+  z-index: 100;
+}
+
+.chat-input input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 20px;
+  font-size: 14px;
+  outline: none;
+}
+
+.chat-input button {
+  margin-left: 8px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 20px;
+  background: #3b82f6;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.chat-input button:hover {
+  background: #2563eb;
+}
+
+/* Header Chat */
+.chat-header {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  text-align: center;
+  padding: 25px 15px;
+  border-radius: 0 0 20px 20px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.chat-header h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
+}
+
+.chat-header p {
+  margin: 5px 0 0;
+  font-size: 16px;
+  opacity: 0.9;
+  color: white;
+}

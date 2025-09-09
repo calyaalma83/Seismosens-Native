@@ -5,8 +5,8 @@
     --bg-secondary: #f8f9fa;
     --bg-tertiary: #f0f2f5;
     --text-primary: #1a1a1a;
-    --text-secondary: #4b5563;
-    --text-muted: #6b7280;
+    --text-secondary: #d1d5db !important;
+    --text-muted: #9ca3af !important;
     --border-color: #e5e7eb;
     --card-bg: #ffffff;
     --card-hover: #f9fafb;
@@ -17,27 +17,25 @@
     --header-text: #ffffff;
 }
 
-/* Force dark theme styles with higher specificity */
-html[data-theme="dark"],
-html[data-theme="dark"] body {
-    --bg-primary: #121212 !important;
-    --bg-secondary: #1e1e1e !important;
-    --text-primary: #f3f4f6 !important;
-    --text-secondary: #9ca3af !important;
-    --border-color: #374151 !important;
-    --card-bg: #1e1e1e !important;
-    --header-bg: linear-gradient(135deg, #2d2d2d, #1a1a1a) !important;
+:root {
+  --nav-text: #94a3b8;
+  --nav-active: #3b82f6;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --success: #16a34a;
 }
 
 /* Apply theme to body */
 body {
-    background-color: var(--bg-primary);
     color: var(--text-primary);
 }
 
-/* Force text color on all elements */
-* {
-    color: var(--text-primary) !important;
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-primary);
+}
+
+p, span, small, label {
+    color: var(--text-secondary);
 }
 
 /* Base Styles */
@@ -131,6 +129,11 @@ body {
 }
 
 /* Settings */
+.settings-item {
+    background-color: var(--card-bg) !important;
+    border: 1px solid var(--border-color);
+}
+
 .settings-item h3 {
     color: var(--text-primary) !important;
 }

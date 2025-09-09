@@ -26,14 +26,17 @@
   <link rel="stylesheet" href="./css/profile/_profile-page.css">
 
   <script type="module">
-        // Import Firebase core
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-        import { getAuth } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-        import { getFirestore } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+    import { 
+        getAuth, onAuthStateChanged, signInAnonymously 
+    }from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+    import { 
+        getFirestore, collection, addDoc, getDocs, query, orderBy 
+    } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
 
-        // Firebase config 
-        const firebaseConfig = {
+    // Firebase config
+    const firebaseConfig = {
         apiKey: "AIzaSyD07M2-79Yh0CzotaQeGYYy4WLZoevTdWY",
         authDomain: "seismosens-a048e.firebaseapp.com",
         projectId: "seismosens-a048e",
@@ -41,17 +44,23 @@
         messagingSenderId: "358453169511",
         appId: "1:358453169511:web:fccc32bf22ede39ff0b3c2",
         databaseURL: "https://seismosens-a048e-default-rtdb.asia-southeast1.firebasedatabase.app/"
-        };
+    };
 
-        // Init app
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const rtdb = getDatabase(app);
+    // Init app
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const rtdb = getDatabase(app);
 
-        // Export ke window biar bisa dipakai di seismosens.js
-        window._firebase = { app, auth, db, rtdb, ref, onValue };
+    // ✅ Export lengkap ke global
+    window._firebase = { 
+        app, auth, db, rtdb, 
+        ref, onValue, 
+        onAuthStateChanged, signInAnonymously, 
+        collection, addDoc, getDocs, query, orderBy 
+    };
     </script>
+
     <script src="js/theme.js" defer></script>
 </head>
 <body>
@@ -191,6 +200,25 @@
                             <div style="font-size: 20px; font-weight: 700; color: #3b82f6;">-</div>
                             <div style="font-size: 11px; color: #64748b;" data-i18n="uptime">Uptime Kota</div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat AI -->
+            <div class="page-content" id="chatai-page">
+                <link rel="stylesheet" href="./chat_ai/chatai.css">
+
+                <div class="chat-container">
+                    <div class="chat-header">
+                        <h1>Chat AI 🤖</h1>
+                         <p>Bertanya langsung dengan AI SeismoSens</p>
+                    </div>
+
+                    <div id="chatMessages" class="chat-messages"></div>
+
+                    <div class="chat-input">
+                        <input type="text" id="chatInput" placeholder="Tulis pesan...">
+                        <button onclick="sendMessage()">Kirim</button>
                     </div>
                 </div>
             </div>
@@ -355,6 +383,10 @@
                     <div class="nav-icon">🗺</div>
                     <div class="nav-label" data-i18n="map">Peta</div>
                 </div>
+                <div class="nav-item" onclick="switchPage('chatai', event)">
+                    <div class="nav-icon">🤖</div>
+                    <div class="nav-label">Chat AI</div>
+                </div>
                 <div class="nav-item" onclick="switchPage('forum', event)">
                     <div class="nav-icon">💬</div>
                     <div class="nav-label" data-i18n="forum">Forum</div>
@@ -382,6 +414,7 @@
   <script type="module" src="./manage-data.js"></script>
   <script type="module" src="./storage.js"></script>
   <script type="module" src="./security.js"></script>
+  <script type="module" src="./chat_ai/chatai.js"></script>
 
 </body>
 </html>

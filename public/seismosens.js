@@ -1,8 +1,10 @@
 import { auth, checkAuthState, deleteUser } from "./auth.js";
 import { collection, addDoc, onSnapshot, serverTimestamp, query, orderBy, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { updateProfile,  EmailAuthProvider, reauthenticateWithCredential} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import { ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
 
 const db = window._firebase.db;
+const rtdb = window._firebase.rtdb;
 if (!db) {
   console.error("Firestore belum siap. Pastikan firebase init di <head> sudah jalan.");
 }
@@ -14,27 +16,51 @@ let mapInitialized = false;
 let chart;
 
 // ===== Navigation =====
-function switchPage(pageName, event) {
+async function switchPage(pageName, event) {
   if (event) event.preventDefault();
 
-  // reset nav
+  // reset nav item aktif
   document.querySelectorAll(".nav-item").forEach(item => item.classList.remove("active"));
   const clickedItem = event?.target.closest(".nav-item") ||
     document.querySelector(`.nav-item[onclick*="${pageName}"]`);
   if (clickedItem) clickedItem.classList.add("active");
 
-  // reset pages
+  // reset semua page
   document.querySelectorAll(".page-content").forEach(p => p.classList.remove("active"));
 
+  // ambil target page
   const targetPage = document.getElementById(`${pageName}-page`);
-  if (targetPage) {
-    targetPage.classList.add("active");
-
-    // refresh map & chart
-    if (pageName === "map" && !mapInitialized) setTimeout(initializeMap, 300);
-    if (pageName === "home") initChart();
-  } else {
+  if (!targetPage) {
     console.warn(`switchPage: Halaman "${pageName}-page" tidak ditemukan`);
+    return;
+  }
+
+  // aktifkan page
+  targetPage.classList.add("active");
+
+  // case khusus
+  if (pageName === "map" && !mapInitialized) {
+    setTimeout(initializeMap, 300);
+  }
+  if (pageName === "home") {
+    initChart();
+  }
+
+  // 🔹 khusus Chat AI → load file chatai.html sekali aja
+  if (pageName === "chatai" && !targetPage.hasChildNodes()) {
+    try {
+      const res = await fetch("./chat_ai/chatai.html"); // ganti sesuai folder kamu
+      if (!res.ok) throw new Error("Gagal load chatai.html");
+      const html = await res.text();
+      targetPage.innerHTML = html;
+
+      // inject script chatai.js
+      const script = document.createElement("script");
+      script.src = "./chat_ai/chatai.js";
+      document.body.appendChild(script);
+    } catch (err) {
+      targetPage.innerHTML = `<p style="color:red; padding:20px;">${err.message}</p>`;
+    }
   }
 }
 
@@ -422,11 +448,6 @@ export async function saveProfile() {
  * Set the application theme
  * @param {string} theme - The theme to set ('light', 'dark', or 'system')
  */
-function setTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
-    // TODO: Save theme preference to localStorage
-    console.log('Theme set to:', theme);
-}
 
 /**
  * Initialize the profile page with user data
@@ -459,14 +480,25 @@ function initProfile() {
     }
 }
 
+function setTheme(theme) {
+  try {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+    console.log("Theme set to:", theme);
+  } catch (err) {
+    console.error("Gagal set theme:", err);
+  }
+}
 
 // Initialize profile when the page loads
 document.addEventListener('DOMContentLoaded', () => {
-    initProfile();
+
     
     // Set initial theme
     const savedTheme = localStorage.getItem('theme') || 'light';
     setTheme(savedTheme);
+    initProfile();
+    initApp();
 
 // Update the form submission handler to use the correct collection name and add better error handling
 document.addEventListener('submit', async (e) => {
@@ -566,6 +598,7 @@ async function initApp() {
 
     listenDeviceStats();
     loadForumPosts();
+    listenDevicesPage();
 
     if (window.location.hash === "#map") initializeMap();
   } catch (error) {
@@ -894,6 +927,11 @@ function initChart() {
   if (!canvas || typeof Chart === "undefined") return;
 
   const ctx = canvas.getContext("2d");
+
+  if (chart) {
+    chart.destroy();
+  }
+
   chart = new Chart(ctx, {
     type: "line",
     data: {
@@ -919,6 +957,7 @@ function initChart() {
     },
     options: {
         responsive: true,
+        maintainAspectRatio: false,
         scales: { y: { beginAtZero: true } }
     }
   });
@@ -1184,6 +1223,54 @@ function applyTranslations(translations) {
   });
 }
 
+function listenDevicesPage() {
+  const { rtdb, ref, onValue } = window._firebase;
+  const user = window._firebase.auth.currentUser;
+  if (!user) return;
+
+  const devicesRef = ref(rtdb, "devices");
+  const container = document.getElementById("devicesContainer");
+
+  onValue(devicesRef, (snapshot) => {
+    container.innerHTML = ""; // clear isi lama
+    if (!snapshot.exists()) {
+      container.style.display = "none"; // kalau kosong, hide
+      return;
+    }
+
+    container.style.display = "block";
+
+    Object.entries(snapshot.val()).forEach(([id, dev]) => {
+      if (dev.ownerUid !== user.uid) return; // filter hanya device user
+
+      const card = document.createElement("div");
+      card.className = `device-card ${dev.status || "offline"}`;
+
+      card.innerHTML = `
+        <div class="device-header">
+          <div class="device-info">
+            <h3>${dev.name || "Unnamed Device"}</h3>
+            <p>${dev.location || "-"}</p>
+          </div>
+          <div class="device-status ${dev.status}">
+            ${dev.status}
+          </div>
+        </div>
+        <div class="device-metrics">
+          <div class="metric">
+            <div class="metric-value">${dev.health || "100%"} </div>
+            <div class="metric-label">Health</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value">${dev.battery || "100%"} </div>
+            <div class="metric-label">Battery</div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  });
+}
 
 // Saat halaman pertama kali dibuka → load bahasa terakhir dipilih
 document.addEventListener("DOMContentLoaded", () => {
