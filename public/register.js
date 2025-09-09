@@ -1,5 +1,5 @@
 import { auth, db, registerUser, redirectIfAuthenticated } from "./auth.js"; 
-// ✅ karena register.js & auth.js sama-sama di /public/
+import { initPresence } from "./presence.js";  // ✅ import presence
 
 console.log("Register script loaded");
 
@@ -47,12 +47,15 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.log("Registering user:", email);
 
       // 🔹 Buat user baru + simpan ke Firestore & Auth
-      await registerUser(email, password, nama);
+      const user = await registerUser(email, password, nama);
+
+      // ✅ Set presence realtime
+      await initPresence(user);
 
       console.log("Registrasi berhasil:", { nama, email });
 
       // 🔹 Redirect ke halaman utama setelah sukses
-      window.location.href = "/seismosens.html"; // ✅ karena seismosens.html ada di /public/
+      window.location.href = "/seismosens.html"; 
 
     } catch (error) {
       console.error("Registration error:", error);

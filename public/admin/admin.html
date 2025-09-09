@@ -23,6 +23,7 @@
     <button class="tab-btn active" data-tab="users">Pengguna</button>
     <button class="tab-btn" data-tab="news">Berita</button>
     <button class="tab-btn" data-tab="support">Tiket Dukungan</button>
+    <button class="tab-btn" data-tab="presence">Presence</button>
   </div>
 
   <!-- MAIN -->
@@ -131,54 +132,34 @@
     </div>
   </section>
 
-  <!-- TICKET DETAIL MODAL -->
-  <div id="ticketModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 id="ticketSubject">Detail Tiket</h3>
-        <button class="close-modal">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="ticket-info">
-          <div class="info-row">
-            <span class="info-label">Dari:</span>
-            <span id="ticketFrom">-</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Email:</span>
-            <span id="ticketEmail">-</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Tanggal:</span>
-            <span id="ticketDate">-</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Status:</span>
-            <span id="ticketStatus" class="status-badge">-</span>
-          </div>
-        </div>
-        <div class="ticket-message">
-          <h4>Pesan:</h4>
-          <p id="ticketMessage">-</p>
-        </div>
-        <div class="ticket-actions">
-          <button id="markResolved" class="btn btn-primary">
-            <i class="fas fa-check"></i> Tandai Selesai
-          </button>
-          <button id="replyTicket" class="btn btn-outline">
-            <i class="fas fa-reply"></i> Balas
-          </button>
-        </div>
-      </div>
+  <!-- PRESENCE -->
+<section id="presenceSection" class="section" style="display: none;">
+  <div class="section-header">
+    <h2 class="section-title">Daftar Perangkat User (Realtime)</h2>
+  </div>
+  <div class="section-body">
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Device</th>
+            <th>Status</th>
+            <th>Last Seen</th>
+          </tr>
+        </thead>
+        <tbody id="presenceList">
+          <tr><td colspan="4" class="text-center">Memuat data perangkat...</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
+</section>
+
 
   <!-- FOOTER ACTIONS -->
   <div class="footer-actions">
     <div class="button-group">
-      <button class="btn btn-small btn-danger" onclick="deleteUser('${doc.id}')">
-        <i class="fas fa-trash"></i> Hapus
-      </button>
     </div>
     <button class="btn btn-danger" id="logoutBtn">Keluar</button>
   </div>
@@ -189,8 +170,58 @@
     <p>Memuat...</p>
   </div>
 
-  <script src="admin.js" type="module"></script>
-  <script src="support.js" type="module"></script>
+  <!-- Load all scripts as modules -->
+  <script type="module">
+    // Hide the body by default, will be shown after auth check
+    document.body.style.display = 'none';
+    
+    // Show loading indicator
+    const loading = document.querySelector('.loading');
+    if (loading) loading.style.display = 'flex';
+    
+    // Load all necessary modules
+    Promise.all([
+      import('../auth.js'),
+      import('./admin.js')
+    ])
+    .then(async ([authModule, adminModule]) => {
+      try {
+        const { getFirebase, getFirebaseAuth, getFirestore } = authModule;
+        const initAdmin = adminModule.default;
+        
+        // Initialize Firebase services
+        const firebase = await getFirebase();
+        const authService = await getFirebaseAuth();
+        const firestore = await getFirestore();
+        
+        // Set auth and db globally for legacy scripts if needed
+        window.auth = firebase.auth;
+        window.db = firestore;
+        
+        // Initialize admin scripts
+        if (typeof initAdmin === 'function') {
+          await initAdmin();
+        } else {
+          throw new Error('Failed to initialize admin module');
+        }
+        
+        // Show the body and hide loading indicator
+        document.body.style.display = 'block';
+        if (loading) loading.style.display = 'none';
+        
+      } catch (error) {
+        console.error('Error initializing admin:', error);
+        if (loading) loading.style.display = 'none';
+        alert('Gagal memuat dashboard admin. Silakan muat ulang halaman.');
+        window.location.href = '/login.html';
+      }
+    })
+    .catch(error => {
+      console.error('Error loading modules:', error);
+      if (loading) loading.style.display = 'none';
+      alert('Terjadi kesalahan saat memuat halaman. Silakan muat ulang browser Anda.');
+    });
+  </script>
   
   <style>
     /* Loading spinner */
@@ -224,8 +255,121 @@
     }
   </style>
 
+  <!-- Ticket Detail Modal -->
+  <div id="ticketModal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal">&times;</span>
+      <h3 id="ticketSubject">Ticket Subject</h3>
+      
+      <div class="ticket-meta">
+        <div><strong>Dari:</strong> <span id="ticketFrom">N/A</span></div>
+        <div><strong>Email:</strong> <span id="ticketEmail">N/A</span></div>
+        <div><strong>Tanggal:</strong> <span id="ticketDate">N/A</span></div>
+        <div><strong>Status:</strong> <span id="ticketStatus" class="status-badge">Baru</span></div>
+      </div>
+      
+      <div class="ticket-message">
+        <h4>Pesan:</h4>
+        <p id="ticketMessage">Loading...</p>
+      </div>
+      
+      <div class="ticket-actions">
+        <button id="markResolved" class="btn btn-primary">Tandai Selesai</button>
+        <button class="btn btn-secondary close-modal-btn">Tutup</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts -->
   <script type="module" src="admin.js"></script>
   <script type="module" src="support.js"></script>
+  
+  <style>
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      overflow: auto;
+    }
+    
+    .modal-content {
+      background-color: #fff;
+      margin: 10% auto;
+      padding: 20px;
+      border-radius: 8px;
+      width: 80%;
+      max-width: 700px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .close-modal {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    
+    .close-modal:hover,
+    .close-modal:focus {
+      color: black;
+      text-decoration: none;
+    }
+    
+    .ticket-meta {
+      margin: 15px 0;
+      padding: 10px;
+      background-color: #f8f9fa;
+      border-radius: 4px;
+    }
+    
+    .ticket-meta div {
+      margin: 5px 0;
+    }
+    
+    .ticket-message {
+      margin: 20px 0;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-radius: 4px;
+    }
+    
+    .ticket-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    
+    .status-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+    
+    .status-new {
+      background-color: #e2e3e5;
+      color: #383d41;
+    }
+    
+    .status-pending {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+    
+    .status-resolved {
+      background-color: #d4edda;
+      color: #155724;
+    }
+  </style>
 </body>
 </html>

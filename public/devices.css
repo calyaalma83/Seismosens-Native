@@ -1,0 +1,73 @@
+.device-list {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .device-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    padding: 16px;
+    font-family: "Inter", sans-serif;
+  }
+  
+  .device-card h3 {
+    margin: 0 0 8px;
+    font-size: 16px;
+    color: #3b82f6;
+  }
+  
+  .device-card p {
+    margin: 4px 0;
+    font-size: 14px;
+    color: #374151;
+  }
+  
+  .status-online {
+    color: green;
+    font-weight: bold;
+  }
+  
+  .status-offline {
+    color: red;
+    font-weight: bold;
+  }
+  
+  .no-device {
+    text-align: center;
+    padding: 20px;
+    color: #6b7280;
+    font-style: italic;
+  }  
+
+  /* Tambahan buat konsistensi sama style admin.css */
+.section {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 30px;
+    overflow: hidden;
+  }
+  
+  .section-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .section-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+  }
+  
+  .section-subtitle {
+    margin: 4px 0 0;
+    font-size: 14px;
+    color: #6b7280;
+  }
+  
+  .section-body {
+    padding: 20px;
+  }  

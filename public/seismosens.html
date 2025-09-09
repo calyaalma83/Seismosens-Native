@@ -25,33 +25,8 @@
   <link rel="stylesheet" href="./css/profile/settings.css">
   <link rel="stylesheet" href="./css/profile/_profile-page.css">
 
-  <script type="module">
-        // Import Firebase core
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-        import { getAuth } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-        import { getFirestore } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
-
-        // Firebase config 
-        const firebaseConfig = {
-        apiKey: "AIzaSyD07M2-79Yh0CzotaQeGYYy4WLZoevTdWY",
-        authDomain: "seismosens-a048e.firebaseapp.com",
-        projectId: "seismosens-a048e",
-        storageBucket: "seismosens-a048e.appspot.com",
-        messagingSenderId: "358453169511",
-        appId: "1:358453169511:web:fccc32bf22ede39ff0b3c2",
-        databaseURL: "https://seismosens-a048e-default-rtdb.asia-southeast1.firebasedatabase.app/"
-        };
-
-        // Init app
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const rtdb = getDatabase(app);
-
-        // Export ke window biar bisa dipakai di seismosens.js
-        window._firebase = { app, auth, db, rtdb, ref, onValue };
-    </script>
+  <!-- Firebase Initialization -->
+  <script type="module" src="./firebase-init.js"></script>
     <script src="js/theme.js" defer></script>
 </head>
 <body>
@@ -127,6 +102,53 @@
                         <div class="welcome-subtitle" data-i18n="kelola">Kelola semua perangkat SeismoSens</div>
                     </div>
                 </div>
+
+                <script type="module">
+                    import { auth } from "./firebase-init.js";
+                    import { ref, onValue } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
+                    import { rtdb } from "./firebase-init.js";
+                  
+                    const devicesContainer = document.getElementById("devicesContainer");
+                  
+                    function renderDevices(devices) {
+                      devicesContainer.innerHTML = "";
+                      if (Object.keys(devices).length === 0) {
+                        devicesContainer.innerHTML = `<p style="text-align:center;color:#666;">Tidak ada perangkat yang aktif.</p>`;
+                        return;
+                      }
+                  
+                      Object.values(devices).forEach(device => {
+                        const card = document.createElement("div");
+                        card.className = "device-card";
+                        card.innerHTML = `
+                          <div class="device-header">
+                            <span class="device-name">📱 ${device.device || "Unknown Device"}</span>
+                            <span class="device-status ${device.online ? "online" : "offline"}">
+                              ${device.online ? "Online ✅" : "Offline ❌"}
+                            </span>
+                          </div>
+                          <div class="device-body">
+                            <p><strong>Email:</strong> ${device.email || "-"}</p>
+                            <p><strong>Last Seen:</strong> ${device.lastActive ? new Date(device.lastActive).toLocaleString("id-ID") : "-"}</p>
+                          </div>
+                        `;
+                        devicesContainer.appendChild(card);
+                      });
+                    }
+                  
+                    auth.onAuthStateChanged(user => {
+                      if (!user) {
+                        devicesContainer.innerHTML = `<p style="text-align:center;color:red;">Silakan login untuk melihat perangkat.</p>`;
+                        return;
+                      }
+                  
+                      const presenceRef = ref(rtdb, `presence/${user.uid}`);
+                      onValue(presenceRef, snapshot => {
+                        const data = snapshot.val() || {};
+                        renderDevices({ [user.uid]: data });
+                      });
+                    });
+                  </script>
                 
                 <!-- Container kosong untuk diisi lewat JS -->
                  <div class="content-section" id="devicesContainer"></div>

@@ -1,11 +1,14 @@
-// firebase.js
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
+// firebase.js - Firebase initialization and utilities
+console.log('firebase.js: Starting Firebase initialization');
 
-// Konfigurasi Firebase
-export const firebaseConfig = {
+// Import Firebase modules
+import * as firebaseApp from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js';
+import * as firebaseAuth from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js';
+import * as firebaseFirestore from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js';
+import * as firebaseDatabase from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js';
+
+// Firebase configuration
+const firebaseConfig = {
   apiKey: "AIzaSyD07M2-79Yh0CzotaQeGYYy4WLZoevTdWY",
   authDomain: "seismosens-a048e.firebaseapp.com",
   projectId: "seismosens-a048e",
@@ -15,21 +18,64 @@ export const firebaseConfig = {
   databaseURL: "https://seismosens-a048e-default-rtdb.asia-southeast1.firebasedatabase.app/"
 };
 
-// Inisialisasi Firebase
-const app = initializeApp(firebaseConfig);
+// Initialize Firebase
+let app, auth, db, rtdb;
 
-// Export auth & db biar bisa dipakai di file lain
-const auth = getAuth(app);
-const db = getFirestore(app);
-const rtdb = getDatabase(app);
+try {
+  // Initialize Firebase app
+  app = firebaseApp.initializeApp(firebaseConfig);
+  
+  // Initialize services
+  auth = firebaseAuth.getAuth(app);
+  db = firebaseFirestore.getFirestore(app);
+  rtdb = firebaseDatabase.getDatabase(app);
+  
+  // Set auth persistence
+  firebaseAuth.setPersistence(auth, firebaseAuth.browserSessionPersistence);
+  
+  // Make them globally available for backward compatibility
+  window._firebase = { 
+    app, 
+    auth, 
+    db,
+    rtdb,
+    firebase: {
+      ...firebaseApp,
+      ...firebaseAuth,
+      ...firebaseFirestore,
+      ...firebaseDatabase
+    }
+  };
+  
+  console.log('firebase.js: Firebase initialized successfully');
+  console.log('firebase.js: _firebase object:', {
+    app: !!app,
+    auth: !!auth,
+    db: !!db,
+    rtdb: !!rtdb
+  });
+  
+  // Dispatch event when Firebase is ready
+  document.dispatchEvent(new Event('firebase-initialized'));
+  
+} catch (error) {
+  console.error('firebase.js: Error initializing Firebase:', error);
+  throw error; // Re-throw to ensure the app doesn't continue with broken Firebase
+}
 
-window._firebase = window._firebase || {};
-window._firebase.app = app;
-window._firebase.auth = auth;
-window._firebase.db = db;
-window._firebase.rtdb = rtdb;
-window._firebase.ref = ref;
-window._firebase.onValue = onValue;
-window._firebase.set = set;
+// Export individual services
+export { app, auth, db, rtdb };
 
-export { auth, db, rtdb };
+// Export commonly used functions
+export const { 
+  ref, 
+  onValue, 
+  set,
+  getAuth,
+  getFirestore,
+  getDatabase,
+  browserSessionPersistence
+} = { ...firebaseAuth, ...firebaseFirestore, ...firebaseDatabase };
+
+// Export all Firebase modules for advanced usage
+export { firebaseApp, firebaseAuth, firebaseFirestore, firebaseDatabase };
