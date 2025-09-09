@@ -1,46 +1,38 @@
-// This will be populated when Firebase is initialized
-let auth, db, app;
-let firebaseInitialized = false;
+// Import Firebase services from centralized configuration
+import {
+  auth,
+  db,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
+  updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup
+} from './firebase.js';
+
+let firebaseInitialized = true; // We're using ES modules, so this is always true
 
 // Wait for Firebase to be initialized
 document.addEventListener('firebase-initialized', () => {
     console.log('auth.js: Firebase initialized event received');
     
-    if (!window._firebase) {
-        console.error('auth.js: _firebase is not available');
-        return;
-    }
-    
-    ({ app, auth, db } = window._firebase);
-    
-    if (!app || !auth || !db) {
-        const missing = [];
-        if (!app) missing.push('app');
-        if (!auth) missing.push('auth');
-        if (!db) missing.push('db');
-        console.error('auth.js: Missing Firebase services:', missing.join(', '));
-        return;
-    }
-    
-    firebaseInitialized = true;
-    console.log('auth.js: Firebase services initialized successfully');
-    
     // Set auth persistence
-    window._firebase.firebase.setPersistence(auth, window._firebase.firebase.browserSessionPersistence);
-    
-    // Make auth and db available globally for debugging
+    // Note: This is now handled by the Firebase SDK's default behavior
+    // which is 'local' persistence by default globally for debugging
     window.auth = auth;
     window.db = db;
 });
 
 // Export a function to wait for Firebase to be ready
 const getFirebase = async () => {
-    if (firebaseInitialized) return { app, auth, db };
+    if (firebaseInitialized) return { auth, db };
     
     return new Promise((resolve) => {
         const checkInitialized = () => {
             if (firebaseInitialized) {
-                resolve({ app, auth, db });
+                resolve({ auth, db });
             } else {
                 setTimeout(checkInitialized, 100);
             }
@@ -50,79 +42,11 @@ const getFirebase = async () => {
 };
 
 // Import Firebase modules dynamically when needed
-const getFirebaseAuth = async () => {
-    const { getAuth, setPersistence, browserSessionPersistence, onAuthStateChanged, 
-            createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, 
-            GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail, updateProfile } = 
-            await import('https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js');
-    return { getAuth, setPersistence, browserSessionPersistence, onAuthStateChanged, 
-             createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, 
-             GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail, updateProfile };
-};
-
 const getFirestore = async () => {
     const { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, updateDoc, serverTimestamp } = 
             await import('https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js');
     return { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, updateDoc, serverTimestamp };
 };
-
-// Supaya bisa diakses global (opsional untuk debug)
-window.auth = auth;
-window.db = db;
-
-// ================================
-// CEK STATE AUTH
-// ================================
-async function checkAuthState() {
-  try {
-    const { auth } = await getFirebase();
-    const { onAuthStateChanged } = await getFirebaseAuth();
-    
-    return new Promise((resolve) => {
-      const unsubscribe = onAuthStateChanged(auth, (user) => {
-        unsubscribe();
-        resolve(user);
-      }, (error) => {
-        console.error('Auth state error:', error);
-        resolve(null);
-      });
-    });
-  } catch (error) {
-    console.error('Error in checkAuthState:', error);
-    return null;
-  }
-}
-
-// 🔹 Wajib login (kalau belum → redirect ke login)
-async function requireAuth() {
-  try {
-    const { auth } = await getFirebase();
-    const { onAuthStateChanged } = await getFirebaseAuth();
-    
-    const user = await checkAuthState();
-    if (!user) {
-      window.location.href = "/login.html";
-      return null;
-    }
-    
-    // Verify the user exists in Firestore
-    const { doc, getDoc } = await getFirestore();
-    const userDoc = await getDoc(doc(db, "users", user.uid));
-    
-    if (!userDoc.exists()) {
-      console.warn("User not found in Firestore");
-      await logoutUser();
-      window.location.href = "/login.html";
-      return null;
-    }
-    
-    return user;
-  } catch (error) {
-    console.error("Error in requireAuth:", error);
-    window.location.href = "/login.html";
-    return null;
-  }
-}
 
 // Helper function to get Realtime Database functions
 async function getRealtimeDatabase() {
@@ -132,7 +56,7 @@ async function getRealtimeDatabase() {
 // Presence (online offline)
 async function setPresence(user) {
   try {
-    const { auth, db, rtdb } = await getFirebase();
+    const { db, rtdb } = await getFirebase();
     const { doc, setDoc, serverTimestamp } = await getFirestore();
     const { ref, onValue, onDisconnect, set } = await getRealtimeDatabase();
     
@@ -186,7 +110,7 @@ async function setPresence(user) {
 (async function initAuthListener() {
   try {
     const { auth } = await getFirebase();
-    const { onAuthStateChanged } = await getFirebaseAuth();
+    const { onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js');
     
     onAuthStateChanged(auth, (user) => {
       if (user) {
@@ -200,6 +124,37 @@ async function setPresence(user) {
     console.error('Error initializing auth listener:', error);
   }
 })();
+
+// 🔹 Wajib login (kalau belum → redirect ke login)
+async function requireAuth() {
+  try {
+    const { auth } = await getFirebase();
+    const { onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js');
+    
+    const user = await checkAuthState();
+    if (!user) {
+      window.location.href = "/login.html";
+      return null;
+    }
+    
+    // Verify the user exists in Firestore
+    const { doc, getDoc } = await getFirestore();
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+    
+    if (!userDoc.exists()) {
+      console.warn("User not found in Firestore");
+      await logoutUser();
+      window.location.href = "/login.html";
+      return null;
+    }
+    
+    return user;
+  } catch (error) {
+    console.error("Error in requireAuth:", error);
+    window.location.href = "/login.html";
+    return null;
+  }
+}
 
 // 🔹 Redirect ke home kalau sudah login
 async function redirectIfAuthenticated() {
@@ -262,7 +217,7 @@ async function requireAdmin() {
 async function registerUser(email, password, nama, role = "user") {
   try {
     const { auth, db } = await getFirebase();
-    const { createUserWithEmailAndPassword, updateProfile } = await getFirebaseAuth();
+    const { createUserWithEmailAndPassword, updateProfile } = await import('https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js');
     const { doc, setDoc, serverTimestamp } = await getFirestore();
     
     console.log('Registering user:', { email, nama, role });
@@ -308,7 +263,7 @@ async function registerUser(email, password, nama, role = "user") {
 async function logoutUser() {
     try {
         const { auth } = await getFirebase();
-        const { signOut } = await getFirebaseAuth();
+        const { signOut } = await import('https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js');
         
         await signOut(auth);
         console.log("✅ User logout");
@@ -324,7 +279,7 @@ async function logoutUser() {
 async function loginWithGoogle() {
   try {
     const { auth, db } = await getFirebase();
-    const { GoogleAuthProvider, signInWithPopup } = await getFirebaseAuth();
+    const { GoogleAuthProvider, signInWithPopup } = await import('https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js');
     const { doc, getDoc, setDoc, serverTimestamp } = await getFirestore();
     
     const provider = new GoogleAuthProvider();
@@ -363,7 +318,7 @@ window.loginWithGoogle = loginWithGoogle;
 async function deleteUser(user) {
   try {
     const { auth } = await getFirebase();
-    const { deleteUser: deleteAuthUser } = await getFirebaseAuth();
+    const { deleteUser: deleteAuthUser } = await import('https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js');
     
     if (!user) {
       user = auth.currentUser;
@@ -381,19 +336,42 @@ async function deleteUser(user) {
 }
 
 // ================================
+// CEK STATE AUTH
+// ================================
+async function checkAuthState() {
+  try {
+    const { auth } = await getFirebase();
+    const { onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js');
+    
+    return new Promise((resolve) => {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        unsubscribe();
+        resolve(user);
+      }, (error) => {
+        console.error('Auth state error:', error);
+        resolve(null);
+      });
+    });
+  } catch (error) {
+    console.error('Error in checkAuthState:', error);
+    return null;
+  }
+}
+
+// ================================
 // EXPORT
 // ================================
 export { 
   getFirebase,
-  getFirebaseAuth,
-  getFirestore,
-  getRealtimeDatabase,
   checkAuthState, 
   requireAuth, 
-  redirectIfAuthenticated,
-  registerUser,
-  requireAdmin,
-  loginWithGoogle,
+  redirectIfAuthenticated, 
+  requireAdmin, 
+  registerUser, 
+  loginWithGoogle, 
+  logoutUser, 
   deleteUser,
-  logoutUser
+  setPresence,
+  auth,
+  db
 };

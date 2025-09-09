@@ -1,19 +1,27 @@
-<link rel="stylesheet" href="./chat_ai/chatai.css">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SeismoSens AI Chat</title>
+    <link rel="stylesheet" href="chatai.css">
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>Chat AI 🤖</h1>
+            <p>Bertanya langsung dengan AI SeismoSens</p>
+        </div>
 
-<div class="chat-container">
-  <div class="chat-header">
-    <h1>Chat AI 🤖</h1>
-    <p>Bertanya langsung dengan AI SeismoSens</p>
-  </div>
+        <div id="chatMessages" class="chat-messages"></div>
 
-  <!-- ini harus ada sebelum script -->
-  <div id="chatMessages" class="chat-messages"></div>
+        <div class="chat-input">
+            <input type="text" id="chatInput" placeholder="Tulis pesan..." onkeypress="if(event.key === 'Enter') sendMessage()">
+            <button onclick="sendMessage()">Kirim</button>
+        </div>
+    </div>
 
-  <div class="chat-input">
-    <input type="text" id="chatInput" placeholder="Tulis pesan...">
-    <button onclick="sendMessage()">Kirim</button>
-  </div>
-</div>
-
-<!-- taruh paling bawah -->
-<script type="module" src="./chat_ai/chatai.js"></script>
+    <!-- Firebase and Chat Scripts -->
+    <script type="module" src="chatai.js"></script>
+</body>
+</html>

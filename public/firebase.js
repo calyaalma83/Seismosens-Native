@@ -1,81 +1,115 @@
-// firebase.js - Firebase initialization and utilities
-console.log('firebase.js: Starting Firebase initialization');
+// firebase.js
 
-// Import Firebase modules
-import * as firebaseApp from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js';
-import * as firebaseAuth from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js';
-import * as firebaseFirestore from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js';
-import * as firebaseDatabase from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js';
+// 1. Import fungsi yang dibutuhkan dari SDK
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+import { 
+  getAuth, 
+  onAuthStateChanged as _onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
+  updateProfile
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import { 
+  getFirestore, 
+  collection, 
+  doc, 
+  getDoc, 
+  setDoc, 
+  addDoc,
+  updateDoc, 
+  deleteDoc, 
+  query, 
+  where, 
+  getDocs, 
+  orderBy, 
+  serverTimestamp 
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { 
+  getDatabase, 
+  ref, 
+  set, 
+  get, 
+  update, 
+  remove, 
+  onValue, 
+  off, 
+  push 
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
 
-// Firebase configuration
+// 2. Konfigurasi Firebase Anda (ini sudah benar)
 const firebaseConfig = {
-  apiKey: "AIzaSyD07M2-79Yh0CzotaQeGYYy4WLZoevTdWY",
-  authDomain: "seismosens-a048e.firebaseapp.com",
-  projectId: "seismosens-a048e",
-  storageBucket: "seismosens-a048e.appspot.com",
-  messagingSenderId: "358453169511",
-  appId: "1:358453169511:web:fccc32bf22ede39ff0b3c2",
-  databaseURL: "https://seismosens-a048e-default-rtdb.asia-southeast1.firebasedatabase.app/"
+    apiKey: "AIzaSyD07M2-79Yh0CzotaQeGYYy4WLZoevTdWY",
+    authDomain: "seismosens-a048e.firebaseapp.com",
+    projectId: "seismosens-a048e",
+    storageBucket: "seismosens-a048e.appspot.com",
+    messagingSenderId: "358453169511",
+    appId: "1:358453169511:web:fccc32bf22ede39ff0b3c2",
+    databaseURL: "https://seismosens-a048e-default-rtdb.asia-southeast1.firebasedatabase.app/"
 };
 
-// Initialize Firebase
-let app, auth, db, rtdb;
+// 3. Inisialisasi Firebase HANYA SEKALI di sini
+let app;
 
 try {
-  // Initialize Firebase app
-  app = firebaseApp.initializeApp(firebaseConfig);
-  
-  // Initialize services
-  auth = firebaseAuth.getAuth(app);
-  db = firebaseFirestore.getFirestore(app);
-  rtdb = firebaseDatabase.getDatabase(app);
-  
-  // Set auth persistence
-  firebaseAuth.setPersistence(auth, firebaseAuth.browserSessionPersistence);
-  
-  // Make them globally available for backward compatibility
-  window._firebase = { 
-    app, 
-    auth, 
-    db,
-    rtdb,
-    firebase: {
-      ...firebaseApp,
-      ...firebaseAuth,
-      ...firebaseFirestore,
-      ...firebaseDatabase
-    }
-  };
-  
-  console.log('firebase.js: Firebase initialized successfully');
-  console.log('firebase.js: _firebase object:', {
-    app: !!app,
-    auth: !!auth,
-    db: !!db,
-    rtdb: !!rtdb
-  });
-  
-  // Dispatch event when Firebase is ready
-  document.dispatchEvent(new Event('firebase-initialized'));
-  
-} catch (error) {
-  console.error('firebase.js: Error initializing Firebase:', error);
-  throw error; // Re-throw to ensure the app doesn't continue with broken Firebase
+  // Coba dapatkan app yang sudah ada
+  app = getApp();
+} catch (e) {
+  // Jika belum ada, inisialisasi baru
+  app = initializeApp(firebaseConfig);
 }
 
-// Export individual services
-export { app, auth, db, rtdb };
+// 4. Initialize services
+const auth = getAuth(app);
+const db = getFirestore(app);
+const rtdb = getDatabase(app);
 
-// Export commonly used functions
-export const { 
-  ref, 
-  onValue, 
+// 5. Export everything that might be needed
+export {
+  // App
+  app,
+  
+  // Auth
+  auth,
+  _onAuthStateChanged as onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
+  updateProfile,
+  
+  // Firestore
+  db,
+  collection,
+  doc,
+  getDoc,
+  setDoc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  getDocs,
+  orderBy,
+  serverTimestamp,
+  
+  // Realtime Database
+  rtdb,
+  ref,
   set,
-  getAuth,
-  getFirestore,
-  getDatabase,
-  browserSessionPersistence
-} = { ...firebaseAuth, ...firebaseFirestore, ...firebaseDatabase };
+  get,
+  update,
+  remove,
+  onValue,
+  off,
+  push
+};
 
-// Export all Firebase modules for advanced usage
-export { firebaseApp, firebaseAuth, firebaseFirestore, firebaseDatabase };
+// Make sure Firebase is only initialized once
+if (!window._firebaseInitialized) {
+  window._firebaseInitialized = true;
+  console.log('Firebase initialized successfully!');
+}
+
+console.log("Firebase initialized successfully!");

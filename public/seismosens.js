@@ -1,11 +1,37 @@
-import { auth, checkAuthState, deleteUser } from "./auth.js";
-import { collection, addDoc, onSnapshot, serverTimestamp, query, orderBy, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import { updateProfile,  EmailAuthProvider, reauthenticateWithCredential} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-
-const db = window._firebase.db;
-if (!db) {
-  console.error("Firestore belum siap. Pastikan firebase init di <head> sudah jalan.");
-}
+// Import Firebase services from our centralized firebase.js
+import { 
+  auth,
+  db,
+  rtdb,
+  // Auth functions
+  updateProfile,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  signOut,
+  updatePassword,
+  onAuthStateChanged,
+  // Firestore functions
+  collection,
+  addDoc,
+  onSnapshot,
+  serverTimestamp,
+  query,
+  orderBy,
+  getDoc,
+  setDoc,
+  updateDoc,
+  doc,
+  deleteDoc,
+  // Realtime Database functions
+  ref,
+  set,
+  get,
+  update,
+  remove,
+  onValue,
+  off,
+  push
+} from './firebase.js';
 
 const surakartaCenter = [-7.566667, 110.816667];
 
@@ -17,7 +43,8 @@ let chart;
 const PROTECTED_PAGES = ['profile', 'devices', 'settings'];
 
 // ===== Navigation =====
-async function switchPage(pageName, event) {
+// Make switchPage globally available
+window.switchPage = async function(pageName, event) {
   if (event) event.preventDefault();
 
   // reset nav
@@ -36,6 +63,12 @@ async function switchPage(pageName, event) {
     // refresh map & chart
     if (pageName === "map" && !mapInitialized) setTimeout(initializeMap, 300);
     if (pageName === "home") initChart();
+
+    // 🔥 TAMBAHKAN INI: Panggil fungsi untuk memuat data halaman perangkat
+    if (pageName === "devices") {
+        listenDevicesPage(); // Panggil fungsi yang benar!
+    }
+
   } else {
     console.warn(`switchPage: Halaman "${pageName}-page" tidak ditemukan`);
   }
@@ -519,10 +552,9 @@ function initProfile() {
             profileAvatar.style.background = `linear-gradient(45deg, ${color1}, ${color2})`;
         }
     } catch (error) {
-        console.error('Error initializing profile:', error);
+        console.error('Error in initProfile:', error);
     }
 }
-
 
 // Initialize profile when the page loads
 document.addEventListener('DOMContentLoaded', () => {
@@ -531,6 +563,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set initial theme
     const savedTheme = localStorage.getItem('theme') || 'light';
     setTheme(savedTheme);
+});
 
 // Update the form submission handler to use the correct collection name and add better error handling
 document.addEventListener('submit', async (e) => {
@@ -1015,10 +1048,10 @@ function initChart() {
       chart = null;
     }
 
-  const ctx = canvas.getContext("2d");
-  chart = new Chart(ctx, {
-    type: "line",
-    data: {
+    const ctx = canvas.getContext("2d");
+    chart = new Chart(ctx, {
+      type: "line",
+      data: {
         labels: [],
         datasets: [
           {
@@ -1042,8 +1075,11 @@ function initChart() {
       options: {
         responsive: true,
         scales: { y: { beginAtZero: true } }
-    }
-  });
+      }
+    });
+  } catch (error) {
+    console.error('Error initializing chart:', error);
+  }
 }
 
 // (biar chart aman, kita inisialisasi ulang pas masuk home)
@@ -1461,8 +1497,7 @@ async function deleteAccountFlow() {
   }
 }
 
-
-// Debug initialization
+// Debug
 function initializeDebug() {
   try {
     // Add debug info to the page
@@ -1506,7 +1541,20 @@ function initializeDebug() {
 document.addEventListener('DOMContentLoaded', () => {
   try {
     initializeDebug();
+    
+    // Check auth state
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log('User is signed in:', user.uid);
+      } else {
+        console.log('No user is signed in');
+      }
+    });
+    
+    // Initialize other components
+    initChart();
+    
   } catch (error) {
-    console.error('Error in DOMContentLoaded:', error);
+    console.error('Error initializing application:', error);
   }
 });

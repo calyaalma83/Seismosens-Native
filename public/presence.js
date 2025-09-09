@@ -1,7 +1,14 @@
 // presence.js
-import { db, rtdb } from "./firebase-init.js";
-import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import { ref, set, onDisconnect } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
+import { 
+  db, 
+  rtdb, 
+  doc, 
+  setDoc, 
+  serverTimestamp, 
+  ref, 
+  set, 
+  onDisconnect 
+} from "./firebase.js";
 
 // ==============================
 // SET PRESENCE USER

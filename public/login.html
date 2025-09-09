@@ -21,13 +21,13 @@
       <h3>Masuk ke Akun</h3>
       <p>Gunakan email dan password untuk melanjutkan</p>
 
-      <form id="loginForm">
+      <form id="loginForm" onsubmit="return false;">
         <div class="form-group">
-          <input type="email" id="email" placeholder="Email Address" required>
+          <input type="email" id="email" name="email" autocomplete="username email" placeholder="Email Address" required>
         </div>
         <div class="form-group">
           <div class="password-input">
-            <input type="password" id="password" placeholder="Masukkan password anda" required>
+            <input type="password" id="password" name="password" autocomplete="current-password" placeholder="Masukkan password anda" required>
             <button type="button" id="togglePassword" class="toggle-password">👁️</button>
           </div>
         </div>
@@ -52,12 +52,26 @@
 
       <div class="extra-links">
         <a href="/forgot-password/forgot-pw.html" class="forgot">Lupa Password?</a>
-        <p>Belum punya akun? <a href="./register.html">Daftar Sekarang</a></p>
       </div>
+    </div>
+
+    <div class="login-footer">
+      <p>Belum punya akun? <a href="register.html">Daftar disini</a></p>
     </div>
   </div>
 
-  <script type="module" src="./firebase-init.js"></script>
+  <!-- Firebase and Login Scripts -->
   <script type="module" src="./login.js"></script>
+  
+  <!-- Fallback for older browsers -->
+  <script nomodule>
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      alert('Please use a modern browser that supports JavaScript modules');
+      } else {
+        console.error('Login form not found!');
+      }
+    });
+  </script>
 </body>
 </html>

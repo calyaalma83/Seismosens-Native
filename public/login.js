@@ -1,10 +1,15 @@
-import { auth, db } from './firebase.js';
-import { signInWithEmailAndPassword, deleteUser } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+// Import Firebase services from centralized configuration
+import { 
+  auth,
+  db,
+  signInWithEmailAndPassword,
+  deleteUser,
+  doc,
+  getDoc,
+  onAuthStateChanged
+} from './firebase.js';
 import { redirectIfAuthenticated } from "./auth.js";
 import { setPresence } from "./presence.js";
-
-console.log("Login script loaded");
 
 // Helper function to show error messages
 function showError(message) {
@@ -24,93 +29,110 @@ function showError(message) {
 
 console.log("Login script loaded");
 
-document.addEventListener("DOMContentLoaded", async () => {
-  console.log('DOM loaded, initializing login...');
+// Function to initialize login functionality
+async function initializeLogin() {
+  console.log('Initializing login...');
   
-  // Initialize fromDelete flag at the top level
-  const fromDelete = sessionStorage.getItem("fromDeleteAccount") === "true";
-  
-  try {
-    // Check if user is already logged in
-    const alreadyRedirected = await redirectIfAuthenticated();
-    if (alreadyRedirected && !fromDelete) return;
-  } catch (error) {
-    console.error('Error checking authentication:', error);
-    showError('Terjadi kesalahan saat memeriksa autentikasi');
-  }
-
   const form = document.getElementById("loginForm");
   if (!form) {
     console.error('Login form not found!');
     return;
   }
 
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    console.log('Login form submitted');
+  // Add event listener for form submission
+  form.addEventListener("submit", handleLogin);
+  
+  // Also add click handler to the submit button as a fallback
+  const submitButton = form.querySelector('button[type="submit"]');
+  if (submitButton) {
+    submitButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      handleLogin(e);
+    });
+  }
 
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
+  // Check authentication status
+  try {
+    const fromDelete = sessionStorage.getItem("fromDeleteAccount") === "true";
+    const alreadyRedirected = await redirectIfAuthenticated();
+    if (alreadyRedirected && !fromDelete) return;
+  } catch (error) {
+    console.error('Error checking authentication:', error);
+    showError('Terjadi kesalahan saat memeriksa autentikasi');
+  }
+}
+
+// Handle login form submission
+async function handleLogin(event) {
+  event.preventDefault();
+  console.log('Login form submission handled');
+
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+  
+  console.log('Form values:', { email, password: password ? '***' : 'empty' });
+  const submitButton = document.querySelector('button[type="submit"]');
+  const errorElement = document.getElementById('error-message');
+
+  // Clear previous errors
+  if (errorElement) {
+    errorElement.style.display = 'none';
+    errorElement.textContent = '';
+  }
+
+  // Basic validation
+  if (!email || !password) {
+    showError('Email dan password harus diisi!');
+    return;
+  }
+
+  // Email format validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    showError('Format email tidak valid');
+    return;
+  }
+
+  // Disable submit button to prevent multiple submissions
+  submitButton.disabled = true;
+  submitButton.querySelector('.button-text').textContent = 'Memproses...';
+  submitButton.querySelector('.button-loader').style.display = 'inline-block';
+
+  try {
+    console.log('Attempting to sign in with:', email);
     
-    console.log('Form values:', { email, password: password ? '***' : 'empty' });
-    const submitButton = form.querySelector('button[type="submit"]');
-    const errorElement = document.getElementById('error-message');
-
-    // Clear previous errors
-    if (errorElement) {
-      errorElement.style.display = 'none';
-      errorElement.textContent = '';
-    }
-
-    // Basic validation
-    if (!email || !password) {
-      showError('Email dan password harus diisi!');
-      return;
-    }
-
-    // Email format validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      showError('Format email tidak valid');
-      return;
-    }
-
-    // Disable submit button to prevent multiple submissions
-    submitButton.disabled = true;
-    submitButton.querySelector('.button-text').textContent = 'Memproses...';
-    submitButton.querySelector('.button-loader').style.display = 'inline-block';
-
+    // Sign in user
+    console.log('Calling signInWithEmailAndPassword...');
+    console.log('Auth object:', auth);
+    
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    console.log('Authentication successful, user:', userCredential.user?.uid);
+    
+    // Set presence after successful login
     try {
-      console.log('Attempting to sign in with:', email);
+      await setPresence(userCredential.user);
+      console.log('Presence set for user');
+    } catch (err) {
+      console.error("Presence error:", err);
+    }      
       
-      // Sign in user
-      console.log('Calling signInWithEmailAndPassword...');
-      console.log('Auth object:', auth);
-      
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      console.log('Authentication successful, user:', userCredential.user?.uid);
-      
-      // Set presence after successful login
-      try {
-        await setPresence(userCredential.user);
-        console.log('Presence set for user');
-      } catch (err) {
-        console.error("Presence error:", err);
-      }      
-      
-      // Get user role from Firestore
-      const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
-      const userData = userDoc.data();
-      const role = userData?.role || 'user';
-      
-      console.log("UserDoc exists:", userDoc.exists(), "Data:", userData);
-      
-      // Small delay to ensure all async operations complete
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Redirect based on role
-      const redirectAfterLogin = sessionStorage.getItem('redirectAfterLogin');
-      
+    // Get user role from Firestore
+    const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
+    const userData = userDoc.data();
+    const role = userData?.role || 'user';
+    
+    console.log("UserDoc exists:", userDoc.exists(), "Data:", userData);
+    
+    // Small delay to ensure all async operations complete
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Redirect based on role
+    const redirectAfterLogin = sessionStorage.getItem('redirectAfterLogin');
+    
+    // Small delay to ensure UI updates are visible
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    try {
       if (redirectAfterLogin) {
         // Clear the redirect URL
         sessionStorage.removeItem('redirectAfterLogin');
@@ -125,11 +147,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.log("Redirecting to user dashboard...");
         window.location.href = "./seismosens.html";
       }
-      
     } catch (error) {
-      console.error("Login error:", error);
-      let errorMessage = "Login gagal: ";
-      
+      console.error('Redirect error:', error);
+      // Fallback redirect
+      window.location.href = "./seismosens.html";
       switch (error.code) {
         case 'auth/user-not-found':
           errorMessage = "Email tidak terdaftar";
@@ -169,15 +190,24 @@ document.addEventListener("DOMContentLoaded", async () => {
           alert("❌ Gagal menghapus akun: " + err.message);
         }
       }
-    } finally {
-      // Re-enable the submit button in all cases
-      if (submitButton) {
-        submitButton.disabled = false;
-        submitButton.querySelector('.button-text').textContent = 'Masuk ke SeismoSens';
-        submitButton.querySelector('.button-loader').style.display = 'none';
-      }
     }
-  });
+  } catch (error) {
+    console.error('Login error:', error);
+    showError('Terjadi kesalahan saat login. Silakan coba lagi.');
+  } finally {
+    // Re-enable the submit button in all cases
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.querySelector('.button-text').textContent = 'Masuk ke SeismoSens';
+      submitButton.querySelector('.button-loader').style.display = 'none';
+    }
+  }
+}
 
-  // Remove duplicate showError function
-});
+// Initialize the login functionality when DOM is loaded
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeLogin);
+} else {
+  // DOM already loaded, initialize immediately
+  initializeLogin();
+}
