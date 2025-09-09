@@ -9,7 +9,13 @@ import {
   signOut,
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
-  updateProfile
+  updateProfile,
+  EmailAuthProvider,
+  GoogleAuthProvider,
+  signInWithPopup,
+  reauthenticateWithCredential,
+  updatePassword,
+  deleteUser as deleteAuthUser
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import { 
   getFirestore, 
@@ -74,10 +80,16 @@ export {
   auth,
   _onAuthStateChanged as onAuthStateChanged,
   signInWithEmailAndPassword,
+  signInWithPopup,
   signOut,
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
   updateProfile,
+  EmailAuthProvider,
+  GoogleAuthProvider,
+  reauthenticateWithCredential,
+  updatePassword,
+  deleteAuthUser,
   
   // Firestore
   db,

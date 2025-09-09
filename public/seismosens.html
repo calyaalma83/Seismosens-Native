@@ -429,10 +429,24 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+  <!-- Temporary switchPage implementation to prevent errors -->
+  <script>
+    // Temporary implementation until seismosens.js loads
+    window.switchPage = function(pageName, event) {
+      if (event) event.preventDefault();
+      console.log('Temporary switchPage called for:', pageName);
+      // The real implementation will replace this when seismosens.js loads
+      if (window._realSwitchPage) {
+        return window._realSwitchPage(pageName, event);
+      }
+      return false;
+    };
+  </script>
+
   <!-- Load Firebase and App -->
+  <script type="module" src="./seismosens.js"></script>
   <script type="module" src="./auth.js"></script>
   <script type="module" src="./news.js"></script>
-  <script type="module" src="./seismosens.js"></script>
   <script type="module" src="./profile.js"></script>
   <script type="module" src="./help.js"></script>
   <script type="module" src="./notification.js"></script>
