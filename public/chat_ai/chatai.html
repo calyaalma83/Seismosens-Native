@@ -2,18 +2,23 @@
 
 <div class="chat-container">
   <div class="chat-header">
-    <h1>Chat AI 🤖</h1>
-    <p>Bertanya langsung dengan AI SeismoSens</p>
+    <h1 data-i18n="ai">Chat AI 🤖</h1>
+    <p data-i18n="p_ai"></p>
   </div>
 
   <!-- ini harus ada sebelum script -->
   <div id="chatMessages" class="chat-messages"></div>
 
   <div class="chat-input">
-    <input type="text" id="chatInput" placeholder="Tulis pesan...">
-    <button onclick="sendMessage()">Kirim</button>
+    <input type="text" id="chatInput" data-i18n="[placeholder] tulis">
+    <button onclick="sendMessage()" data-i18n="kirim"></button>
   </div>
 </div>
 
 <!-- taruh paling bawah -->
 <script type="module" src="./chat_ai/chatai.js"></script>
+
+<script src="https://unpkg.com/i18next@23.7.16/i18next.min.js"></script>
+<script src="https://unpkg.com/i18next-http-backend@2.5.1/i18nextHttpBackend.min.js"></script>
+<script src="https://unpkg.com/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://unpkg.com/jquery-i18next@1.2.1/dist/umd/jquery-i18next.min.js"></script>

@@ -899,26 +899,26 @@ async function updateProfileUI() {
 // ===== Chart.js =====
 // Chart variable is already declared at the top of the file
 
-function updateChart(displacement, vibration) {
+// ===== Chart.js =====
+function updateChart(ax_g, ay_g) {
   if (!chart) return;
-  
-  // Add new data point
+
   const now = new Date();
   const timeLabel = now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds();
-  
-  // Add new data
+
+  // Tambah data baru
   chart.data.labels.push(timeLabel);
-  chart.data.datasets[0].data.push(displacement);
-  chart.data.datasets[1].data.push(vibration);
-  
-  // Keep only last 20 data points for performance
+  chart.data.datasets[0].data.push(ax_g);
+  chart.data.datasets[1].data.push(ay_g);
+
+  // Batasin hanya 20 data terakhir
   const maxDataPoints = 20;
   if (chart.data.labels.length > maxDataPoints) {
     chart.data.labels.shift();
     chart.data.datasets[0].data.shift();
     chart.data.datasets[1].data.shift();
   }
-  
+
   chart.update();
 }
 
@@ -927,38 +927,82 @@ function initChart() {
   if (!canvas || typeof Chart === "undefined") return;
 
   const ctx = canvas.getContext("2d");
-
-  if (chart) {
-    chart.destroy();
-  }
+  if (chart) chart.destroy();
 
   chart = new Chart(ctx, {
     type: "line",
     data: {
-        labels: [],
-        datasets: [
-            {
-                label: "Displacement (cm)",
-                data: [],
-                borderColor: "rgba(59, 130, 246, 1)",
-                backgroundColor: "rgba(59, 130, 246, 0.3)",
-                fill: true,
-                tension: 0.4
-            },
-            {
-                label: "Vibration Magnitude",
-                data: [],
-                borderColor: "rgba(239, 68, 68, 1)",
-                backgroundColor: "rgba(239, 68, 68, 0.3)",
-                fill: true,
-                tension: 0.4
-            }
-        ]
+      labels: [],
+      datasets: [
+        {
+          label: "AX (g)",
+          data: [],
+          borderColor: "rgba(59, 130, 246, 1)",
+          backgroundColor: "rgba(59, 130, 246, 0.3)",
+          fill: true,
+          tension: 0.4
+        },
+        {
+          label: "AY (g)",
+          data: [],
+          borderColor: "rgba(239, 68, 68, 1)",
+          backgroundColor: "rgba(239, 68, 68, 0.3)",
+          fill: true,
+          tension: 0.4
+        }
+      ]
     },
     options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: { y: { beginAtZero: true } }
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  const { rtdb, ref, onValue } = window._firebase;
+
+  // 🔹 1. Load history lebih dulu
+  const historyRef = ref(rtdb, "sensor/history");
+  onValue(historyRef, (snapshot) => {
+    if (!snapshot.exists()) return;
+    const history = snapshot.val();
+
+    const labels = [];
+    const axData = [];
+    const ayData = [];
+
+    Object.entries(history).forEach(([ts, point]) => {
+      const date = new Date(parseInt(ts));
+      const timeLabel = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
+      labels.push(timeLabel);
+      axData.push(point.ax_g);
+      ayData.push(point.ay_g);
+    });
+
+    chart.data.labels = labels;
+    chart.data.datasets[0].data = axData;
+    chart.data.datasets[1].data = ayData;
+    chart.update();
+  });
+
+  // 🔹 2. Dengar data realtime terakhir
+  const dataRef = ref(rtdb, "sensor/data");
+  onValue(dataRef, (snapshot) => {
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      console.log("📡 Data realtime:", data);
+      if (data.ax_g !== undefined && data.ay_g !== undefined) {
+        updateChart(parseFloat(data.ax_g), parseFloat(data.ay_g));
+
+        // 🔹 Simpan juga ke history
+        const ts = Date.now();
+        set(ref(rtdb, "sensor/history/" + ts), {
+          ax_g: parseFloat(data.ax_g),
+          ay_g: parseFloat(data.ay_g)
+        });
+      }
+    } else {
+      console.warn("❌ Tidak ada data di path 'data'");
     }
   });
 }

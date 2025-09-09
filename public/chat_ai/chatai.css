@@ -60,7 +60,7 @@ body, html {
   background: #fff;
 
   position: fixed;
-  bottom: 67px; /* ubah ini jadi lebih besar */
+  bottom: 62px; /* ubah ini jadi lebih besar */
   left: 0;
   right: 0;
   z-index: 100;
