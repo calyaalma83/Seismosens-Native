@@ -1,33 +1,11 @@
-// Import Firebase services from centralized module
-import { 
-  auth, 
-  db, 
-  rtdb,
-  onAuthStateChanged,
-  signOut,
-  collection,
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc,
-  onSnapshot,
-  query,
-  orderBy,
-  serverTimestamp,
-  deleteDoc,
-  ref,
-  set,
-  onValue,
-  onDisconnect,
-  update,
-  EmailAuthProvider,
-  reauthenticateWithCredential,
-  updateProfile,
-  deleteUser as firebaseDeleteUser
-} from "./firebase-init.js";
+import { auth, checkAuthState, deleteUser } from "./auth.js";
+import { collection, addDoc, onSnapshot, serverTimestamp, query, orderBy, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { updateProfile,  EmailAuthProvider, reauthenticateWithCredential} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
-// Global state
-let isInitialized = false;
+const db = window._firebase.db;
+if (!db) {
+  console.error("Firestore belum siap. Pastikan firebase init di <head> sudah jalan.");
+}
 
 const surakartaCenter = [-7.566667, 110.816667];
 
@@ -41,114 +19,27 @@ const PROTECTED_PAGES = ['profile', 'devices', 'settings'];
 // ===== Navigation =====
 async function switchPage(pageName, event) {
   if (event) event.preventDefault();
-  console.log('switchPage called with:', pageName);
-  
-  try {
-    // Ensure auth is initialized
-    if (!isInitialized) {
-      console.log('Waiting for auth initialization...');
-      await new Promise((resolve, reject) => {
-        const startTime = Date.now();
-        const checkAuth = () => {
-          if (isInitialized) {
-            resolve();
-          } else if (Date.now() - startTime > 5000) {
-            console.warn('Auth initialization timeout, continuing anyway');
-            isInitialized = true; // Force continue
-            resolve();
-          } else {
-            setTimeout(checkAuth, 100);
-          }
-        };
-        checkAuth();
-      });
-    }
-    
-    // Check if page requires authentication
-    const requiresAuth = PROTECTED_PAGES.includes(pageName);
-    const currentUser = auth.currentUser;
-    
-    // If page requires auth but no user is logged in, redirect to login
-    if (requiresAuth && !currentUser) {
-      console.log('Authentication required, saving target page and redirecting to login');
-      sessionStorage.setItem('redirectAfterLogin', pageName);
-      window.location.href = '/login.html';
-      return;
-    }
-    
-    // Clear any previous redirect URL
-    if (sessionStorage.getItem('redirectAfterLogin')) {
-      sessionStorage.removeItem('redirectAfterLogin');
-    }
-    
-    // Update active navigation
-    document.querySelectorAll(".nav-item").forEach(item => item.classList.remove("active"));
-    
-    // Find and activate the clicked navigation item
-    const clickedItem = event?.target?.closest(".nav-item") ||
-      document.querySelector(`.nav-item[onclick*="${pageName}"]`);
-      
-    if (clickedItem) {
-      clickedItem.classList.add("active");
-    }
-    
-    // Hide all pages
-    document.querySelectorAll(".page-content").forEach(p => p.classList.remove("active"));
-    
-    // Show the selected page
-    const targetPage = document.getElementById(`${pageName}-page`);
-    if (targetPage) {
-      targetPage.classList.add('active');
-      
-      // Initialize specific page content if needed
-      try {
-        if (pageName === 'map' && !mapInitialized) {
-          await initializeMap();
-        } else if (pageName === 'profile') {
-          await updateProfileUI();
-        } else if (pageName === 'forum') {
-          await loadForumPosts();
-        } else if (pageName === 'home') {
-          // Initialize home page components
-          if (typeof initChart === 'function') initChart();
-          if (typeof listenDeviceStats === 'function') listenDeviceStats();
-        }
-      } catch (error) {
-        console.error(`Error initializing ${pageName} page:`, error);
-      }
-      
-      // Update URL without page reload
-      window.history.pushState({ page: pageName }, '', `#${pageName}`);
-      
-      // Scroll to top of the page
-      window.scrollTo(0, 0);
-    } else {
-      console.error(`Page not found: ${pageName}`);
-      // Fallback to home page if target page not found
-      if (pageName !== 'home') {
-        switchPage('home');
-      }
-    }
-  } catch (error) {
-    console.error('Error in switchPage:', error);
+
+  // reset nav
+  document.querySelectorAll(".nav-item").forEach(item => item.classList.remove("active"));
+  const clickedItem = event?.target.closest(".nav-item") ||
+    document.querySelector(`.nav-item[onclick*="${pageName}"]`);
+  if (clickedItem) clickedItem.classList.add("active");
+
+  // reset pages
+  document.querySelectorAll(".page-content").forEach(p => p.classList.remove("active"));
+
+  const targetPage = document.getElementById(`${pageName}-page`);
+  if (targetPage) {
+    targetPage.classList.add("active");
+
+    // refresh map & chart
+    if (pageName === "map" && !mapInitialized) setTimeout(initializeMap, 300);
+    if (pageName === "home") initChart();
+  } else {
+    console.warn(`switchPage: Halaman "${pageName}-page" tidak ditemukan`);
   }
 }
-
-
-import { initPresence } from "./presence.js";
-import { auth, onAuthStateChanged } from "./firebase-init.js";
-
-document.addEventListener("DOMContentLoaded", () => {
-  // Initialize presence when user is signed in
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      console.log("User is signed in, initializing presence");
-      initPresence(user);
-    } else {
-      console.log("No user is signed in");
-    }
-  });
-});
 
 // ===== Profile & Settings Functions =====
 
@@ -157,45 +48,65 @@ document.addEventListener("DOMContentLoaded", () => {
  * @param {string} settingName - The name of the setting/page to show
  */
 function showSetting(settingName) {
-    // Hide all page contents first
-    document.querySelectorAll('.page-content').forEach(page => {
-        page.classList.remove('active');
-    });
+  // Hide semua page-content dulu
+  document.querySelectorAll('.page-content').forEach(page => {
+    page.classList.remove('active');
+  });
 
-    // Show the selected page
-    const pageId = `${settingName.toLowerCase().replace(/\s+/g, '-')}-page`;
-    const targetPage = document.getElementById(pageId);
-    
-    if (targetPage) {
-        targetPage.classList.add('active');
-        return;
-    }
+  // buat id untuk page
+  const pageId = `${settingName.toLowerCase().replace(/\s+/g, '-')}-page`;
+  const targetPage = document.getElementById(pageId);
 
-    // If page doesn't exist, create it
-    const pageContent = getSettingContent(settingName);
-    if (!pageContent) {
-        console.warn(`No content found for setting: ${settingName}`);
-        return;
-    }
+  if (targetPage) {
+    targetPage.classList.add('active');
+    return;
+  }
 
-    // Create and append the new page
-    const newPage = document.createElement('div');
-    newPage.id = pageId;
-    newPage.className = 'page-content';
-    newPage.innerHTML = `
-        <div class="page-header">
-            <button class="btn-back" onclick="showSetting('Profile')">
-                <i class="icon-arrow">←</i> Kembali
-            </button>
-            <h2>${settingName}</h2>
-        </div>
-        <div class="page-content-inner">
-            ${pageContent}
-        </div>
-    `;
-    
-    document.querySelector('.main-content').appendChild(newPage);
-    newPage.classList.add('active');
+  // ambil konten setting dari mapping
+  const pageContent = getSettingContent(settingName);
+  if (!pageContent) {
+    console.warn(`No content found for setting: ${settingName}`);
+    return;
+  }
+
+  // mapping key judul berdasarkan settingName
+  const titleKeys = {
+    "Edit Profil": "edit_title",
+    "Notifikasi": "notif_title",
+    "Bahasa": "bahasa_title",
+    "Tema": "tema_title",
+    "Bantuan": "bantuan_title",
+    "Tentang": "about_title"
+  };
+
+  const titleKey = titleKeys[settingName] || "";
+
+  // Create and append the new page
+  const newPage = document.createElement('div');
+  newPage.id = pageId;
+  newPage.className = 'page-content';
+  newPage.innerHTML = `
+    <div class="page-header">
+      <button class="btn-back" onclick="showSetting('Profile')">
+        <i class="icon-arrow">←</i> <span data-i18n="back">Kembali</span>
+      </button>
+      <h2 data-i18n="${titleKey}">${settingName}</h2>
+    </div>
+    <div class="page-content-inner">
+      ${pageContent}
+    </div>
+  `;
+
+  document.querySelector('.main-content').appendChild(newPage);
+  newPage.classList.add('active');
+
+  // 🔹 langsung apply translate ke halaman baru
+  if (typeof applyTranslations === "function") {
+    const savedLang = localStorage.getItem("lang") || "id";
+    fetch(`./lang/${savedLang}.json`)
+      .then(res => res.json())
+      .then(translations => applyTranslations(translations));
+  }
 }
 
 /**
@@ -209,16 +120,16 @@ function getSettingContent(settingName) {
             <div class="edit-profile-container">
                 <div class="profile-form">
                     <div class="form-group">
-                        <label class="form-label">Username</label>
-                        <input type="text" id="editUsername" class="form-control" placeholder="Masukkan username">
+                        <label class="form-label" data-i18n="usn_edit">Username</label>
+                        <input type="text" id="editUsername" class="form-control" placeholder="Masukkan username" data-i18n-placeholder="masuk_usn">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Password Lama (Untuk konfirmasi)</label>
-                        <input type="password" id="confirmPassword" class="form-control" placeholder="Masukkan password lama">
+                        <label class="form-label" data-i18n="pw_edit">Password Lama (Untuk konfirmasi)</label>
+                        <input type="password" id="confirmPassword" class="form-control" placeholder="Masukkan password lama" data-i18n-placeholder="pw_lama">
                     </div>
                     <div class="form-actions">
-                        <button class="btn btn-primary" onclick="saveProfile()">Simpan Perubahan</button>
-                        <button class="btn btn-outline" onclick="showSetting('Profile')">Batal</button>
+                        <button class="btn btn-primary" onclick="saveProfile()" data-i18n="save_btn">Simpan Perubahan</button>
+                        <button class="btn btn-outline" onclick="showSetting('Profile')" data-i18n="cancel_btn">Batal</button>
                     </div>
                 </div>
             </div>
@@ -227,8 +138,8 @@ function getSettingContent(settingName) {
             <div class="settings-section">
                 <div class="setting-item">
                     <div class="setting-info">
-                        <h3>Notifikasi Aplikasi</h3>
-                        <p>Aktifkan atau nonaktifkan notifikasi</p>
+                        <h3 data-i18n="notif_app">Notifikasi Aplikasi</h3>
+                        <p data-i18n="notif_desc">Aktifkan atau nonaktifkan notifikasi</p>
                     </div>
                     <label class="toggle-switch">
                         <input type="checkbox" id="notificationsEnabled" checked>
@@ -237,8 +148,8 @@ function getSettingContent(settingName) {
                 </div>
                 <div class="setting-item">
                     <div class="setting-info">
-                        <h3>Notifikasi Email</h3>
-                        <p>Terima pemberitahuan melalui email</p>
+                        <h3 data-i18n="notif_email">Notifikasi Email</h3>
+                        <p data-i18n="notif_email_desc">Terima pemberitahuan melalui email</p>
                     </div>
                     <label class="toggle-switch">
                         <input type="checkbox" id="emailNotificationsEnabled" checked>
@@ -267,6 +178,12 @@ function getSettingContent(settingName) {
                   <h3>日本語</h3>
                 </div>
               </div>
+              <div class="setting-item" onclick="setLanguage('ko')">
+                <div class="setting-icon">🇰🇷</div>
+                <div class="setting-info">
+                  <h3>한국어</h3>
+                </div>
+              </div>
             </div>
         `,
         'Tema': `
@@ -274,24 +191,24 @@ function getSettingContent(settingName) {
                 <div class="setting-item" onclick="setTheme('light')">
                     <div class="setting-icon">☀️</div>
                     <div class="setting-info">
-                        <h3>Terang</h3>
-                        <p>Tema terang standar</p>
+                        <h3 data-i18n="tema_light">Terang</h3>
+                        <p data-i18n="tema_light_desc">Tema terang standar</p>
                     </div>
                     <div class="setting-arrow">›</div>
                 </div>
                 <div class="setting-item" onclick="setTheme('dark')">
                     <div class="setting-icon">🌙</div>
                     <div class="setting-info">
-                        <h3>Gelap</h3>
-                        <p>Tema gelap yang nyaman di malam hari</p>
+                        <h3 data-i18n="tema_dark">Gelap</h3>
+                        <p data-i18n="tema_dark_desc">Tema gelap yang nyaman di malam hari</p>
                     </div>
                     <div class="setting-arrow">›</div>
                 </div>
                 <div class="setting-item" onclick="setTheme('system')">
                     <div class="setting-icon">🖥️</div>
                     <div class="setting-info">
-                        <h3>Sesuai Perangkat</h3>
-                        <p>Mengikuti pengaturan tema perangkat</p>
+                        <h3 data-i18n="tema_system">Sesuai Perangkat</h3>
+                        <p data-i18n="tema_system_desc">Mengikuti pengaturan tema perangkat</p>
                     </div>
                     <div class="setting-arrow">›</div>
                 </div>
@@ -299,26 +216,26 @@ function getSettingContent(settingName) {
         `,
         'Bantuan': `
             <div class="help-section">
-                <h3>Pusat Bantuan</h3>
-                <p>Berikut adalah beberapa pertanyaan yang sering diajukan:</p>
+                <h3 data-i18n="help_title">Pusat Bantuan</h3>
+                <p data-i18n="help_desc">Berikut adalah beberapa pertanyaan yang sering diajukan:</p>
                 
                 <div class="help-item">
                     <div class="help-content">
-                        <h4>Bagaimana cara mengubah password?</h4>
-                        <p>Untuk mengubah password, buka Pengaturan > Keamanan > Ubah Password.</p>
+                        <h4 data-i18n="help_q1">Bagaimana cara mengubah password?</h4>
+                        <p data-i18n="help_a1">Untuk mengubah password, buka Pengaturan > Keamanan > Ubah Password.</p>
                     </div>
                 </div>
                 
                 <div class="help-item">
                     <div class="help-content">
-                        <h4>Bagaimana cara menghubungi dukungan?</h4>
-                        <p>Anda dapat menghubungi tim dukungan kami melalui email di support@seismosens.id</p>
+                        <h4 data-i18n="help_q2">Bagaimana cara menghubungi dukungan?</h4>
+                        <p data-i18n="help_a2">Anda dapat menghubungi tim dukungan kami melalui email di support@seismosens.id</p>
                     </div>
                 </div>
                 
                 <div class="contact-support">
-                    <p>Tidak menemukan jawaban yang Anda cari?</p>
-                    <button class="btn btn-primary" onclick="showSetting('Hubungi Kami')">Hubungi Dukungan</button>
+                    <p data-i18n="help_not_found">Tidak menemukan jawaban yang Anda cari?</p>
+                    <button class="btn btn-primary" data-i18n="help_contact_btn"onclick="showSetting('Hubungi Kami')">Hubungi Dukungan</button>
                 </div>
             </div>
         `,
@@ -421,25 +338,25 @@ function getSettingContent(settingName) {
         'Tentang': `
             <div class="about-container">
                 <div class="app-logo">🌋</div>
-                <h1>SeismoSens</h1>
-                <p class="version">Versi 2.1.0</p>
+                <h1 data-i18n="about_seis">SeismoSens</h1>
+                <p class="version" data-i18n="about_version">Versi 2.1.0</p>
                 
                 <div class="about-section">
-                    <p>SeismoSens adalah aplikasi monitoring gempa yang membantu Anda tetap aman dengan memberikan peringatan dini dan informasi gempa terkini.</p>
+                    <p data-i18n="about_desc">SeismoSens adalah aplikasi monitoring gempa yang membantu Anda tetap aman dengan memberikan peringatan dini dan informasi gempa terkini.</p>
                 </div>
                 
                 <div class="about-section">
-                    <h3>Tim Pengembang</h3>
-                    <p>Dikembangkan dengan ❤️ oleh Tim SeismoSens</p>
+                    <h3 data-i18n="about_team_title">Tim Pengembang</h3>
+                    <p data-i18n="about_team_desc">Dikembangkan dengan ❤️ oleh Tim SeismoSens</p>
                 </div>
                 
                 <div class="about-links">
-                    <a href="#" class="link">Kebijakan Privasi</a>
+                    <a href="#" class="link" data-i18n="about_privacy">Kebijakan Privasi</a>
                     <span>•</span>
-                    <a href="#" class="link">Syarat & Ketentuan</a>
+                    <a href="#" class="link" data-i18n="about_terms">Syarat & Ketentuan</a>
                 </div>
                 
-                <p class="copyright">© 2025 SeismoSens. Seluruh hak cipta dilindungi.</p>
+                <p class="copyright" data-i18n="about_copyright">© 2025 SeismoSens. Seluruh hak cipta dilindungi.</p>
             </div>
         `
     };
@@ -566,38 +483,13 @@ async function saveProfile() {
 }
 
 /**
- * Show toast notification
+ * Set the application theme
+ * @param {string} theme - The theme to set ('light', 'dark', or 'system')
  */
-function showToast(message, type = "info") {
-  // Remove existing toasts
-  const existingToasts = document.querySelectorAll('.toast');
-  existingToasts.forEach(toast => toast.remove());
-  
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  toast.textContent = message;
-  
-  document.body.appendChild(toast);
-  
-  // Auto remove after 3 seconds
-  setTimeout(() => {
-    toast.classList.add('show');
-    setTimeout(() => {
-      toast.classList.remove('show');
-      setTimeout(() => toast.remove(), 300);
-    }, 3000);
-  }, 100);
-}
-
-/**
- * Set the application theme to light mode
- */
-function setLightTheme() {
-    // Set light theme and save preference
-    localStorage.setItem('theme', 'light');
-    document.documentElement.setAttribute('data-theme', 'light');
-    document.body.classList.remove('dark-theme');
-    document.body.classList.add('light-theme');
+function setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    // TODO: Save theme preference to localStorage
+    console.log('Theme set to:', theme);
 }
 
 /**
@@ -631,105 +523,14 @@ function initProfile() {
     }
 }
 
-// Handle hash-based navigation
-function handleHashNavigation() {
-    const hash = window.location.hash.substring(1); // Remove the '#'
-    if (hash) {
-        // If there's a hash, navigate to that page
-        switchPage(hash);
-    } else {
-        // Default to map page if no hash
-        switchPage('map');
-    }
-}
 
-// Initialize authentication state listener
-async function initAuthState() {
-  try {
-    // Wait for Firebase to be ready
-    const { auth } = await import('./firebase-init.js');
-    const { onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js');
+// Initialize profile when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    initProfile();
     
-    return new Promise((resolve) => {
-      onAuthStateChanged(auth, async (user) => {
-        isInitialized = true;
-        
-        if (user) {
-          console.log('User is signed in:', user.uid);
-          // Update UI for authenticated user
-          updateUIForAuthState(user);
-          
-          // Check for redirect after login
-          const redirectPage = sessionStorage.getItem('redirectAfterLogin') || 'home';
-          if (redirectPage) {
-            sessionStorage.removeItem('redirectAfterLogin');
-            await switchPage(redirectPage);
-          }
-        } else {
-          console.log('No user is signed in');
-          // User is signed out, redirect to login if on protected page
-          const currentPage = getPageFromUrl();
-          if (PROTECTED_PAGES.includes(currentPage)) {
-            window.location.href = '/login.html';
-          }
-          updateUIForAuthState(null);
-        }
-        resolve();
-      });
-    });
-  } catch (error) {
-    console.error('Error initializing auth state:', error);
-    isInitialized = true; // Continue even if auth fails
-    return Promise.resolve();
-  }
-}
-
-// Update UI based on authentication state
-// Update UI based on authentication state
-function updateUIForAuthState(user) {
-  try {
-    const authElements = document.querySelectorAll('[data-auth]');
-    const unauthElements = document.querySelectorAll('[data-unauth]');
-    
-    if (user) {
-      // User is signed in
-      authElements.forEach(el => el.style.display = '');
-      unauthElements.forEach(el => el.style.display = 'none');
-      
-      // Update user info if elements exist
-      const userNameElements = document.querySelectorAll('[data-user-name]');
-      const userEmailElements = document.querySelectorAll('[data-user-email]');
-      const userAvatarElements = document.querySelectorAll('[data-user-avatar]');
-      
-      const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
-      const firstLetter = displayName.charAt(0).toUpperCase();
-      
-      userNameElements.forEach(el => el.textContent = displayName);
-      userEmailElements.forEach(el => el.textContent = user.email || '');
-      
-      userAvatarElements.forEach(el => {
-        if (el.tagName === 'IMG' && user.photoURL) {
-          el.src = user.photoURL;
-          el.alt = displayName;
-        } else if (el.tagName !== 'IMG') {
-          el.textContent = firstLetter;
-        }
-      });
-      
-      // Update profile UI if user is signed in
-      updateProfileUI();
-      if (typeof initPresence === 'function') {
-        initPresence(user);
-      }
-    } else {
-      // User is signed out
-      authElements.forEach(el => el.style.display = 'none');
-      unauthElements.forEach(el => el.style.display = '');
-    }
-  } catch (error) {
-    console.error('Error updating UI for auth state:', error);
-  }
-}
+    // Set initial theme
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    setTheme(savedTheme);
 
 // Update the form submission handler to use the correct collection name and add better error handling
 document.addEventListener('submit', async (e) => {
@@ -831,38 +632,8 @@ async function initApp() {
     
     // Load public data
     loadForumPosts();
-    
-    // If user is authenticated, load protected data
-    const user = auth.currentUser;
-    if (user) {
-      console.log("User authenticated:", {
-        uid: user.uid, 
-        email: user.email, 
-        displayName: user.displayName
-      });
-      
-      // Initialize user-specific components
-      await updateProfileUI();
-      listenDeviceStats();
-      listenUserDevicesCount();
-      listenUserDataUsage();
-      
-      // Initialize presence
-      initPresence(user);
-      
-      // Navigate to home or requested page
-      const targetPage = getPageFromUrl() || 'home';
-      await switchPage(targetPage);
-    } else {
-      console.log("No authenticated user, showing public content");
-      // Navigate to login if trying to access protected page
-      const targetPage = getPageFromUrl();
-      if (targetPage && PROTECTED_PAGES.includes(targetPage)) {
-        window.location.href = '/login.html';
-      }
-    }
-    
-    console.log('App initialization complete');
+
+    if (window.location.hash === "#map") initializeMap();
   } catch (error) {
     console.error("Error initializing app:", error);
     // Show error to user if needed
@@ -1244,15 +1015,10 @@ function initChart() {
       chart = null;
     }
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) {
-      console.error('Could not get 2D context for chart');
-      return;
-    }
-
-    chart = new Chart(ctx, {
-      type: "line",
-      data: {
+  const ctx = canvas.getContext("2d");
+  chart = new Chart(ctx, {
+    type: "line",
+    data: {
         labels: [],
         datasets: [
           {
@@ -1275,84 +1041,12 @@ function initChart() {
       },
       options: {
         responsive: true,
-        maintainAspectRatio: false,
-        scales: { 
-          y: { 
-            beginAtZero: true,
-            grid: {
-              color: 'rgba(200, 200, 200, 0.2)'
-            },
-            ticks: {
-              color: '#666'
-            }
-          },
-          x: {
-            grid: {
-              color: 'rgba(200, 200, 200, 0.1)'
-            },
-            ticks: {
-              color: '#666'
-            }
-          }
-        },
-        plugins: {
-          legend: {
-            labels: {
-              color: '#666',
-              font: {
-                size: 12
-              }
-            }
-          }
-        }
-      }
-    });
-    
-    console.log('Chart initialized successfully');
-  } catch (error) {
-    console.error('Error initializing chart:', error);
-    // Clear the canvas to prevent further errors
-    const canvas = document.getElementById("myChart");
-    if (canvas) {
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
+        scales: { y: { beginAtZero: true } }
     }
-  }
+  });
 }
 
-// Make module functions available to the global scope
-if (typeof window !== 'undefined') {
-  // Store the module version of switchPage with a different name
-  window._switchPage = switchPage;
-  
-  // Override the global switchPage to use the module version
-  window.switchPage = function(pageName, event) {
-    if (window._switchPage) {
-      return window._switchPage(pageName, event);
-    }
-    // Fallback to the minimal implementation if module not loaded yet
-    if (event) event.preventDefault();
-    document.querySelectorAll('.page-content').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    
-    const targetPage = document.getElementById(`${pageName}-page`);
-    const clickedNav = event?.currentTarget.closest('.nav-item') || 
-                      document.querySelector(`.nav-item[onclick*="${pageName}"]`);
-    
-    if (targetPage) targetPage.classList.add('active');
-    if (clickedNav) clickedNav.classList.add('active');
-  };
-  
-  // Expose other functions that might be needed globally
-  window.sendReply = sendReply;
-  window.initChart = initChart;
-  window.updateChart = updateChart;
-  
-  console.log('Global functions initialized');
-}
-
+// (biar chart aman, kita inisialisasi ulang pas masuk home)
 document.addEventListener("DOMContentLoaded", () => {
   console.log("SeismoSens app initialized");
   initApp();
@@ -1594,21 +1288,79 @@ async function setLanguage(langCode) {
     const res = await fetch(`./lang/${langCode}.json`);
     const translations = await res.json();
 
-    // Simpan pilihan user ke localStorage
     localStorage.setItem("lang", langCode);
 
-    // Update semua elemen yang punya atribut data-i18n
-    document.querySelectorAll("[data-i18n]").forEach(el => {
-      const key = el.getAttribute("data-i18n");
-      if (translations[key]) {
-        el.textContent = translations[key];
-      }
-    });
+    // 🔹 apply ke semua elemen yg ada di halaman
+    applyTranslations(translations);
 
-    console.log("Bahasa diganti ke:", langCode);
   } catch (err) {
     console.error("Gagal load bahasa:", err);
   }
+}
+
+function applyTranslations(translations) {
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.getAttribute("data-i18n");
+    if (translations[key]) {
+      el.textContent = translations[key];
+    }
+  });
+
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+    const key = el.getAttribute("data-i18n-placeholder");
+    if (translations[key]) {
+      el.setAttribute("placeholder", translations[key]);
+    }
+  });
+}
+
+function listenDevicesPage() {
+  const { rtdb, ref, onValue } = window._firebase;
+  const user = window._firebase.auth.currentUser;
+  if (!user) return;
+
+  const devicesRef = ref(rtdb, "devices");
+  const container = document.getElementById("devicesContainer");
+
+  onValue(devicesRef, (snapshot) => {
+    container.innerHTML = ""; // clear isi lama
+    if (!snapshot.exists()) {
+      container.style.display = "none"; // kalau kosong, hide
+      return;
+    }
+
+    container.style.display = "block";
+
+    Object.entries(snapshot.val()).forEach(([id, dev]) => {
+      if (dev.ownerUid !== user.uid) return; // filter hanya device user
+
+      const card = document.createElement("div");
+      card.className = `device-card ${dev.status || "offline"}`;
+
+      card.innerHTML = `
+        <div class="device-header">
+          <div class="device-info">
+            <h3>${dev.name || "Unnamed Device"}</h3>
+            <p>${dev.location || "-"}</p>
+          </div>
+          <div class="device-status ${dev.status}">
+            ${dev.status}
+          </div>
+        </div>
+        <div class="device-metrics">
+          <div class="metric">
+            <div class="metric-value">${dev.health || "100%"} </div>
+            <div class="metric-label">Health</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value">${dev.battery || "100%"} </div>
+            <div class="metric-label">Battery</div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  });
 }
 
 // Load saved language preference
@@ -1712,26 +1464,49 @@ async function deleteAccountFlow() {
 
 // Debug initialization
 function initializeDebug() {
-  console.log('Global functions initialized:', {
-    switchPage: typeof window.switchPage,
-    initApp: typeof window.initApp,
-    initializeMap: typeof window.initializeMap,
-    zoomIn: typeof window.zoomIn,
-    zoomOut: typeof window.zoomOut,
-    centerMap: typeof window.centerMap,
-    showNotifications: typeof window.showNotifications,
-    showDeviceDetail: typeof window.showDeviceDetail,
-    showLocationDetail: typeof window.showLocationDetail,
-    showSetting: typeof window.showSetting,
-    showQuickActions: typeof window.showQuickActions,
-    updateTime: typeof window.updateTime,
-    logout: typeof window.logout,
-    updateProfileUI: typeof window.updateProfileUI,
-    addForumPost: typeof window.addForumPost,
-    loadForumPosts: typeof window.loadForumPosts,
-    deleteAccount: typeof window.deleteAccount
-  });
+  try {
+    // Add debug info to the page
+    const debugInfo = document.createElement('div');
+    debugInfo.id = 'debug-info';
+    debugInfo.style.position = 'fixed';
+    debugInfo.style.bottom = '10px';
+    debugInfo.style.right = '10px';
+    debugInfo.style.backgroundColor = 'rgba(0,0,0,0.7)';
+    debugInfo.style.color = 'white';
+    debugInfo.style.padding = '10px';
+    debugInfo.style.borderRadius = '5px';
+    debugInfo.style.fontFamily = 'monospace';
+    debugInfo.style.fontSize = '12px';
+    debugInfo.style.zIndex = '9999';
+    
+    // Add debug info content
+    debugInfo.innerHTML = 'Debug Info:<br>Loading...';
+    document.body.appendChild(debugInfo);
+    
+    // Update debug info periodically
+    setInterval(() => {
+      try {
+        const user = auth.currentUser;
+        debugInfo.innerHTML = `
+          <strong>Debug Info:</strong><br>
+          User: ${user ? user.email : 'Not logged in'}<br>
+          UID: ${user ? user.uid : 'N/A'}<br>
+          Time: ${new Date().toLocaleTimeString()}
+        `;
+      } catch (error) {
+        console.error('Error updating debug info:', error);
+      }
+    }, 1000);
+  } catch (error) {
+    console.error('Error initializing debug info:', error);
+  }
 }
 
 // Initialize debug info when DOM is loaded
-document.addEventListener('DOMContentLoaded', initializeDebug);
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    initializeDebug();
+  } catch (error) {
+    console.error('Error in DOMContentLoaded:', error);
+  }
+});

@@ -7,8 +7,8 @@ html[data-theme="dark"] {
     --bg-secondary: #f8f9fa;
     --bg-tertiary: #f0f2f5;
     --text-primary: #1a1a1a;
-    --text-secondary: #4b5563;
-    --text-muted: #6b7280;
+    --text-secondary: #d1d5db !important;
+    --text-muted: #9ca3af !important;
     --border-color: #e5e7eb;
     --card-bg: #ffffff;
     --card-hover: #f9fafb;
@@ -25,6 +25,7 @@ html[data-theme="dark"] {
     --info-color: #3b82f6;
 }
 
+<<<<<<< HEAD
 /* Toast Notifications */
 .toast {
     position: fixed;
@@ -71,17 +72,27 @@ html[data-theme="dark"] {
 
 .toast i {
     font-size: 18px;
+=======
+:root {
+  --nav-text: #94a3b8;
+  --nav-active: #3b82f6;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --success: #16a34a;
+>>>>>>> 4817641f9d8fbd14f4b60a71d7db3c44d91ad0e1
 }
 
 /* Apply theme to body */
 body {
-    background-color: var(--bg-primary);
     color: var(--text-primary);
 }
 
-/* Force text color on all elements */
-* {
-    color: var(--text-primary) !important;
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-primary);
+}
+
+p, span, small, label {
+    color: var(--text-secondary);
 }
 
 /* Base Styles */
@@ -175,6 +186,11 @@ body {
 }
 
 /* Settings */
+.settings-item {
+    background-color: var(--card-bg) !important;
+    border: 1px solid var(--border-color);
+}
+
 .settings-item h3 {
     color: var(--text-primary) !important;
 }

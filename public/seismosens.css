@@ -55,7 +55,6 @@
     background: #ffffff;
     border-radius: 12px;
     padding: 20px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .form-group {
@@ -82,14 +81,13 @@
 .form-control:focus {
     outline: none;
     border-color: #3b82f6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
 .form-text {
     display: block;
     margin-top: 4px;
     font-size: 12px;
-    color: #666;
+    color: #111827;
 }
 
 /* Buttons */
@@ -194,7 +192,7 @@
 .setting-info p {
     margin: 0;
     font-size: 13px;
-    color: #666;
+    color: #111827;
 }
 
 .setting-arrow {
@@ -322,7 +320,7 @@ input:checked + .slider:before {
 
 .contact-card p {
     margin: 0 0 16px 0;
-    color: #666;
+    color: #111827;
     font-size: 14px;
 }
 
@@ -450,16 +448,14 @@ input:checked + .slider:before {
 
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: white;
+    background: white !important;
     min-height: 100vh;
     margin: 0;        
 }
 
 .page-content {
-    display: none;
-    width: 100%;
-    min-height: 100vh;
-    padding-bottom: 60px;
+  background: white !important;  /* hilangin abu abu */
+  padding-bottom: 0 !important;  /* hapus padding */
 }
 
 .page-content.active {
@@ -473,17 +469,18 @@ body {
 }
 
 .bottom-nav {
-    height: 70px;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    display: flex;
-    justify-content: space-around;
-    background: white;
-    padding: 6px 0 10px;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-    z-index: 1000;
+  height: 65px;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 10px 0;
+  z-index: 1000;
+  border-top: 1px solid #e5e7eb;  /* tipis biar rapi */
 }
 
 .nav-item {
@@ -781,7 +778,6 @@ color: #92400e;
     margin: 0 20px 20px;
     padding: 20px;
     border-radius: 16px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     height: 320px;
     display: flex;
     flex-direction: column;
@@ -993,7 +989,6 @@ padding: 10px;
     width: 100%;
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     margin: 16px 0 20px; /* ada jarak bawah kecil */
     background: #f8f9fa;
 }
@@ -1274,19 +1269,21 @@ padding: 10px;
 
 /* Bottom Navigation */
 .bottom-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 95px;
-    background: white;
-    border-top: 1px solid #e2e8f0;
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    padding: 10px 0 25px;
-    z-index: 1000;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 55px; /* kecilin dari 65px */
+  background: white;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0; /* buang padding biar ga nambah tinggi */
+  z-index: 1000;
+  border-top: 1px solid #e5e7eb; /* garis tipis atas */
+  
 }
+
 
 .nav-item {
     display: flex;
@@ -1295,7 +1292,7 @@ padding: 10px;
     gap: 4px;
     cursor: pointer;
     transition: all 0.3s ease;
-    padding: 8px 12px;
+    padding: 4px 6px;
     border-radius: 12px;
 }
 
@@ -1304,7 +1301,7 @@ padding: 10px;
 }
 
 .nav-icon {
-    font-size: 22px;
+    font-size: 20px;
     transition: all 0.3s ease;
     color: #64748b;
 }
@@ -1314,14 +1311,26 @@ padding: 10px;
 }
 
 .nav-label {
-    font-size: 16px;
+    font-size: 14px;
     color: #64748b;
-    font-weight: 600;
+    font-weight: 500;
     transition: all 0.3s ease;
 }
 
 .nav-item.active .nav-label {
     color: #3b82f6;
+}
+
+@media (max-width: 480px) {
+  .bottom-nav {
+    height: 55px;
+  }
+  .nav-icon {
+    font-size: 16px;
+  }
+  .nav-label {
+    font-size: 9px;
+  }
 }
 
 /* Content Pages */
@@ -1478,4 +1487,35 @@ padding: 10px;
 
 .btn-delete:hover {
   background: #dc2626;
+}
+
+/* Profile Stats */
+.profile-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* selalu 3 kolom */
+  gap: 8px; /* rapetin dikit */
+  margin: 16px 0;
+}
+
+.profile-stats .stat-item {
+  background: rgba(255, 255, 255, 0.2); /* semi transparan, kayak quick stat */
+  border: none;
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+  color: white;
+}
+
+.stat-value {
+  font-size: 16px;   /* kecilin dari 22px */
+  font-weight: 700;
+  color: #111827 !important ;
+  margin-bottom: 2px;
+}
+
+.stat-label {
+  font-size: 12px;   /* kecilin dari 14px */
+  color: #111827 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }

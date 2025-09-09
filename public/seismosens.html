@@ -25,8 +25,33 @@
   <link rel="stylesheet" href="./css/profile/settings.css">
   <link rel="stylesheet" href="./css/profile/_profile-page.css">
 
-  <!-- Firebase Initialization -->
-  <script type="module" src="./firebase-init.js"></script>
+  <script type="module">
+        // Import Firebase core
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
+
+        // Firebase config 
+        const firebaseConfig = {
+        apiKey: "AIzaSyD07M2-79Yh0CzotaQeGYYy4WLZoevTdWY",
+        authDomain: "seismosens-a048e.firebaseapp.com",
+        projectId: "seismosens-a048e",
+        storageBucket: "seismosens-a048e.appspot.com",
+        messagingSenderId: "358453169511",
+        appId: "1:358453169511:web:fccc32bf22ede39ff0b3c2",
+        databaseURL: "https://seismosens-a048e-default-rtdb.asia-southeast1.firebasedatabase.app/"
+        };
+
+        // Init app
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const rtdb = getDatabase(app);
+
+        // Export ke window biar bisa dipakai di seismosens.js
+        window._firebase = { app, auth, db, rtdb, ref, onValue };
+    </script>
     <script src="js/theme.js" defer></script>
 </head>
 <body>
@@ -49,7 +74,7 @@
                     <div class="welcome-text">
                         <div class="welcome-title">
                             <span data-i18n="greeting">Halo</span>, 
-                            <span id="greetingName">Memuat...</span> 👋
+                            <span id="greetingName" data-i18n="loading">Memuat...</span> 👋
                         </div>
                         <div class="welcome-subtitle" data-i18n="system">Sistem monitoring berjalan optimal</div>
                     </div>
@@ -61,11 +86,11 @@
                         </div>
                         <div class="quick-stat">
                             <div class="quick-stat-value" data-stat="online">0</div>
-                            <div class="quick-stat-label">Online</div>
+                            <div class="quick-stat-label" data-i18n="online">Online</div>
                         </div>
                         <div class="quick-stat">
                             <div class="quick-stat-value" data-stat="health">0%</div>
-                            <div class="quick-stat-label">Health</div>
+                            <div class="quick-stat-label" data-i18n="health">Health</div>
                         </div>
                     </div>
                 </div>
@@ -167,7 +192,7 @@
                     <div id="map"></div>
                     
                     <div class="map-legend">
-                        <div style="font-weight: 600; margin-bottom: 8px;">SeismoSens Network</div>
+                        <div style="font-weight: 600; margin-bottom: 8px;" data-i18n="network">SeismoSens Network</div>
                         <div class="legend-item">
                             <div class="legend-dot" style="background: #10b981;"></div>
                             <span data-i18n="normal">Normal (<span id="legend-normal">0</span>)</span>
@@ -193,10 +218,10 @@
                 <div style="margin: 0 20px 20px; background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                     <div style="font-weight: 600; margin-bottom: 10px; color: #1e293b;" data-i18n="filter_peta">Filter Peta</div>
                     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                        <button class="map-filter active" onclick="filterMarkers('all')" style="padding: 6px 12px; border: none; border-radius: 15px; background: #3b82f6; color: white; font-size: 12px; cursor: pointer;">Semua</button>
-                        <button class="map-filter" onclick="filterMarkers('normal')" style="padding: 6px 12px; border: 1px solid #e2e8f0; border-radius: 15px; background: white; color: #64748b; font-size: 12px; cursor: pointer;">Normal</button>
-                        <button class="map-filter" onclick="filterMarkers('warning')" style="padding: 6px 12px; border: 1px solid #e2e8f0; border-radius: 15px; background: white; color: #64748b; font-size: 12px; cursor: pointer;">Warning</button>
-                        <button class="map-filter" onclick="filterMarkers('user')" style="padding: 6px 12px; border: 1px solid #e2e8f0; border-radius: 15px; background: white; color: #64748b; font-size: 12px; cursor: pointer;">Milik Saya</button>
+                        <button class="map-filter active" onclick="filterMarkers('all')" style="padding: 6px 12px; border: none; border-radius: 15px; background: #3b82f6; color: white; font-size: 12px; cursor: pointer;" data-i18n="all">Semua</button>
+                        <button class="map-filter" onclick="filterMarkers('normal')" style="padding: 6px 12px; border: 1px solid #e2e8f0; border-radius: 15px; background: white; color: #64748b; font-size: 12px; cursor: pointer;" data-i18n="normal">Normal</button>
+                        <button class="map-filter" onclick="filterMarkers('warning')" style="padding: 6px 12px; border: 1px solid #e2e8f0; border-radius: 15px; background: white; color: #64748b; font-size: 12px; cursor: pointer;" data-i18n="warning">Warning</button>
+                        <button class="map-filter" onclick="filterMarkers('user')" style="padding: 6px 12px; border: 1px solid #e2e8f0; border-radius: 15px; background: white; color: #64748b; font-size: 12px; cursor: pointer;" data-i18n="mine">Milik Saya</button>
                     </div>
                 </div>
 
@@ -207,12 +232,31 @@
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
                         <div style="background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                             <div style="font-size: 20px; font-weight: 700; color: #10b981;">-</div>
-                            <div style="font-size: 11px; color: #64748b;">Total Aktif</div>
+                            <div style="font-size: 11px; color: #64748b;" data-i18n="tot_aktif">Total Aktif</div>
                         </div>
                         <div style="background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                             <div style="font-size: 20px; font-weight: 700; color: #3b82f6;">-</div>
-                            <div style="font-size: 11px; color: #64748b;">Uptime Kota</div>
+                            <div style="font-size: 11px; color: #64748b;" data-i18n="uptime">Uptime Kota</div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat AI -->
+            <div class="page-content" id="chatai-page">
+                <link rel="stylesheet" href="./chat_ai/chatai.css">
+
+                <div class="chat-container">
+                    <div class="chat-header">
+                        <h1>Chat AI 🤖</h1>
+                         <p>Bertanya langsung dengan AI SeismoSens</p>
+                    </div>
+
+                    <div id="chatMessages" class="chat-messages"></div>
+
+                    <div class="chat-input">
+                        <input type="text" id="chatInput" placeholder="Tulis pesan...">
+                        <button onclick="sendMessage()">Kirim</button>
                     </div>
                 </div>
             </div>
@@ -230,8 +274,8 @@
                 <div class="settings-section">
                     <div class="settings-header" data-i18n="post">Buat Post Baru</div>
                     <div style="padding: 15px;">
-                        <input id="forumTitle" placeholder="Judul posting..." style="width:100%; padding:12px; border-radius:8px; border:1px solid #e2e8f0; font-size:14px; margin-bottom:10px;">
-                        <textarea id="forumInput" placeholder="Tulis sesuatu..." style="width:100%; padding:12px; border-radius:8px; border:1px solid #e2e8f0; font-size:14px;"></textarea>
+                        <input id="forumTitle" placeholder="Judul posting..." style="width:100%; padding:12px; border-radius:8px; border:1px solid #e2e8f0; font-size:14px; margin-bottom:10px;" data-i18n-placeholder="title">
+                        <textarea id="forumInput" placeholder="Tulis sesuatu..." style="width:100%; padding:12px; border-radius:8px; border:1px solid #e2e8f0; font-size:14px;" data-i18n-placeholder="tulis"></textarea>
                         <button onclick="addForumPost()" style="margin-top:10px; width:100%; background:#3b82f6; color:white; border:none; padding:10px; border-radius:8px; font-weight:600; cursor:pointer;" data-i18n="kirim">
                           Kirim
                         </button>
@@ -251,7 +295,7 @@
                     <div class="reply-card">
                         <p class="reply-text"></p>
                         <small class="reply-author"></small>
-                        <span class="reply-actions" data-i18n="balas">Balas</span>
+                        <span class="reply-actions">Balas</span>
                     </div>
                 </template>
             </div>
@@ -289,7 +333,7 @@
                         </div>
                         <div class="setting-info">
                             <h3 data-i18n="edit">Edit Profil</h3>
-                            <p>Ubah informasi akun Anda</p>
+                            <p data-i18n="edit_sub">Ubah informasi akun Anda</p>
                         </div>
                         <div class="setting-arrow">›</div>
                     </div>
@@ -300,7 +344,7 @@
                         </div>
                         <div class="setting-info">
                             <h3 data-i18n="notif">Notifikasi</h3>
-                            <p>Kelola pemberitahuan</p>
+                            <p data-i18n="notif_sub">Kelola pemberitahuan</p>
                         </div>
                         <div class="setting-arrow">›</div>
                     </div>
@@ -311,7 +355,7 @@
                         </div>
                         <div class="setting-info">
                             <h3 data-i18n="bahasa">Bahasa</h3>
-                            <p>Pilih bahasa yang diinginkan</p>
+                            <p data-i18n="bahasa_sub">Pilih bahasa yang diinginkan</p>
                         </div>
                         <div class="setting-arrow">›</div>
                     </div>
@@ -322,7 +366,7 @@
                         </div>
                         <div class="setting-info">
                             <h3 data-i18n="tema">Tema</h3>
-                            <p>Ubah tampilan aplikasi</p>
+                            <p data-i18n="tema_sub">Ubah tampilan aplikasi</p>
                         </div>
                         <div class="setting-arrow">›</div>
                     </div>
@@ -333,7 +377,7 @@
                         </div>
                         <div class="setting-info">
                             <h3 data-i18n="bantuan">Bantuan</h3>
-                            <p>Pusat bantuan dan dukungan</p>
+                            <p data-i18n="bantuan_sub">Pusat bantuan dan dukungan</p>
                         </div>
                         <div class="setting-arrow">›</div>
                     </div>
@@ -344,7 +388,7 @@
                         </div>
                         <div class="setting-info"> 
                             <h3  data-i18n="about">Tentang Aplikasi</h3>
-                            <p>Versi dan informasi pengembang</p>
+                            <p data-i18n="about_sub">Versi dan informasi pengembang</p>
                         </div>
                         <div class="setting-arrow">›</div>
                     </div>
@@ -377,6 +421,10 @@
                     <div class="nav-icon">🗺</div>
                     <div class="nav-label" data-i18n="map">Peta</div>
                 </div>
+                <div class="nav-item" onclick="switchPage('chatai', event)">
+                    <div class="nav-icon">🤖</div>
+                    <div class="nav-label">Chat AI</div>
+                </div>
                 <div class="nav-item" onclick="switchPage('forum', event)">
                     <div class="nav-icon">💬</div>
                     <div class="nav-label" data-i18n="forum">Forum</div>
@@ -404,6 +452,7 @@
   <script type="module" src="./manage-data.js"></script>
   <script type="module" src="./storage.js"></script>
   <script type="module" src="./security.js"></script>
+  <script type="module" src="./chat_ai/chatai.js"></script>
 
 </body>
 </html>
