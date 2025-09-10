@@ -15,13 +15,33 @@
   </header>
 
   <main class="news-container">
-    <h2 id="news-title"></h2>
-    <p id="news-meta" class="news-meta"></p>
-    <article id="news-content" class="news-content"></article>
+    <!-- Placeholder awal sebelum konten dimuat -->
+    <h2 id="news-title" class="loading">⏳ Memuat judul...</h2>
+    <p id="news-meta" class="news-meta loading">Menunggu data...</p>
+    <article id="news-content" class="news-content loading">Memuat konten berita...</article>
 
     <a href="seismosens.html" class="btn-back">&larr; Kembali</a>
   </main>
 
+  <!-- ⬇️ load firebase-init.js dulu -->
+  <script type="module" src="firebase-init.js"></script>
+  <!-- ⬇️ lalu auth.js (karena butuh window._firebase dari firebase-init.js) -->
+  <script type="module" src="auth.js"></script>
+  <!-- ⬇️ terakhir baru news-detail.js -->
   <script type="module" src="news-detail.js"></script>
+
+  <script>
+    // Opsional: update title browser setelah judul berita terisi
+    document.addEventListener("DOMContentLoaded", () => {
+      const titleEl = document.getElementById("news-title");
+      const observer = new MutationObserver(() => {
+        if (titleEl.textContent && titleEl.textContent !== "⏳ Memuat judul...") {
+          document.title = titleEl.textContent + " | Detail Berita";
+          observer.disconnect();
+        }
+      });
+      observer.observe(titleEl, { childList: true });
+    });
+  </script>
 </body>
 </html>

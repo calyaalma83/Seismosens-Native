@@ -4,7 +4,7 @@ body {
     margin: 0;
     background: #f9f9fc;
     color: #222;
-  }
+}
   
   /* Header style mirip dashboard */
   .news-header {
@@ -29,12 +29,19 @@ body {
   
   /* Content card */
   .news-container {
-    max-width: 800px;
-    margin: 20px 20px 40px;
-    background: white;
-    border-radius: 15px;
-    padding: 2rem;
-    box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+  width: 95%;              /* hampir full layar */
+  max-width: 1200px;       /* batasi biar gak kepanjangan di monitor gede */
+  margin: 20px auto 40px;  /* auto = center horizontal */
+  background: white;
+  border-radius: 15px;
+  padding: 2rem;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+  animation: fadeIn 0.5s ease-in;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
   }
   
   .news-container h2 {
@@ -59,17 +66,44 @@ body {
   /* Button back */
   .btn-back {
     display: inline-block;
-    margin-top: 2rem;
-    padding: 0.6rem 1.2rem;
-    background: linear-gradient(135deg, #6a11cb, #2575fc);
-    color: white;
-    text-decoration: none;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    transition: 0.2s;
+  margin-top: 2rem;
+  padding: 0.6rem 1.2rem;
+  background: linear-gradient(135deg, #6a11cb, #2575fc);
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: 0.2s;
   }
   
   .btn-back:hover {
     opacity: 0.9;
+    transform: translateY(-2px);
   }
   
+/* Placeholder loading style */
+.news-container .loading {
+  color: #888;
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 0.8rem;
+}
+
+.loading::before {
+  content: "⏳";
+}
+
+@media (max-width: 600px) {
+  .news-container {
+    padding: 1.2rem;
+  }
+  .news-container h2 {
+    font-size: 1.3rem;
+  }
+  .news-content {
+    font-size: 0.95rem;
+  }
+}

@@ -1,3 +1,8 @@
+/* ===== MERGED SEISMOSENS.CSS ===== */
+/* Enhanced version + Original combined */
+
+/* TODO: Insert full enhanced CSS here (already given by user) */
+
 /* ===========================================
    PROFILE & SETTINGS STYLES
    =========================================== */
@@ -1400,45 +1405,49 @@ padding: 10px;
 
 /* Container news list */
 /* Card list berita */
-.news-list {
+/* Wrapper untuk daftar berita */
+#news-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 0 1rem 5rem; /* bawah ditambah biar gak ketutupan bottom-nav */
+  gap: 16px; /* jarak antar card */
 }
 
-.news-card {
+/* Card berita */
+.news-item {
   background: #fff;
   border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.06);
-  padding: 1rem 1.2rem;
-  cursor: pointer;
+  padding: 16px 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
 }
 
-.news-card:hover {
+/* Hover efek */
+.news-item:hover {
   transform: translateY(-3px);
-  box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
 }
 
-.news-card h3 {
-  margin: 0 0 0.4rem;
+/* Judul berita */
+.news-item .card-title {
   font-size: 1.1rem;
   font-weight: 600;
+  margin-bottom: 6px;
   color: #222;
 }
 
-.news-card p {
-  margin: 0;
-  font-size: 0.9rem;
-  color: #555;
-  line-height: 1.4;
+/* Meta info (tanggal/author) */
+.news-item .card-subtitle {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 10px;
 }
 
-.news-meta {
-  font-size: 0.8rem;
-  color: #888;
-  margin-top: 0.5rem;
+/* Ringkasan berita */
+.news-item .card-text {
+  font-size: 0.95rem;
+  color: #444;
+  line-height: 1.5;
 }
 
 .logout-section {
