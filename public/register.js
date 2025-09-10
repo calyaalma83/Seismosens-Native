@@ -1,5 +1,4 @@
-import { auth, db, registerUser, redirectIfAuthenticated } from "./auth.js"; 
-// ✅ karena register.js & auth.js sama-sama di /public/
+import { registerUser, redirectIfAuthenticated } from "./auth.js";
 
 console.log("Register script loaded");
 
@@ -52,8 +51,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.log("Registrasi berhasil:", { nama, email });
 
       // 🔹 Redirect ke halaman utama setelah sukses
-      window.location.href = "/seismosens.html"; // ✅ karena seismosens.html ada di /public/
-
+      window.location.href = "/seismosens.html";
     } catch (error) {
       console.error("Registration error:", error);
       let errorMessage = "Registrasi gagal: ";

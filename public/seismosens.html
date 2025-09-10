@@ -24,44 +24,6 @@
   <link rel="stylesheet" href="./css/profile/edit-profile.css">
   <link rel="stylesheet" href="./css/profile/settings.css">
   <link rel="stylesheet" href="./css/profile/_profile-page.css">
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-    import { 
-        getAuth, onAuthStateChanged, signInAnonymously 
-    }from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-    import { 
-        getFirestore, collection, addDoc, getDocs, query, orderBy 
-    } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
-
-    // Firebase config
-    const firebaseConfig = {
-        apiKey: "AIzaSyD07M2-79Yh0CzotaQeGYYy4WLZoevTdWY",
-        authDomain: "seismosens-a048e.firebaseapp.com",
-        projectId: "seismosens-a048e",
-        storageBucket: "seismosens-a048e.appspot.com",
-        messagingSenderId: "358453169511",
-        appId: "1:358453169511:web:fccc32bf22ede39ff0b3c2",
-        databaseURL: "https://seismosens-a048e-default-rtdb.asia-southeast1.firebasedatabase.app/"
-    };
-
-    // Init app
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const rtdb = getDatabase(app);
-
-    // ✅ Export lengkap ke global
-    window._firebase = { 
-        app, auth, db, rtdb, 
-        ref, onValue, 
-        onAuthStateChanged, signInAnonymously, 
-        collection, addDoc, getDocs, query, orderBy 
-    };
-    </script>
-
-    <script src="js/theme.js" defer></script>
 </head>
 <body>
     <!-- Main Content -->
@@ -112,11 +74,12 @@
                 <!-- Section Berita Terkini -->
                 <div class="content-section">
                     <div class="section-title" data-i18n="news">Berita Terkini</div>
-                    <div id="news-list">
+                    <div id="news-list" class="news-list">
                     <!-- berita dari news.js akan muncul di sini -->
                     </div>
                 </div>
-            
+
+                <!-- Statistik Harian-->
                 <div class="content-section">
                     <div class="section-title" data-i18n="statistic">
                         <span>Statistik Harian</span>
@@ -124,6 +87,8 @@
                     <div class="chart-container">
                         <canvas id="myChart" class="chart-canvas"></canvas>
                     </div>
+                    
+                    <div id="shakeLevel">Menunggu data...</div>
                 </div>
 
             </div>
@@ -136,7 +101,7 @@
                         <div class="welcome-subtitle" data-i18n="kelola">Kelola semua perangkat SeismoSens</div>
                     </div>
                 </div>
-                
+
                 <!-- Container kosong untuk diisi lewat JS -->
                  <div class="content-section" id="devicesContainer"></div>
             </div>
@@ -403,6 +368,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Load Firebase and App -->
+  <script type="module" src="./firebase-init.js"></script>
   <script type="module" src="./auth.js"></script>
   <script type="module" src="./news.js"></script>
   <script type="module" src="./seismosens.js"></script>

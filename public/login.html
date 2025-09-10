@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login - SeismoSens</title>
+   <!-- Favicon Emoji Earth -->
+   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌍</text></svg>">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./login.css">
 </head>
@@ -19,13 +21,13 @@
       <h3>Masuk ke Akun</h3>
       <p>Gunakan email dan password untuk melanjutkan</p>
 
-      <form id="loginForm">
+      <form id="loginForm" onsubmit="return false;">
         <div class="form-group">
-          <input type="email" id="email" placeholder="Email Address" required>
+          <input type="email" id="email" name="email" autocomplete="username email" placeholder="Email Address" required>
         </div>
         <div class="form-group">
           <div class="password-input">
-            <input type="password" id="password" placeholder="Masukkan password anda" required>
+            <input type="password" id="password" name="password" autocomplete="current-password" placeholder="Masukkan password anda" required>
             <button type="button" id="togglePassword" class="toggle-password">👁️</button>
           </div>
         </div>
@@ -50,11 +52,33 @@
 
       <div class="extra-links">
         <a href="/forgot-password/forgot-pw.html" class="forgot">Lupa Password?</a>
-        <p>Belum punya akun? <a href="./register.html">Daftar Sekarang</a></p>
+      </div>
+
+      <div class="login-footer">
+        <p>Belum punya akun? <a href="register.html">Daftar disini</a></p>
       </div>
     </div>
   </div>
 
+  <script type="module" src="./firebase-init.js"></script>
+  <script type="module" src="./auth.js"></script>
+
+  <!-- Firebase and Login Scripts -->
   <script type="module" src="./login.js"></script>
+  
+  <!-- Fallback for older browsers -->
+  <script nomodule>
+    document.addEventListener('DOMContentLoaded', function() {
+      const loginForm = document.getElementById('loginForm');
+      if (loginForm) {
+        loginForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          alert('Please use a modern browser that supports JavaScript modules');
+        });
+      } else {
+        console.error('Login form not found!');
+      }
+    });
+  </script>
 </body>
 </html>

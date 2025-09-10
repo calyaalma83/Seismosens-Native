@@ -1,17 +1,13 @@
-<link rel="stylesheet" href="./chat_ai/chatai.css">
-
 <div class="chat-container">
   <div class="chat-header">
     <h1 data-i18n="ai">Chat AI 🤖</h1>
     <p data-i18n="p_ai"></p>
   </div>
 
-  <!-- ini harus ada sebelum script -->
   <div id="chatMessages" class="chat-messages"></div>
-
-  <div class="chat-input">
-    <input type="text" id="chatInput" data-i18n="[placeholder] tulis">
-    <button onclick="sendMessage()" data-i18n="kirim"></button>
+    <div class="chat-input">
+      <input type="text" id="chatInput" placeholder="Tulis pesan..." onkeypress="if(event.key === 'Enter') sendMessage()">
+      <button onclick="sendMessage()">Kirim</button>
   </div>
 </div>
 

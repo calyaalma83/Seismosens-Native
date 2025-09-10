@@ -1,36 +1,61 @@
-// Import Firebase
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+// Import auth functions
 import { 
-  getAuth, 
-  onAuthStateChanged, 
-  signOut 
-} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-import { 
+  getFirebase, 
+  getFirebaseAuth, 
   getFirestore, 
-  collection, 
-  getDocs, 
-  doc, 
-  deleteDoc, 
-  setDoc, 
-  updateDoc, 
-  serverTimestamp, 
-  getDoc 
-} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+  getRealtimeDatabase 
+} from '../auth.js';
 
-// Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyD07M2-79Yh0CzotaQeGYYy4WLZoevTdWY",
-  authDomain: "seismosens-a048e.firebaseapp.com",
-  projectId: "seismosens-a048e",
-  storageBucket: "seismosens-a048e.appspot.com",
-  messagingSenderId: "358453169511",
-  appId: "1:358453169511:web:fccc32bf22ede39ff0b3c2"
-};
+// Initialize Firebase services
+let auth, db, onAuthStateChanged, signOut, collection, getDocs, doc, deleteDoc, setDoc, updateDoc, serverTimestamp, getDoc, onSnapshot, getDatabase, ref, onValue;
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+// Initialize function that will be called from admin.html
+async function initAdmin() {
+  try {
+    // Initialize Firebase services
+    const firebase = await getFirebase();
+    const authModule = await getFirebaseAuth();
+    const firestore = await getFirestore();
+    const database = await getRealtimeDatabase();
+    
+    // Extract needed functions
+    ({ onAuthStateChanged, signOut } = authModule);
+    ({ collection, getDocs, doc, deleteDoc, setDoc, updateDoc, serverTimestamp, getDoc, onSnapshot } = firestore);
+    ({ getDatabase, ref, onValue } = database);
+    
+    // Set auth and db
+    auth = firebase.auth;
+    db = firestore;
+    
+    // Initialize the rest of the admin functionality
+    initAuthListener();
+    
+    // Set up tab switching
+    setupTabNavigation();
+    
+    // Setup logout button
+    document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+    
+    // Setup news form if it exists
+    const newsForm = document.getElementById('news-form');
+    if (newsForm) {
+      newsForm.addEventListener('submit', handleNewsSubmit);
+    }
+    
+    // Show loading indicator while initializing
+    const loading = document.querySelector('.loading');
+    if (loading) loading.style.display = 'flex';
+    
+    // Hide loading indicator when done
+    setTimeout(() => {
+      if (loading) loading.style.display = 'none';
+    }, 1000);
+    
+  } catch (error) {
+    console.error('Error initializing admin:', error);
+    window.location.href = '/login.html';
+  }
+}
 
 // Check if user is admin
 function checkAdmin(user) {
@@ -54,24 +79,75 @@ function checkAdmin(user) {
   });
 }
 
-// Handle authentication state
-onAuthStateChanged(auth, async (user) => {
-  const isAdmin = await checkAdmin(user);
-  
-  if (!isAdmin) {
-    // Redirect to login if not admin
-    window.location.href = '/login.html';
-    return;
-  }
-  
-  // User is admin, load admin content
-  document.getElementById('admin-info').textContent = `Logged in as: ${user.email}`;
-  
-  // Load initial content
-  showSection('users');
-  loadUsers();
-  
-  // Set up tab switching
+function listenUserDevices(userId) {
+  const sessionsRef = collection(db, "userDevices", userId, "sessions");
+  onSnapshot(sessionsRef, (snapshot) => {
+    console.log("Realtime devices:", snapshot.docs.map(d => d.data()));
+  });
+}
+
+async function loadPresence() {
+  const presenceList = document.getElementById("presenceList");
+  presenceList.innerHTML = "<p>Memuat data...</p>";
+
+  const rtdb = getDatabase();
+  const presenceRef = ref(rtdb, "presence");
+
+  onValue(presenceRef, (snapshot) => {
+    presenceList.innerHTML = "";
+    const data = snapshot.val() || {};
+    Object.keys(data).forEach(uid => {
+      const p = data[uid];
+      const div = document.createElement("div");
+      div.className = "device-card";
+      div.innerHTML = `
+        <strong>${p.email}</strong><br>
+        Device: ${p.device}<br>
+        Status: <span style="color:${p.online ? 'green':'red'}">${p.online ? 'Online':'Offline'}</span><br>
+        Last Seen: ${new Date(p.lastActive).toLocaleString("id-ID")}
+      `;
+      presenceList.appendChild(div);
+    });
+  });
+}
+
+document.addEventListener("DOMContentLoaded", loadPresence);
+
+
+// Initialize authentication listener
+function initAuthListener() {
+  onAuthStateChanged(auth, async (user) => {
+    try {
+      const isAdmin = await checkAdmin(user);
+      
+      if (!isAdmin) {
+        // Redirect to login if not admin
+        window.location.href = '/login.html';
+        return;
+      }
+      
+      // User is admin, load admin content
+      const adminInfo = document.getElementById('admin-info');
+      if (adminInfo) {
+        adminInfo.textContent = `Logged in as: ${user.email}`;
+      }
+      
+      // Show the admin interface
+      document.body.style.display = 'block';
+      
+      // Load initial content
+      showSection('users');
+      loadUsers();
+      
+    } catch (error) {
+      console.error('Error in auth state change:', error);
+      window.location.href = '/login.html';
+    }
+  });
+}
+
+// Set up tab navigation
+function setupTabNavigation() {
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const section = btn.getAttribute('data-tab');
@@ -83,44 +159,56 @@ onAuthStateChanged(auth, async (user) => {
       } else if (section === 'news') {
         loadNewsAdmin();
       } else if (section === 'support') {
-        // Trigger the loadSupportTickets function from support.js
         if (typeof loadSupportTickets === 'function') {
           loadSupportTickets();
+        }
+      } else if (section === 'presence') {
+        // Load presence data if needed
+        if (typeof loadPresence === 'function') {
+          loadPresence();
         }
       }
     });
   });
+}
+
+// Handle logout
+function handleLogout() {
+  signOut(auth).then(() => {
+    window.location.href = '/login.html';
+  }).catch(error => {
+    console.error('Error signing out:', error);
+  });
+}
+
+// Handle news form submission
+async function handleNewsSubmit(e) {
+  e.preventDefault();
   
-  // Setup logout button
-  document.getElementById('logoutBtn').addEventListener('click', () => {
-    signOut(auth).then(() => {
-      window.location.href = '/login.html';
+  const title = document.getElementById('title')?.value;
+  const content = document.getElementById('content')?.value;
+  
+  if (!title || !content) {
+    alert('Judul dan konten berita harus diisi');
+    return;
+  }
+  
+  try {
+    await setDoc(doc(collection(db, 'news')), {
+      title,
+      content,
+      createdAt: serverTimestamp(),
+      author: auth.currentUser?.email || 'Admin',
+      authorId: auth.currentUser?.uid || 'system'
     });
-  });
-  
-  // Setup news form
-  document.getElementById('news-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const title = document.getElementById('title').value;
-    const content = document.getElementById('content').value;
-    
-    try {
-      await setDoc(doc(collection(db, 'news')), {
-        title,
-        content,
-        createdAt: serverTimestamp(),
-        author: user.email,
-        authorId: user.uid
-      });
-      alert('Berita berhasil ditambahkan!');
-      e.target.reset();
-      loadNewsAdmin();
-    } catch (error) {
-      console.error('Error adding news:', error);
-      alert('Gagal menambahkan berita');
-    }
-  });
-});
+    alert('Berita berhasil ditambahkan!');
+    e.target.reset();
+    loadNewsAdmin();
+  } catch (error) {
+    console.error('Error adding news:', error);
+    alert('Gagal menambahkan berita: ' + (error.message || 'Terjadi kesalahan'));
+  }
+}
 
 // Load users for admin
 async function loadUsers() {
@@ -322,12 +410,21 @@ function showSection(sectionId) {
     btn.classList.remove('active');
   });
   
-  // Show the selected section and activate its button
-  const section = document.getElementById(sectionId + 'Section');
-  const button = document.querySelector(`.tab-btn[data-tab="${sectionId}"]`);
+  // Show the selected section
+  const selectedSection = document.getElementById(`${sectionId}Section`);
+  if (selectedSection) {
+    selectedSection.style.display = 'block';
+  } else {
+    console.warn(`Section with ID '${sectionId}Section' not found`);
+  }
   
-  if (section) section.style.display = 'block';
-  if (button) button.classList.add('active');
+  // Add active class to the clicked button
+  const activeButton = document.querySelector(`.tab-btn[data-tab="${sectionId}"]`);
+  if (activeButton) {
+    activeButton.classList.add('active');
+  } else {
+    console.warn(`Tab button for section '${sectionId}' not found`);
+  }
   
   // Load data for the section if needed
   if (sectionId === 'users') {
@@ -337,6 +434,8 @@ function showSection(sectionId) {
     document.getElementById('addNewsSection').style.display = 'block';
     document.getElementById('newsSection').style.display = 'block';
     loadNewsAdmin();
+  } else if (sectionId === 'presence') {
+    loadPresence();
   } else if (sectionId === 'support') {
     if (typeof loadSupportTickets === 'function') {
       loadSupportTickets();
@@ -344,5 +443,11 @@ function showSection(sectionId) {
   }
 }
 
-// panggil saat halaman admin load
-showSection('users');
+// Make functions available globally if needed
+window.deleteUser = deleteUser;
+window.loadUsers = loadUsers;
+window.loadNewsAdmin = loadNewsAdmin;
+window.loadPresence = loadPresence;
+
+// Export the initAdmin function as default
+export default initAdmin;

@@ -521,8 +521,8 @@ body {
 .main-content {
     height: auto !important;
     overflow-y: auto;
-    padding-bottom: 0 !important; /* buang padding berlebih */
-    margin-bottom: 0 !important;
+    padding-bottom: 80px; /* buang padding berlebih */
+    box-sizing: border-box;
 }
 
 .header {
@@ -766,7 +766,7 @@ body {
 .alert-title {
     font-size: 14px;
     font-weight: 600;
-    color: #92400e;
+    color: #d97706;
     margin-bottom: 5px;
 }
 
@@ -854,7 +854,7 @@ padding: 10px;
     align-items: center;
     margin: 8px 0;
     font-size: 13px;
-    color: #334155;
+    color: black;
 }
 
 .legend-dot {
@@ -1049,7 +1049,7 @@ padding: 10px;
 
 .info.legend h4 {
     margin: 0 0 8px 0;
-    color: #333;
+    color: black;
     font-size: 14px;
     font-weight: 600;
 }
@@ -1399,42 +1399,46 @@ padding: 10px;
 }
 
 /* Container news list */
-#news-list {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    margin-top: 20px;
-  }
-  
-/* Card berita */
+/* Card list berita */
+.news-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 1rem 5rem; /* bawah ditambah biar gak ketutupan bottom-nav */
+}
+
 .news-card {
-    background:rgb(225, 217, 250);
-    border-radius: 15px;
-    padding: 20px;
-    box-shadow: 0 5px 5px rgba(0,0,0,0.05);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    border-left: 4px solid rgb(21, 11, 110);
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+  padding: 1rem 1.2rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-  
+
 .news-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-    border-left: 4px solid rgb(141, 141, 139);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.12);
 }
-  
-/* Judul berita */
-.news-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: #1e293b;
-    margin-bottom: 6px;
+
+.news-card h3 {
+  margin: 0 0 0.4rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #222;
 }
-  
-/* Info tambahan */
+
+.news-card p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #555;
+  line-height: 1.4;
+}
+
 .news-meta {
-    font-size: 13px;
-    color: #64748b;
-    margin-bottom: 12px;
+  font-size: 0.8rem;
+  color: #888;
+  margin-top: 0.5rem;
 }
 
 .logout-section {
@@ -1476,7 +1480,6 @@ padding: 10px;
   align-items: center;      /* vertikal center */
   justify-content: center;  /* horizontal center */
   gap: 8px;                 /* jarak antara icon & teks */
-  
   background: red;
   border: 1px solid #ccc;
   color: white;
@@ -1521,4 +1524,12 @@ padding: 10px;
   color: #111827 !important;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+#shakeLevel {
+  margin-top: 10px;
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+  transition: color 0.3s ease;
 }

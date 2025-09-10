@@ -1,10 +1,8 @@
-import { auth, checkAuthState, deleteUser } from "./auth.js";
+import { requireAuth, logoutUser, registerUser, loginWithGoogle } from './auth.js';
 import { collection, addDoc, onSnapshot, serverTimestamp, query, orderBy, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import { updateProfile,  EmailAuthProvider, reauthenticateWithCredential} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-import { ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
+import { updateProfile,  EmailAuthProvider, reauthenticateWithCredential, updatePassword, deleteUser, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
-const db = window._firebase.db;
-const rtdb = window._firebase.rtdb;
+const { auth, db, rtdb, ref, update, onValue } = window._firebase;
 if (!db) {
   console.error("Firestore belum siap. Pastikan firebase init di <head> sudah jalan.");
 }
@@ -15,55 +13,43 @@ let map;
 let mapInitialized = false;
 let chart;
 
+// Protected pages that require authentication
+const PROTECTED_PAGES = ['profile', 'devices', 'settings'];
+
 // ===== Navigation =====
-async function switchPage(pageName, event) {
+window.switchPage = async function(pageName, event) {
   if (event) event.preventDefault();
 
-  // reset nav item aktif
+  // reset nav
   document.querySelectorAll(".nav-item").forEach(item => item.classList.remove("active"));
   const clickedItem = event?.target.closest(".nav-item") ||
     document.querySelector(`.nav-item[onclick*="${pageName}"]`);
   if (clickedItem) clickedItem.classList.add("active");
 
-  // reset semua page
+  // reset pages
   document.querySelectorAll(".page-content").forEach(p => p.classList.remove("active"));
 
-  // ambil target page
   const targetPage = document.getElementById(`${pageName}-page`);
-  if (!targetPage) {
-    console.warn(`switchPage: Halaman "${pageName}-page" tidak ditemukan`);
-    return;
-  }
+  if (targetPage) {
+    targetPage.classList.add("active");
 
-  // aktifkan page
-  targetPage.classList.add("active");
-
-  // case khusus
-  if (pageName === "map" && !mapInitialized) {
-    setTimeout(initializeMap, 300);
-  }
-  if (pageName === "home") {
-    initChart();
-  }
-
-  // 🔹 khusus Chat AI → load file chatai.html sekali aja
-  if (pageName === "chatai" && !targetPage.hasChildNodes()) {
-    try {
-      const res = await fetch("./chat_ai/chatai.html"); // ganti sesuai folder kamu
-      if (!res.ok) throw new Error("Gagal load chatai.html");
-      const html = await res.text();
-      targetPage.innerHTML = html;
-
-      // inject script chatai.js
-      const script = document.createElement("script");
-      script.src = "./chat_ai/chatai.js";
-      document.body.appendChild(script);
-    } catch (err) {
-      targetPage.innerHTML = `<p style="color:red; padding:20px;">${err.message}</p>`;
+    // refresh map & chart
+    if (pageName === "map") {
+      if (!mapInitialized && typeof initializeMap === "function") {
+        setTimeout(() => {
+          initializeMap();
+          mapInitialized = true;
+        }, 300);
+      }
     }
-  }
-}
 
+    if (pageName === "home" && typeof initChart === "function") {
+      initChart();
+    }
+  } else {
+    console.warn(`switchPage: Halaman "${pageName}-page" tidak ditemukan`);
+  }
+};
 // ===== Profile & Settings Functions =====
 
 /**
@@ -388,66 +374,122 @@ function getSettingContent(settingName) {
 }
 
 /**
- * Save profile changes
+ * Save user profile changes
  */
-// 🔹 Simpan perubahan username
-export async function saveProfile() {
-  const username = document.getElementById("editUsername")?.value.trim();
-  const oldPassword = document.getElementById("confirmPassword")?.value.trim();
-
-  const user = window._firebase?.auth.currentUser;
-  if (!user) return alert("❌ Kamu harus login dulu!");
-  if (!username) return alert("⚠️ Username tidak boleh kosong!");
-  if (!oldPassword) return alert("⚠️ Password lama wajib diisi!");
-
+async function saveProfile() {
   try {
-    // 🔹 Re-authenticate dengan password lama
+    // Get form values
+    const usernameInput = document.getElementById("editUsername");
+    const oldPasswordInput = document.getElementById("confirmPassword");
+    const newPasswordInput = document.getElementById("newPassword");
+    const confirmNewPasswordInput = document.getElementById("confirmNewPassword");
+    
+    const username = usernameInput?.value.trim();
+    const oldPassword = oldPasswordInput?.value.trim();
+    const newPassword = newPasswordInput?.value.trim();
+    const confirmNewPassword = confirmNewPasswordInput?.value.trim();
+    
+    const user = auth.currentUser;
+    if (!user) throw new Error("Anda harus login terlebih dahulu");
+    if (!username) throw new Error("Username tidak boleh kosong");
+    if (!oldPassword) throw new Error("Password lama wajib diisi");
+    
+    // Validate passwords if changing
+    if (newPassword) {
+      if (newPassword !== confirmNewPassword) {
+        throw new Error("Password baru tidak cocok");
+      }
+      if (newPassword.length < 6) {
+        throw new Error("Password minimal 6 karakter");
+      }
+    }
+    
+    // Show loading state
+    const saveBtn = document.querySelector(".form-actions button.btn-primary");
+    const originalBtnText = saveBtn?.textContent;
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+    }
+    
+    // 1. Re-authenticate user
     const credential = EmailAuthProvider.credential(user.email, oldPassword);
     await reauthenticateWithCredential(user, credential);
-
-    // 🔹 Update displayName di Firebase Auth
-    await updateProfile(user, { displayName: username });
-
-    // 🔹 Simpan ke Firestore
-    const userRef = doc(window._firebase.db, "users", user.uid);
-    const snap = await getDoc(userRef);
-    if (snap.exists()) {
-      await updateDoc(userRef, {
-        username: username,
-        email: user.email
-      });
+    
+    // 2. Update display name if changed
+    if (user.displayName !== username) {
+      await updateProfile(user, { displayName: username });
+    }
+    
+    // 3. Update password if changed
+    if (newPassword) {
+      await updatePassword(user, newPassword);
+    }
+    
+    // 4. Update user data in Firestore
+    const userRef = doc(db, "users", user.uid);
+    const userData = {
+      username: username,
+      email: user.email,
+      updatedAt: serverTimestamp(),
+      photoURL: user.photoURL || ""
+    };
+    
+    const userDoc = await getDoc(userRef);
+    if (userDoc.exists()) {
+      await updateDoc(userRef, userData);
     } else {
       await setDoc(userRef, {
-        username: username,
-        email: user.email,
-        createdAt: new Date()
+        ...userData,
+        createdAt: serverTimestamp(),
+        devices: []
       });
     }
-
-    // 🔹 Simpan ke Realtime DB
-    await window._firebase.set(
-      window._firebase.ref(window._firebase.rtdb, `users/${user.uid}/profile`),
-      {
-        username: username,
-        email: user.email
-      }
-    );
-
-    // 🔹 Refresh UI
-    if (window.updateProfileUI) window.updateProfileUI();
-
-    alert("✅ Username berhasil diperbarui");
+    
+    // 5. Update Realtime Database
+    const rtdbRef = ref(rtdb, `users/${user.uid}/profile`);
+    await update(rtdbRef, userData);
+    
+    // Show success message
+    showToast("✅ Profil berhasil diperbarui", "success");
+    
+    // Update UI
+    if (typeof updateProfileUI === 'function') {
+      await updateProfileUI();
+    }
+    
+    // Switch back to profile view
     window.switchPage?.("profile");
-  } catch (err) {
-    console.error("❌ Gagal update username:", err);
-    alert("❌ Gagal update username: " + err.message);
+    
+  } catch (error) {
+    console.error("Gagal memperbarui profil:", error);
+    
+    let errorMessage = "Gagal memperbarui profil";
+    switch (error.code) {
+      case "auth/wrong-password":
+        errorMessage = "Password lama salah";
+        break;
+      case "auth/requires-recent-login":
+        errorMessage = "Sesi login sudah kadaluwarsa. Silakan login ulang.";
+        setTimeout(() => window.location.href = "/login.html", 2000);
+        break;
+      case "auth/weak-password":
+        errorMessage = "Password terlalu lemah. Minimal 6 karakter.";
+        break;
+      default:
+        errorMessage = error.message || errorMessage;
+    }
+    
+    showToast(`❌ ${errorMessage}`, "error");
+  } finally {
+    // Reset button state
+    const saveBtn = document.querySelector("#profileForm button[type='submit']");
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = originalBtnText || "Simpan Perubahan";
+    }
   }
 }
-
-/**
- * Set the application theme
- * @param {string} theme - The theme to set ('light', 'dark', or 'system')
- */
 
 /**
  * Initialize the profile page with user data
@@ -480,25 +522,11 @@ function initProfile() {
     }
 }
 
-function setTheme(theme) {
-  try {
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
-    console.log("Theme set to:", theme);
-  } catch (err) {
-    console.error("Gagal set theme:", err);
-  }
-}
 
 // Initialize profile when the page loads
 document.addEventListener('DOMContentLoaded', () => {
-
-    
-    // Set initial theme
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    setTheme(savedTheme);
     initProfile();
-    initApp();
+});
 
 // Update the form submission handler to use the correct collection name and add better error handling
 document.addEventListener('submit', async (e) => {
@@ -575,35 +603,48 @@ document.addEventListener('submit', async (e) => {
       }
   }
 });
-});
 
 // Make functions available globally
 window.showSetting = showSetting;
 window.saveProfile = saveProfile;
-window.setTheme = setTheme;
 
 // ===== App Init =====
 async function initApp() {
   try {
-    const user = await checkAuthState();
-    console.log("App initialized with user:", user ? {
-      uid: user.uid, email: user.email, displayName: user.displayName
-    } : "No user");
-
-    await updateProfileUI();
-    switchPage("home");
-
+    console.log('Initializing app components...');
+    
+    // Initialize time display
     updateTime();
     setInterval(updateTime, 1000);
-
-    listenDeviceStats();
+    
+    // Initialize map if on map page
+    if (window.location.hash === "#map") {
+      initializeMap();
+    }
+    
+    // Load public data
     loadForumPosts();
-    listenDevicesPage();
 
     if (window.location.hash === "#map") initializeMap();
   } catch (error) {
     console.error("Error initializing app:", error);
+    // Show error to user if needed
+    const errorEl = document.getElementById('app-error');
+    if (errorEl) {
+      errorEl.textContent = 'Terjadi kesalahan saat memuat aplikasi. Silakan muat ulang halaman.';
+      errorEl.style.display = 'block';
+    }
   }
+}
+
+function setTheme(theme) {
+  console.log(`Tema ${theme} dipilih (fitur tema sudah nonaktif).`);
+}
+
+// Helper function to get target page from URL
+function getPageFromUrl() {
+  const hash = window.location.hash.replace('#', '');
+  return hash || null;
 }
 
 // ===== Map =====
@@ -651,11 +692,16 @@ function initializeMap() {
                 const lng = pos.coords.longitude;
 
                 if (!userMarker) {
+                    // Create a custom blue dot icon
+                    const blueDotIcon = L.divIcon({
+                        className: 'blue-dot-icon',
+                        html: '<div style="width: 16px; height: 16px; background: #3b82f6; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.3);"></div>',
+                        iconSize: [20, 20],
+                        iconAnchor: [10, 10],
+                        popupAnchor: [0, -10]
+                    });
                     userMarker = L.marker([lat, lng], {
-                        icon: L.icon({
-                            iconUrl: "https://maps.gstatic.com/mapfiles/ms2/micons/blue-dot.png",
-                            iconSize: [32, 32]
-                        })
+                        icon: blueDotIcon
                     }).addTo(map).bindPopup("📍 Perangkat Anda");
                 } else {
                     userMarker.setLatLng([lat, lng]);
@@ -702,14 +748,23 @@ function showQuickActions() {
 }
 
 async function logout() {
+  if (!confirm('Apakah Anda yakin ingin keluar?')) {
+    return;
+  }
+  
   try {
-    if (window.auth && typeof window.auth.signOut === "function") {
-      await auth.signOut();
-    }
-    window.location.href = "/login.html";
+    // Sign out from Firebase
+    await signOut(auth);
+    
+    // Clear any local storage/session data if needed
+    localStorage.removeItem('userToken');
+    sessionStorage.clear();
+    
+    // Redirect to login page
+    window.location.href = 'login.html';
   } catch (error) {
-    console.error("Error signing out:", error);
-    alert("Gagal keluar. Silakan coba lagi.");
+    console.error('Error during logout:', error);
+    alert('Terjadi kesalahan saat mencoba keluar. Silakan coba lagi.');
   }
 }
 
@@ -816,7 +871,12 @@ function updateTime() {
 // ===== Profile =====
 async function updateProfileUI() {
   try {
-    const user = await checkAuthState();
+    const user = auth.currentUser;
+    if (!user) {
+      console.warn("Tidak ada user yang login");
+      return;
+    }
+
     const greetingName   = document.getElementById("greetingName");
     const profileName    = document.getElementById("profileName");
     const profileEmail   = document.getElementById("profileEmail");
@@ -824,80 +884,80 @@ async function updateProfileUI() {
     const elDevicesCount = document.getElementById("devicesCount");
     const elActiveDays   = document.getElementById("activeDays");
     const elDataUsage    = document.getElementById("dataUsage");
+    const joinDateEl     = document.querySelector(".join-date");
 
-    if (user) {
-      const displayName = user.displayName || "Pengguna";
-      if (greetingName)  greetingName.textContent  = displayName;
-      if (profileName)   profileName.textContent   = displayName;
-      if (profileEmail)  profileEmail.textContent  = user.email || "";
-      if (profileAvatar) profileAvatar.textContent = (displayName[0] || "U").toUpperCase();
+    // Update basic profile info
+    const displayName = user.displayName || "Pengguna";
+    if (greetingName)  greetingName.textContent  = displayName;
+    if (profileName)   profileName.textContent   = displayName;
+    if (profileEmail)  profileEmail.textContent  = user.email || "";
+    if (profileAvatar) profileAvatar.textContent = (displayName[0] || "U").toUpperCase();
 
-      const { rtdb, ref, onValue } = window._firebase;
-
-      // 🔹 1. Hitung jumlah perangkat milik user
-      const devicesRef = ref(rtdb, "devices");
-      onValue(devicesRef, (snapshot) => {
-        if (!snapshot.exists()) return;
-        const devices = snapshot.val();
-        let myCount = 0;
-        Object.values(devices).forEach(dev => {
-          if (dev.ownerUid === user.uid) myCount++;
-        });
-        if (elDevicesCount) elDevicesCount.textContent = myCount;
-      });
-
-      // 🔹 2. Hitung hari aktif (pakai tanggal akun dibuat dari Firebase Auth)
-      if (user.metadata?.creationTime) {
-        const created = new Date(user.metadata.creationTime);
-        const diff = Math.floor((Date.now() - created) / (1000 * 60 * 60 * 24));
-        if (elActiveDays) elActiveDays.textContent = diff;
-      }
-
-      // 🔹 3. Data usage
-      const userRef = ref(rtdb, `users/${user.uid}/dataUsage`);
-      onValue(userRef, (snap) => {
-        if (snap.exists()) {
-          // Kalau ada dataUsage → langsung pakai
-          const usage = snap.val(); // byte
-          const gb = (usage / (1024*1024*1024)).toFixed(1);
-          if (elDataUsage) elDataUsage.textContent = `${gb}GB`;
-        } else {
-          // 🔹 Fallback: hitung dari semua perangkat user
-          const devicesRef = ref(rtdb, "devices");
-          onValue(devicesRef, (snapshot) => {
-            if (!snapshot.exists()) return;
-            const devices = snapshot.val();
-            let totalBytes = 0;
-
-            Object.values(devices).forEach(dev => {
-              if (dev.ownerUid === user.uid && dev.dataUsage) {
-                totalBytes += dev.dataUsage; // asumsinya tiap device simpan dataUsage
-              }
-            });
-
-            const gb = (totalBytes / (1024*1024*1024)).toFixed(1);
-            if (elDataUsage) elDataUsage.textContent = `${gb}GB`;
-          });
-        }
-      });
-
-    } else {
-      // 🔹 User belum login
-      if (greetingName)  greetingName.textContent  = "Tamu";
-      if (profileName)   profileName.textContent   = "Tamu";
-      if (profileEmail)  profileEmail.textContent  = "—";
-      if (profileAvatar) profileAvatar.textContent = "T";
-      if (elDevicesCount) elDevicesCount.textContent = "0";
-      if (elActiveDays)   elActiveDays.textContent   = "0";
-      if (elDataUsage)    elDataUsage.textContent    = "0GB";
+    // Update profile picture if available
+    if (user.photoURL) {
+      profileAvatar.src = user.photoURL;
+      profileAvatar.style.display = 'block';
     }
+
+    // 🔹 1. Hitung jumlah perangkat milik user
+    const devicesRef = ref(rtdb, "devices");
+    onValue(devicesRef, (snapshot) => {
+      if (!snapshot.exists()) return;
+      const devices = snapshot.val();
+      let myCount = 0;
+      Object.values(devices).forEach(dev => {
+        if (dev.ownerUid === user.uid) myCount++;
+      });
+      if (elDevicesCount) elDevicesCount.textContent = myCount;
+    }, (error) => {
+      console.error("Error fetching devices:", error);
+    });
+
+    // 🔹 2. Hitung hari aktif
+    if (user.metadata?.creationTime) {
+      const created = new Date(user.metadata.creationTime);
+      const diff = Math.floor((Date.now() - created) / (1000 * 60 * 60 * 24));
+      if (elActiveDays) elActiveDays.textContent = diff;
+      
+      if (joinDateEl) {
+        joinDateEl.textContent = `Bergabung pada ${created.toLocaleDateString('id-ID', { 
+          year: 'numeric', month: 'long', day: 'numeric' 
+        })}`;
+      }
+    }
+
+    // 🔹 3. Data usage
+    const userRef = ref(rtdb, `users/${user.uid}/dataUsage`);
+    onValue(userRef, (snap) => {
+      if (snap.exists()) {
+        const usage = snap.val(); // byte
+        const gb = (usage / (1024*1024*1024)).toFixed(1);
+        if (elDataUsage) elDataUsage.textContent = `${gb}GB`;
+      } else {
+        // Fallback
+        const devicesRef = ref(rtdb, "devices");
+        onValue(devicesRef, (snapshot) => {
+          if (!snapshot.exists()) return;
+          const devices = snapshot.val();
+          let totalBytes = 0;
+
+          Object.values(devices).forEach(dev => {
+            if (dev.ownerUid === user.uid && dev.dataUsage) {
+              totalBytes += dev.dataUsage;
+            }
+          });
+
+          const gb = (totalBytes / (1024*1024*1024)).toFixed(1);
+          if (elDataUsage) elDataUsage.textContent = `${gb}GB`;
+        });
+      }
+    });
+
   } catch (error) {
     console.error("Error in updateProfileUI:", error);
   }
 }
 
-// ===== Chart.js =====
-// Chart variable is already declared at the top of the file
 
 // ===== Chart.js =====
 function updateChart(ax_g, ay_g) {
@@ -922,98 +982,150 @@ function updateChart(ax_g, ay_g) {
   chart.update();
 }
 
+function getShakeLevel(ax, ay){
+  const magnitude = Math.sqrt(ax * ax + ay * ay);
+  if (magnitude < 0.2) return { text: "Tenang 🌱", color: "green" };
+  if (magnitude < 0.5) return { text: "Getaran Ringan ⚡", color: "orange" };
+  if (magnitude < 1.0) return { text: "Sedang  🌋", color: "darkorange" };
+  return { text: "Kuat  🚨", color: "red" };
+}
+
 function initChart() {
-  const canvas = document.getElementById("myChart");
-  if (!canvas || typeof Chart === "undefined") return;
-
-  const ctx = canvas.getContext("2d");
-  if (chart) chart.destroy();
-
-  chart = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: [],
-      datasets: [
-        {
-          label: "AX (g)",
-          data: [],
-          borderColor: "rgba(59, 130, 246, 1)",
-          backgroundColor: "rgba(59, 130, 246, 0.3)",
-          fill: true,
-          tension: 0.4
-        },
-        {
-          label: "AY (g)",
-          data: [],
-          borderColor: "rgba(239, 68, 68, 1)",
-          backgroundColor: "rgba(239, 68, 68, 0.3)",
-          fill: true,
-          tension: 0.4
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: { y: { beginAtZero: true } }
+  try {
+    const canvas = document.getElementById("myChart");
+    if (!canvas) {
+      console.warn("Chart canvas not found");
+      return;
     }
-  });
 
-  const { rtdb, ref, onValue } = window._firebase;
+    if (typeof Chart === "undefined") {
+      console.error("Chart.js is not loaded");
+      return;
+    }
 
-  // 🔹 1. Load history lebih dulu
-  const historyRef = ref(rtdb, "sensor/history");
-  onValue(historyRef, (snapshot) => {
-    if (!snapshot.exists()) return;
-    const history = snapshot.val();
+    // Destroy existing chart instance if it exists
+    if (chart) {
+      chart.destroy();
+      chart = null;
+    }
 
-    const labels = [];
-    const axData = [];
-    const ayData = [];
-
-    Object.entries(history).forEach(([ts, point]) => {
-      const date = new Date(parseInt(ts));
-      const timeLabel = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
-      labels.push(timeLabel);
-      axData.push(point.ax_g);
-      ayData.push(point.ay_g);
+    const ctx = canvas.getContext("2d");
+    chart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: [],
+        datasets: [
+          {
+            label: "AX (g)",
+            data: [],
+            borderColor: "rgba(59, 130, 246, 1)",
+            backgroundColor: "rgba(59, 130, 246, 0.3)",
+            fill: true,
+            tension: 0.4,
+          },
+          {
+            label: "AY (g)",
+            data: [],
+            borderColor: "rgba(239, 68, 68, 1)",
+            backgroundColor: "rgba(239, 68, 68, 0.3)",
+            fill: true,
+            tension: 0.4,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: { y: { beginAtZero: true } },
+      },
     });
 
-    chart.data.labels = labels;
-    chart.data.datasets[0].data = axData;
-    chart.data.datasets[1].data = ayData;
-    chart.update();
-  });
+    // ✅ ambil function dari window._firebase langsung
+    const { rtdb, ref, onValue } = window._firebase;
 
-  // 🔹 2. Dengar data realtime terakhir
-  const dataRef = ref(rtdb, "sensor/data");
-  onValue(dataRef, (snapshot) => {
-    if (snapshot.exists()) {
-      const data = snapshot.val();
-      console.log("📡 Data realtime:", data);
-      if (data.ax_g !== undefined && data.ay_g !== undefined) {
-        updateChart(parseFloat(data.ax_g), parseFloat(data.ay_g));
+    // 🔹 1. Load history lebih dulu
+    const historyRef = ref(rtdb, "sensor/history");
+    onValue(historyRef, (snapshot) => {
+      if (!snapshot.exists()) return;
+      const history = snapshot.val();
 
-        // 🔹 Simpan juga ke history
-        const ts = Date.now();
-        set(ref(rtdb, "sensor/history/" + ts), {
-          ax_g: parseFloat(data.ax_g),
-          ay_g: parseFloat(data.ay_g)
-        });
+      const labels = [];
+      const axData = [];
+      const ayData = [];
+
+      Object.entries(history).forEach(([ts, point]) => {
+        const date = new Date(parseInt(ts));
+        const timeLabel =
+          date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
+        labels.push(timeLabel);
+        axData.push(point.ax_g);
+        ayData.push(point.ay_g);
+      });
+
+      chart.data.labels = labels;
+      chart.data.datasets[0].data = axData;
+      chart.data.datasets[1].data = ayData;
+      chart.update();
+    });
+
+    // 🔹 2. Dengar data realtime terakhir
+    const dataRef = ref(rtdb, "sensor/data");
+    onValue(dataRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        console.log("📡 Data realtime:", data);
+        if (data.ax_g !== undefined && data.ay_g !== undefined) {
+          const ax = parseFloat(data.ax_g);
+          const ay = parseFloat(data.ay_g);
+
+          // update grafik
+          updateChart(ax, ay);
+
+          // 🔹 Update teks level guncangan
+          const { text, color } = getShakeLevel(ax, ay);
+          const el = document.getElementById("shakeLevel");
+          if (el) {
+            el.textContent = text;
+            el.style.color = color;
+          }
+
+          const { set } = window._firebase;
+          // 🔹 Simpan juga ke history
+          const ts = Date.now();
+          set(ref(rtdb, "sensor/history/" + ts), {
+            ax_g: ax,
+            ay_g: ay,
+          });
+        }
+      } else {
+        console.warn("❌ Tidak ada data di path 'data'");
       }
-    } else {
-      console.warn("❌ Tidak ada data di path 'data'");
-    }
-  });
+    });
+  } catch (error) {
+    console.error("Error initializing chart:", error);
+  }
 }
 
 // (biar chart aman, kita inisialisasi ulang pas masuk home)
 document.addEventListener("DOMContentLoaded", () => {
   console.log("SeismoSens app initialized");
   initApp();
+
+  const defaultPage = getPageFromUrl() || "home";
+  if (defaultPage === "home") {
+    initChart();
+  }
 });
 
 // ===== Forum =====
+// Function to send a reply to a forum post
+function sendReply(postId) {
+  const input = document.getElementById(`replyInput-${postId}`);
+  if (input && input.value.trim()) {
+    addReply(postId, input.value.trim());
+  }
+}
+
 // Tambah postingan
 async function addForumPost() {
   const titleInput = document.getElementById('forumTitle');
@@ -1316,11 +1428,15 @@ function listenDevicesPage() {
   });
 }
 
-// Saat halaman pertama kali dibuka → load bahasa terakhir dipilih
-document.addEventListener("DOMContentLoaded", () => {
+
+// Load saved language preference
+function initializeLanguage() {
   const savedLang = localStorage.getItem("lang") || "id";
   setLanguage(savedLang);
-});
+}
+
+// Initialize language when the app starts
+initializeLanguage();
 
 // ===== Expose ke window =====
 window.switchPage = switchPage;
@@ -1344,6 +1460,31 @@ window.addForumPost = addForumPost;
 window.loadForumPosts = loadForumPosts;
 window.deleteAccountFlow = deleteAccountFlow;
 window.setLanguage = setLanguage;
+
+// Pastikan UI update setiap kali user login/logout
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    console.log("✅ User login:", user.email);
+    loadForumPosts();
+    updateProfileUI();
+    listenUserDevicesCount();
+    listenUserDataUsage();
+
+    // ✅ kasih parameter creationTime biar gak NaN
+    if (user.metadata?.creationTime) {
+      updateActiveDays(user.metadata.creationTime);
+    }
+
+  } else {
+    console.log("❌ User logout");
+    const profileName  = document.getElementById("profileName");
+    const profileEmail = document.getElementById("profileEmail");
+    const postsContainer = document.getElementById('forumPosts')
+    if (profileName)  profileName.textContent = "Pengguna";
+    if (profileEmail) profileEmail.textContent = "";
+    if (postsContainer) postsContainer.innerHTML = "<p>Silakan login untuk melihat posting.</p>";
+  }
+});
 
 window.deleteAccount = async function () {
   if (confirm('Apakah Anda yakin ingin menghapus akun ini? Tindakan ini tidak dapat dibatalkan.')) {
@@ -1384,7 +1525,16 @@ async function deleteAccountFlow() {
     const credential = EmailAuthProvider.credential(user.email, password);
     await reauthenticateWithCredential(user, credential);
 
-    // Step 4: Hapus akun
+    // Step 4: Hapus data pengguna dari Firestore terlebih dahulu
+    try {
+      const userDocRef = doc(db, "users", user.uid);
+      await deleteDoc(userDocRef);
+    } catch (error) {
+      console.warn("Gagal menghapus data pengguna dari Firestore:", error);
+      // Lanjutkan meskipun gagal hapus dari Firestore
+    }
+
+    // Step 5: Hapus akun
     await deleteUser(user);
     alert("✅ Akun berhasil dihapus.");
     window.location.href = "/login.html";
@@ -1401,24 +1551,3 @@ async function deleteAccountFlow() {
     }
   }
 }
-
-// ===== Debug =====
-console.log('Global functions initialized:', {
-  switchPage: typeof window.switchPage,
-  initApp: typeof window.initApp,
-  initializeMap: typeof window.initializeMap,
-  zoomIn: typeof window.zoomIn,
-  zoomOut: typeof window.zoomOut,
-  centerMap: typeof window.centerMap,
-  showNotifications: typeof window.showNotifications,
-  showDeviceDetail: typeof window.showDeviceDetail,
-  showLocationDetail: typeof window.showLocationDetail,
-  showSetting: typeof window.showSetting,
-  showQuickActions: typeof window.showQuickActions,
-  updateTime: typeof window.updateTime,
-  logout: typeof window.logout,
-  updateProfileUI: typeof window.updateProfileUI,
-  addForumPost: typeof window.addForumPost,
-  loadForumPosts: typeof window.loadForumPosts,
-  deleteAccount: typeof window.deleteAccount
-});

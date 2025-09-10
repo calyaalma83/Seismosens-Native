@@ -1,7 +1,5 @@
-// Firebase Imports
-import { getAuth } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+// Import Firebase services
 import { 
-  getFirestore, 
   collection, 
   query, 
   where, 
@@ -13,11 +11,8 @@ import {
   limit, 
   getDoc,
   serverTimestamp
-} from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
-
-// Get the initialized Firebase app from admin.js
-const auth = getAuth();
-const db = getFirestore();
+} from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js';
+import { auth, db } from '../firebase.js';
 
 // DOM Elements
 const ticketsTableBody = document.getElementById('ticketsTableBody');
@@ -274,17 +269,17 @@ function showError(message) {
   alert('Error: ' + message);
 }
 
+// Make viewTicket function globally available
+window.viewTicket = viewTicket;
+
 // Initialize support tickets when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
   // Set up event listeners
   const markResolvedBtn = document.getElementById('markResolved');
   const refreshTicketsBtn = document.getElementById('refreshTickets');
   const closeModalBtn = document.querySelector('.close-modal');
+  const closeModalBtn2 = document.querySelector('.close-modal-btn');
   
-  // Load tickets when the page loads
-  loadSupportTickets();
-  
-  // Set up event listeners
   if (markResolvedBtn) {
     markResolvedBtn.addEventListener('click', markTicketAsResolved);
   }
@@ -293,17 +288,26 @@ document.addEventListener('DOMContentLoaded', () => {
     refreshTicketsBtn.addEventListener('click', loadSupportTickets);
   }
   
+  // Close modal when clicking the X button or close button
   if (closeModalBtn) {
     closeModalBtn.addEventListener('click', closeModal);
   }
   
-  // Close modal when clicking outside
-  const ticketModal = document.getElementById('ticketModal');
-  if (ticketModal) {
-    window.addEventListener('click', (e) => {
-      if (e.target === ticketModal) {
-        closeModal();
-      }
-    });
+  if (closeModalBtn2) {
+    closeModalBtn2.addEventListener('click', closeModal);
   }
+  
+  // Close modal when clicking outside the modal content
+  window.addEventListener('click', (e) => {
+    const modal = document.getElementById('ticketModal');
+    if (e.target === modal) {
+      closeModal();
+    }
+  });
+  
+  // Initial load
+  loadSupportTickets();
 });
+
+// Export functions that need to be used in other modules
+export { loadSupportTickets, viewTicket, markTicketAsResolved };

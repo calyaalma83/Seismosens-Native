@@ -1,5 +1,21 @@
-// Ambil instance Firebase dari window (sudah di-init di seismosens.html)
-const { db, auth, collection, addDoc, getDocs, query, orderBy, onAuthStateChanged } = window._firebase;
+// Import Firebase functions
+import { 
+  auth, 
+  db, 
+  collection, 
+  addDoc, 
+  getDocs, 
+  query, 
+  orderBy, 
+  onAuthStateChanged,
+  doc,
+  getDoc,
+  setDoc,
+  serverTimestamp
+} from '../firebase.js';
+
+// Make sendMessage globally available
+window.sendMessage = sendMessage;
 
 // ✅ Gemini API
 const API_KEY = "AIzaSyDzHnhIj8QQRTwben9uzDw7kWVjXJg0nBA";

@@ -1,95 +1,56 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { 
-  getAuth,
-  onAuthStateChanged,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+
+const {
+  auth,
+  db,
   signOut,
+  createUserWithEmailAndPassword,
   updateProfile,
-  deleteUser,
-  setPersistence, 
   GoogleAuthProvider,
   signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
-  browserSessionPersistence
-} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-
-import { 
-  doc, 
-  setDoc, 
-  getDoc, 
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  deleteUser,
+  doc,
+  setDoc,
+  getDoc,
   serverTimestamp,
-  getFirestore 
-} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+} = window._firebase;
 
-// Initialize Firebase with a check for existing app
-let app;
-let auth;
-let db;
+// =======================================
+// Auth state listener (log info doang)
+// =======================================
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    console.log("Auth state changed: User signed in", user.uid);
+  } else {
+    console.log("Auth state changed: User signed out");
+  }
+});
 
-// Check if Firebase app is already initialized
-if (window._firebase && window._firebase.app) {
-    app = window._firebase.app;
-    auth = getAuth(app);
-    db = getFirestore(app);
-} else {
-    // Fallback initialization if not loaded via seismosens.html
-    const firebaseConfig = {
-        apiKey: "AIzaSyD07M2-79Yh0CzotaQeGYYy4WLZoevTdWY",
-        authDomain: "seismosens-a048e.firebaseapp.com",
-        projectId: "seismosens-a048e",
-        storageBucket: "seismosens-a048e.appspot.com",
-        messagingSenderId: "358453169511",
-        appId: "1:358453169511:web:fccc32bf22ede39ff0b3c2"
-    };
-    
-    app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    db = getFirestore(app);
-    
-    // Store for other scripts if needed
-    window._firebase = window._firebase || {};
-    window._firebase.app = app;
-    window._firebase.auth = auth;
-    window._firebase.db = db;
-}
-
-setPersistence(auth, browserSessionPersistence);
-
-// Supaya bisa diakses global (opsional untuk debug)
-window.auth = auth;
-window.db = db;
-
-// ================================
-// CEK STATE AUTH
-// ================================
-function checkAuthState() {
+// =======================================
+// Auth utils
+// =======================================
+async function checkAuthState() {
   return new Promise((resolve) => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      unsubscribe();
-      resolve(user);
-    });
+    onAuthStateChanged(auth, (user) => resolve(user || null));
   });
 }
 
-// 🔹 Wajib login (kalau belum → redirect ke login)
 async function requireAuth() {
   const user = await checkAuthState();
   if (!user) {
     window.location.href = "/login.html";
-    return false;
+    return null;
   }
   return user;
 }
 
-// 🔹 Redirect ke home kalau sudah login
 async function redirectIfAuthenticated() {
   const user = await checkAuthState();
   const fromDelete = sessionStorage.getItem("fromDeleteAccount") === "true";
-
   if (user && !fromDelete) {
-    window.location.href = "/seismosens.html"; 
+    window.location.href = "/seismosens.html";
     return true;
   }
   return false;
@@ -97,121 +58,111 @@ async function redirectIfAuthenticated() {
 
 async function requireAdmin() {
   const user = await requireAuth();
-  if (!user) return;
+  if (!user) return false;
 
-  try {
-    const snap = await getDoc(doc(db, "users", user.uid));
-    if (!snap.exists()) {
-      console.warn("❌ User tidak ada di Firestore");
-      alert("Akun belum terdaftar di database.");
-      window.location.href = "/seismosens.html";
-      return false;
-    }
+  const userDoc = await getDoc(doc(db, "users", user.uid));
 
-    const role = snap.data().role;
-    console.log("👤 Login sebagai:", user.email, "| Role:", role);
-
-    if (role !== "admin") {
-      alert("Akses ditolak. Kamu bukan admin.");
-      window.location.href = "/seismosens.html";
-      return false;
-    }
-    return user;
-  } catch (err) {
-    console.error("❌ Error requireAdmin:", err);
-    alert("Gagal memeriksa hak akses admin.");
-    window.location.href = "/login.html";
+  if (!userDoc.exists()) {
+    alert("Akun belum terdaftar di database.");
+    window.location.href = "/seismosens.html";
+    return false;
   }
+
+  const role = userDoc.data().role;
+  if (role !== "admin") {
+    alert("Akses ditolak. Kamu bukan admin.");
+    window.location.href = "/seismosens.html";
+    return false;
+  }
+
+  return user;
 }
 
-// ================================
-// REGISTER USER
-// ================================
+// =======================================
+// Register user
+// =======================================
 async function registerUser(email, password, nama, role = "user") {
-  try {
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
-    const user = cred.user;
+  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+  const user = userCredential.user;
 
-    await setDoc(doc(db, "users", user.uid), {
-      email,
-      nama,
-      role,
-      createdAt: serverTimestamp()
-    });
+  await updateProfile(user, { displayName: nama });
 
-    await updateProfile(user, { displayName: nama });
-    await user.reload();
+  await setDoc(doc(db, "users", user.uid), {
+    email,
+    nama,
+    role,
+    emailVerified: user.emailVerified || false,
+    createdAt: serverTimestamp(),
+    lastLogin: serverTimestamp(),
+  });
 
-    console.log("✅ Register berhasil:", email, "| Nama:", user.displayName);
-    return user;
-  } catch (err) {
-    console.error("❌ Error registerUser:", err);
-    throw err;
-  }
+  return user;
 }
 
-// ================================
-// LOGOUT USER
-// ================================
+// =======================================
+// Logout
+// =======================================
 async function logoutUser() {
-  try {
-    await signOut(auth);
-    console.log("✅ User logout");
-    window.location.href = "/login.html";
-  } catch (err) {
-    console.error("❌ Error logoutUser:", err);
-  }
+  await signOut(auth);
+  console.log("✅ User logout");
+  window.location.href = "/login.html";
 }
 
-// Buat provider Google
-const provider = new GoogleAuthProvider();
-
-// Login dengan popup
+// =======================================
+// Google login
+// =======================================
 async function loginWithGoogle() {
   try {
+    const provider = new GoogleAuthProvider();
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
 
-    console.log("✅ Login Google berhasil:", user);
+    const userDoc = doc(db, "users", user.uid);
+    const snap = await getDoc(userDoc);
 
-    // Simpan user ke Firestore (jika belum ada)
-    const snap = await getDoc(doc(db, "users", user.uid));
     if (!snap.exists()) {
-      await setDoc(doc(db, "users", user.uid), {
+      await setDoc(userDoc, {
         email: user.email,
         nama: user.displayName || "Pengguna",
         role: "user",
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
       });
     }
 
-    // Redirect ke dashboard
     window.location.href = "./seismosens.html";
-
   } catch (error) {
-    console.error("❌ Error login Google:", error);
+    console.error("Error login Google:", error);
     alert("Login dengan Google gagal: " + error.message);
   }
 }
 
-// biar bisa dipanggil langsung dari HTML
 window.loginWithGoogle = loginWithGoogle;
 
+// =======================================
+// Delete user
+// =======================================
+async function deleteUserAccount(user) {
+  if (!user) user = auth.currentUser;
+  if (!user) throw new Error("No authenticated user");
+  await deleteUser(user);
+  return true;
+}
 
-// ================================
-// EXPORT
-// ================================
-export { 
-  auth,
-  db,
-  checkAuthState, 
-  requireAuth, 
+function getFirebase() {
+  return window._firebase || {};
+}
+
+// =======================================
+// Export
+// =======================================
+export {
+  checkAuthState,
+  requireAuth,
   redirectIfAuthenticated,
-  registerUser,
   requireAdmin,
-  signInWithEmailAndPassword,
-  updateProfile,
-  logoutUser,
+  registerUser,
   loginWithGoogle,
-  deleteUser
+  logoutUser,
+  deleteUserAccount,
+  getFirebase,
 };

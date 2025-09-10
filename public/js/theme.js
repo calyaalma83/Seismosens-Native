@@ -1,7 +1,7 @@
 // Theme Manager
 class ThemeManager {
     constructor() {
-        this.theme = localStorage.getItem('theme') || 'system';
+        this.theme = 'light'; // Force light theme
         this.init();
     }
 
@@ -13,9 +13,7 @@ class ThemeManager {
         if (window.matchMedia) {
             const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
             const handleChange = () => {
-                if (this.theme === 'system') {
-                    this.applyTheme();
-                }
+                this.applyTheme();
             };
             mediaQuery.addEventListener('change', handleChange);
         }
@@ -24,17 +22,11 @@ class ThemeManager {
     applyTheme() {
         let themeToApply = this.theme;
         
-        if (themeToApply === 'system') {
-            themeToApply = window.matchMedia('(prefers-color-scheme: dark)').matches 
-                ? 'dark' 
-                : 'light';
-        }
-
         // Update data-theme attribute on html tag
         document.documentElement.setAttribute('data-theme', themeToApply);
         
         // Update meta theme color for mobile browsers
-        const themeColor = themeToApply === 'dark' ? '#121212' : '#4f46e5';
+        const themeColor = '#4f46e5';
         document.querySelector('meta[name="theme-color"]').setAttribute('content', themeColor);
         
         // Force repaint to ensure styles are applied
@@ -43,14 +35,11 @@ class ThemeManager {
         document.body.style.display = '';
     }
 
-    setTheme(theme) {
-        if (['light', 'dark', 'system'].includes(theme)) {
-            this.theme = theme;
-            localStorage.setItem('theme', theme);
-            this.applyTheme();
-            return true;
-        }
-        return false;
+    setTheme() {
+        // Always set to light theme
+        this.theme = 'light';
+        this.applyTheme();
+        return true;
     }
 }
 
@@ -58,25 +47,14 @@ class ThemeManager {
 const themeManager = new ThemeManager();
 
 // Make setTheme available globally
-window.setTheme = (theme) => {
-    if (themeManager.setTheme(theme)) {
-        // Update active state in settings
-        document.querySelectorAll('.setting-item').forEach(item => {
-            const itemTheme = item.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
-            item.classList.toggle('active', itemTheme === theme);
-        });
-    }
+window.setTheme = () => {
+    themeManager.setTheme();
 };
 
 // Initialize active state on load
 document.addEventListener('DOMContentLoaded', () => {
-    // Set active state for current theme
-    document.querySelectorAll('.setting-item').forEach(item => {
-        const theme = item.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
-        if (theme === themeManager.theme) {
-            item.classList.add('active');
-        }
-    });
+    // Force light theme on load
+    themeManager.setTheme();
 });
 
 // Add theme styles to the head

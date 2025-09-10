@@ -1,6 +1,8 @@
-/* Theme Variables */
-:root {
-    /* Light Theme (Default) */
+/* Theme Variables - Light Theme Only */
+:root, 
+html[data-theme="light"],
+html[data-theme="dark"] {
+    /* Light Theme (Forced) */
     --bg-primary: #ffffff;
     --bg-secondary: #f8f9fa;
     --bg-tertiary: #f0f2f5;
@@ -15,6 +17,12 @@
     --primary-hover: #4338ca;
     --header-bg: linear-gradient(135deg, #4f46e5, #7c3aed);
     --header-text: #ffffff;
+    
+    /* Notification Colors */
+    --success-color: #10b981;
+    --error-color: #ef4444;
+    --warning-color: #f59e0b;
+    --info-color: #3b82f6;
 }
 
 :root {
